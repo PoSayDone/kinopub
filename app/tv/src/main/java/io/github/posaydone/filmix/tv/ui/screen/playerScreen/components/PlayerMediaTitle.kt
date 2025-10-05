@@ -3,7 +3,6 @@ package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -17,7 +16,7 @@ import coil.compose.AsyncImage
 import io.github.posaydone.filmix.core.model.FullShow
 
 @Composable
-fun PlayerShowHeader(
+fun PlayerMediaTitle(
     showDetails: FullShow,
     currentSeason: String?,
     currentEpisode: String?,

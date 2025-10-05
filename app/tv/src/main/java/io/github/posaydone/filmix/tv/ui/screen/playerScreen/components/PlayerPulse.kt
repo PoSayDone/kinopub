@@ -46,19 +46,19 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlin.time.Duration.Companion.seconds
 
-object VideoPlayerPulse {
+object PlayerPulse {
     enum class Type { FORWARD, BACK, NONE }
 }
 
 @Composable
-fun VideoPlayerPulse(
+fun PlayerPulse(
     state: VideoPlayerPulseState = rememberVideoPlayerPulseState(),
     isLoading: Boolean,
 ) {
     val icon = when (state.type) {
-        VideoPlayerPulse.Type.FORWARD -> Icons.Default.Forward10
-        VideoPlayerPulse.Type.BACK -> Icons.Default.Replay10
-        VideoPlayerPulse.Type.NONE -> null
+        PlayerPulse.Type.FORWARD -> Icons.Default.Forward10
+        PlayerPulse.Type.BACK -> Icons.Default.Replay10
+        PlayerPulse.Type.NONE -> null
     }
 
 
@@ -86,8 +86,8 @@ fun VideoPlayerPulse(
 }
 
 class VideoPlayerPulseState {
-    private var _type by mutableStateOf(VideoPlayerPulse.Type.NONE)
-    val type: VideoPlayerPulse.Type get() = _type
+    private var _type by mutableStateOf(PlayerPulse.Type.NONE)
+    val type: PlayerPulse.Type get() = _type
 
     private val channel = Channel<Unit>(Channel.CONFLATED)
 
@@ -95,10 +95,10 @@ class VideoPlayerPulseState {
     suspend fun observe() {
         channel.consumeAsFlow()
             .debounce(2.seconds)
-            .collect { _type = VideoPlayerPulse.Type.NONE }
+            .collect { _type = PlayerPulse.Type.NONE }
     }
 
-    fun setType(type: VideoPlayerPulse.Type) {
+    fun setType(type: PlayerPulse.Type) {
         _type = type
         channel.trySend(Unit)
     }

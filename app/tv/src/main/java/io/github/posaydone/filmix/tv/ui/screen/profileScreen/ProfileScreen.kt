@@ -3,6 +3,7 @@ package io.github.posaydone.filmix.tv.ui.screen.profileScreen
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -106,7 +112,6 @@ fun ProfileScreenContent(
     onStreamTypeChange: (newStreamType: String) -> Unit,
     onServerLocationChange: (newServerLocation: String) -> Unit,
 ) {
-    val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val videoQualities = ProfileScreenViewModel.videoQualities
     val streamTypes = ProfileScreenViewModel.streamTypes
     val serverLocations = ProfileScreenViewModel.serverLocations
@@ -115,7 +120,7 @@ fun ProfileScreenContent(
     var showStreamTypeDialog by remember { mutableStateOf(false) }
     var showServerLocationDialog by remember { mutableStateOf(false) }
 
-    val verticalBivs = remember { CustomBringIntoViewSpec(0.5f, 0.5f) }
+    val verticalBivs = remember { CustomBringIntoViewSpec(0.6f, 0.0f) }
 
     val lazyListState = rememberLazyListState();
     val childPadding = rememberChildPadding();
@@ -128,9 +133,40 @@ fun ProfileScreenContent(
         "Free Account"
     }
 
+    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+
+    // Stream Type Dialog
+    SettingDialog(
+        title = "Stream type",
+        description = "Type of video stream, pick auto if unsure",
+        currentValue = currentStreamType,
+        values = streamTypes,
+        onValueSelected = { streamType ->
+            onStreamTypeChange(streamType)
+            showStreamTypeDialog = false
+        },
+        opened = showStreamTypeDialog,
+        onDismiss = { showStreamTypeDialog = false })
+
+    // Server Location Dialog
+    SettingDialog(
+        title = "Server location",
+        description = "Pick the nearest location for a better speed",
+        currentValue = currentServerLocation,
+        values = serverLocations,
+        onValueSelected = { serverLocation ->
+            onServerLocationChange(serverLocation)
+            showServerLocationDialog = false
+        },
+        opened = showServerLocationDialog,
+        onDismiss = { showServerLocationDialog = false },
+    )
+
     CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
         LazyColumn(
-            modifier = modifier,
+            modifier = modifier
+                .focusRequester(lazyColumn)
+                .focusRestorer(firstItem),
             state = lazyListState,
             contentPadding = PaddingValues(
                 start = childPadding.start,
@@ -145,7 +181,8 @@ fun ProfileScreenContent(
                 Column(
                     modifier = Modifier
                         .padding(top = 16.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .focusable(false),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -160,7 +197,7 @@ fun ProfileScreenContent(
             }
 
             item {
-                SettingsGroup(modifier = Modifier, title = "Account") {
+                SettingsGroup(modifier = Modifier.focusRequester(firstItem), title = "Account") {
                     SettingItem(
                         title = "Username", currentValue = userProfile.login, onClick = {})
                     SettingItem(
@@ -219,32 +256,6 @@ fun ProfileScreenContent(
             opened = showVideoQualityDialog,
             onDismiss = { showVideoQualityDialog = false })
 
-        // Stream Type Dialog
-        SettingDialog(
-            title = "Stream type",
-            description = "Type of video stream, pick auto if unsure",
-            currentValue = currentStreamType,
-            values = streamTypes,
-            onValueSelected = { streamType ->
-                onStreamTypeChange(streamType)
-                showStreamTypeDialog = false
-            },
-            opened = showStreamTypeDialog,
-            onDismiss = { showStreamTypeDialog = false })
-
-        // Server Location Dialog
-        SettingDialog(
-            title = "Server location",
-            description = "Pick the nearest location for a better speed",
-            currentValue = currentServerLocation,
-            values = serverLocations,
-            onValueSelected = { serverLocation ->
-                onServerLocationChange(serverLocation)
-                showServerLocationDialog = false
-            },
-            opened = showServerLocationDialog,
-            onDismiss = { showServerLocationDialog = false },
-        )
     }
 }
 

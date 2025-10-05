@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
 
 import androidx.annotation.IntRange
@@ -30,8 +14,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 
 class VideoPlayerState internal constructor(
-    @IntRange(from = 0)
-    private val hideSeconds: Int,
+    @IntRange(from = 0) private val hideSeconds: Int,
 ) {
     private var _controlsVisible by mutableStateOf(true)
     val controlsVisible get() = _controlsVisible
@@ -49,19 +32,16 @@ class VideoPlayerState internal constructor(
 
     @OptIn(FlowPreview::class)
     suspend fun observe() {
-        channel.consumeAsFlow()
-            .debounce { it.toLong() * 1000 }
-            .collect { _controlsVisible = false }
+        channel.consumeAsFlow().debounce { it.toLong() * 1000 }.collect { _controlsVisible = false }
     }
 }
 
 /**
  * Create and remember a [VideoPlayerState] instance. Useful when trying to control the state of
- * the [VideoPlayerOverlay]-related composable.
+ * the [PlayerOverlay]-related composable.
  * @return A remembered instance of [VideoPlayerState].
  * @param hideSeconds How many seconds should the controls be visible before being hidden.
  * */
 @Composable
 fun rememberVideoPlayerState(@IntRange(from = 0) hideSeconds: Int = 2) =
-    remember { VideoPlayerState(hideSeconds = hideSeconds) }
-        .also { LaunchedEffect(it) { it.observe() } }
+    remember { VideoPlayerState(hideSeconds = hideSeconds) }.also { LaunchedEffect(it) { it.observe() } }

@@ -27,7 +27,6 @@ fun RootGraph(
         if (sessionManager.isLoggedIn()) MainGraphData.MainGraph else MainGraphData.Auth
     val backStack = rememberNavBackStack<MainGraphData>(startDestination)
 
-
     LaunchedEffect(key1 = true) {
         authEventFlow.collectLatest { event ->
             when (event) {
@@ -46,7 +45,7 @@ fun RootGraph(
             entry<MainGraphData.Auth> {
                 AuthScreen(navigateToHome = {
                     backStack.clear()
-                    backStack.add(MainGraphData.Auth)
+                    backStack.add(MainGraphData.MainGraph)
                 })
             }
             entry<MainGraphData.MainGraph> {

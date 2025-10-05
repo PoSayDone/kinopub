@@ -16,24 +16,13 @@
 
 package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.dp
-import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import kotlin.time.Duration
 
 @Composable
-fun VideoPlayerSeeker(
+fun PlayerSeeker(
     state: VideoPlayerState,
     onSeek: (Float) -> Unit,
     contentProgress: Duration,
@@ -57,11 +46,11 @@ fun VideoPlayerSeeker(
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        VideoPlayerControllerText(text = contentProgressString)
-        VideoPlayerControllerIndicator(
+        PlayerControllerText(text = contentProgressString)
+        PlayerSeekPill(
             progress = (contentProgress / contentDuration).toFloat(), onSeek = onSeek, state = state
         )
-        VideoPlayerControllerText(text = contentDurationString)
+        PlayerControllerText(text = contentDurationString)
     }
 }
 

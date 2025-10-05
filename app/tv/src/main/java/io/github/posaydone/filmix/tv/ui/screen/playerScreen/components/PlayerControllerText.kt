@@ -11,7 +11,7 @@ import androidx.tv.material3.Text
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun VideoPlayerControllerText(text: String) {
+fun PlayerControllerText(text: String) {
     Text(
         modifier = Modifier.padding(horizontal = 12.dp),
         text = text,

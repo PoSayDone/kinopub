@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
 
 import androidx.compose.animation.core.animateDpAsState
@@ -44,7 +28,7 @@ import io.github.posaydone.filmix.tv.ui.utils.ifElse
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTvMaterial3Api::class)
 @Composable
-fun RowScope.VideoPlayerControllerIndicator(
+fun RowScope.PlayerSeekPill(
     progress: Float,
     onSeek: (seekProgress: Float) -> Unit,
     state: VideoPlayerState,
@@ -70,25 +54,20 @@ fun RowScope.VideoPlayerControllerIndicator(
         }
     }
 
-    val handleSeekEventModifier = Modifier.handleDPadKeyEvents(
-        onEnter = {
-            isSelected = !isSelected
-            onSeek(seekProgress)
-        },
-        onLeft = {
-            seekProgress = (seekProgress - 0.025f).coerceAtLeast(0f)
-        },
-        onRight = {
-            seekProgress = (seekProgress + 0.025f).coerceAtMost(1f)
-        }
-    )
+    val handleSeekEventModifier = Modifier.handleDPadKeyEvents(onEnter = {
+        isSelected = !isSelected
+        onSeek(seekProgress)
+    }, onLeft = {
+        seekProgress = (seekProgress - 0.025f).coerceAtLeast(0f)
+    }, onRight = {
+        seekProgress = (seekProgress + 0.025f).coerceAtMost(1f)
+    })
 
     val handleDpadCenterClickModifier = Modifier.handleDPadKeyEvents(
         onEnter = {
             seekProgress = progress
             isSelected = !isSelected
-        }
-    )
+        })
 
     Canvas(
         modifier = Modifier
@@ -100,8 +79,7 @@ fun RowScope.VideoPlayerControllerIndicator(
                 ifTrueModifier = handleSeekEventModifier,
                 ifFalseModifier = handleDpadCenterClickModifier
             )
-            .focusable(interactionSource = interactionSource),
-        onDraw = {
+            .focusable(interactionSource = interactionSource), onDraw = {
             val yOffset = size.height.div(2)
             drawLine(
                 color = color.copy(alpha = 0.24f),
@@ -111,15 +89,9 @@ fun RowScope.VideoPlayerControllerIndicator(
                 cap = StrokeCap.Round
             )
             drawLine(
-                color = color,
-                start = Offset(x = 0f, y = yOffset),
-                end = Offset(
-                    x = size.width.times(if (isSelected) seekProgress else progress),
-                    y = yOffset
-                ),
-                strokeWidth = size.height,
-                cap = StrokeCap.Round
+                color = color, start = Offset(x = 0f, y = yOffset), end = Offset(
+                    x = size.width.times(if (isSelected) seekProgress else progress), y = yOffset
+                ), strokeWidth = size.height, cap = StrokeCap.Round
             )
-        }
-    )
+        })
 }

@@ -14,6 +14,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,6 +76,11 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import kotlin.math.max
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.Icon
 
 /**
  * Dialogs provide important prompts in a user flow. They can require an action, communicate
@@ -196,7 +203,9 @@ fun StandardDialog(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalTvMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalTvMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun SideDialog(
     showDialog: Boolean,
@@ -205,6 +214,7 @@ fun SideDialog(
     width: Dp = 320.dp,
     title: String,
     description: String?,
+    onBack: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Dialog(
@@ -214,20 +224,48 @@ fun SideDialog(
     ) {
         Column(
             modifier = modifier
+                .dialogFocusable()
+                .focusable(false)
                 .background(MaterialTheme.colorScheme.surface)
                 .fillMaxHeight()
                 .width(width)
                 .clip(RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
         ) {
             Column(
-                modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp),
+                modifier = Modifier.padding(
+                    top = 24.dp,
+                    bottom = 12.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start)
+                ) {
+                    if (onBack != null) {
+                        Button(
+                            onClick = onBack,
+                            colors = ButtonDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+
                 if (!description.isNullOrBlank()) Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
@@ -286,10 +324,11 @@ fun FullScreenDialog(
     Dialog(
         showDialog = showDialog, onDismissRequest = onDismissRequest, properties = properties
     ) {
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .drawBehind { drawRect(color = backgroundColor) }
-            .dialogFocusable(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .drawBehind { drawRect(color = backgroundColor) }
+                .dialogFocusable(), contentAlignment = Alignment.Center) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth(FullScreenDialogDefaults.DialogMaxWidth)
@@ -499,27 +538,28 @@ fun Dialog(
                 }
             }
 
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged {
-                    contentWidth = it.width
-                } // Capture width for slide calculation
-                .graphicsLayer {
-                    this.scaleX = scale
-                    this.scaleY = scale
-                    this.alpha = alpha
-                    // Apply translation only if not centered
-                    if (alignment != DialogAlignment.Center) {
-                        this.translationX = translationX
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged {
+                        contentWidth = it.width
+                    } // Capture width for slide calculation
+                    .graphicsLayer {
+                        this.scaleX = scale
+                        this.scaleY = scale
+                        this.alpha = alpha
+                        // Apply translation only if not centered
+                        if (alignment != DialogAlignment.Center) {
+                            this.translationX = translationX
+                        }
                     }
-                }
-                .semantics {
-                    dismiss {
-                        onDismissRequest()
-                        true
+                    .semantics {
+                        dismiss {
+                            onDismissRequest()
+                            true
+                        }
                     }
-                }
-                .then(modifier), contentAlignment = boxAlignment, content = content)
+                    .then(modifier), contentAlignment = boxAlignment, content = content)
 
             LaunchedEffect(alpha) {
                 state.updateProgress(currentProgress = alpha)
@@ -656,6 +696,7 @@ private fun Modifier.dialogFocusable() = composed {
         focusRequester.requestFocus()
         focusManager.moveFocus(FocusDirection.Enter)
     }
+   
     this.then(
         Modifier
             .focusRequester(focusRequester)

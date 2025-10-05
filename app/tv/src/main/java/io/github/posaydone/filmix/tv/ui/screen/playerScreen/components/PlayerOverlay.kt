@@ -30,29 +30,21 @@ import androidx.tv.material3.MaterialTheme
  * Handles the visibility and animation of the controls.
  */
 @Composable
-fun VideoPlayerOverlay(
+fun PlayerOverlay(
     isPlaying: Boolean,
     pulseState: VideoPlayerPulseState,
     modifier: Modifier = Modifier,
     state: VideoPlayerState = rememberVideoPlayerState(),
-    focusRequester: FocusRequester = remember { FocusRequester() },
     centerButton: @Composable () -> Unit = {},
     subtitles: @Composable () -> Unit = {},
     header: @Composable () -> Unit = {},
     controls: @Composable () -> Unit = {},
 ) {
-
     val context = LocalContext.current
     val window = (context as Activity).window
 
-    LaunchedEffect(state.controlsVisible) {
-        if (state.controlsVisible) {
-            focusRequester.requestFocus()
-        }
-    }
-
     LaunchedEffect(isPlaying) {
-        if (!isPlaying && pulseState.type == VideoPlayerPulse.Type.NONE) {
+        if (!isPlaying && pulseState.type == PlayerPulse.Type.NONE) {
             state.showControls(seconds = Int.MAX_VALUE)
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
@@ -125,8 +117,8 @@ fun CinematicBackground(modifier: Modifier = Modifier) {
         modifier.background(
             Brush.verticalGradient(
                 listOf(
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
                 )
             )
         )

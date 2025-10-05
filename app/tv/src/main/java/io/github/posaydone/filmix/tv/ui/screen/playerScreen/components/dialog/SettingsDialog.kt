@@ -1,4 +1,4 @@
-package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
+package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.dialog
 
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Arrangement
@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
@@ -36,17 +36,14 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.model.File
 import io.github.posaydone.filmix.tv.ui.common.SideDialog
-import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 
 @OptIn(UnstableApi::class)
 @Composable
 fun SettingsDialog(
-    focusRequester: FocusRequester,
     qualities: List<File>,
     selectedQuality: File?,
     cropOptions: List<String>,
     selectedCrop: String?,
-    viewModel: PlayerScreenViewModel,
     isSettingsSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onQualitySelected: (File) -> Unit,
@@ -57,71 +54,66 @@ fun SettingsDialog(
     var selectedTempQuality by remember { mutableStateOf(selectedQuality) }
     var selectedTempCrop by remember { mutableStateOf(selectedCrop) }
 
-    if (isSettingsSheetOpen) {
-        SideDialog(
-            modifier = modifier.focusRequester(focusRequester),
-            showDialog = isSettingsSheetOpen,
-            onDismissRequest = onDismiss,
-            title = when (currentPage) {
-                SettingsPage.MAIN -> "Settings"
-                SettingsPage.QUALITY -> "Quality"
-                SettingsPage.CROP -> "Crop"
-            },
-            description = null
+    SideDialog(
+        showDialog = isSettingsSheetOpen,
+        onDismissRequest = onDismiss,
+        title = when (currentPage) {
+            SettingsPage.MAIN -> "Settings"
+            SettingsPage.QUALITY -> "Quality"
+            SettingsPage.CROP -> "Crop"
+        },
+        description = null
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                // Header with back button for sub-pages
-                if (currentPage != SettingsPage.MAIN) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
+            if (currentPage != SettingsPage.MAIN) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Button(
+                        onClick = { currentPage = SettingsPage.MAIN },
+                        colors = ButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Button(
-                            onClick = { currentPage = SettingsPage.MAIN },
-                            colors = ButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
-                        }
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-
-                    Spacer(Modifier.height(16.dp))
                 }
 
-                // Content based on current page
-                when (currentPage) {
-                    SettingsPage.MAIN -> {
-                        MainSettingsPage(
-                            onQualityClick = { currentPage = SettingsPage.QUALITY },
-                            onCropClick = { currentPage = SettingsPage.CROP }
-                        )
-                    }
+                Spacer(Modifier.height(16.dp))
+            }
 
-                    SettingsPage.QUALITY -> {
-                        QualitySettingsPage(
-                            qualities = qualities,
-                            selectedQuality = selectedTempQuality,
-                            onQualitySelected = { quality ->
-                                selectedTempQuality = quality
-                                onQualitySelected(quality)
-                            }
-                        )
-                    }
+            when (currentPage) {
+                SettingsPage.MAIN -> {
+                    MainSettingsPage(
+                        onQualityClick = { currentPage = SettingsPage.QUALITY },
+                        onCropClick = { currentPage = SettingsPage.CROP }
+                    )
+                }
 
-                    SettingsPage.CROP -> {
-                        CropSettingsPage(
-                            cropOptions = cropOptions,
-                            selectedCrop = selectedTempCrop,
-                            onCropSelected = { crop ->
-                                selectedTempCrop = crop
-                                onCropSelected(crop)
-                            }
-                        )
-                    }
+                SettingsPage.QUALITY -> {
+                    QualitySettingsPage(
+                        qualities = qualities,
+                        selectedQuality = selectedTempQuality,
+                        onQualitySelected = { quality ->
+                            selectedTempQuality = quality
+                            onQualitySelected(quality)
+                        }
+                    )
+                }
+
+                SettingsPage.CROP -> {
+                    CropSettingsPage(
+                        cropOptions = cropOptions,
+                        selectedCrop = selectedTempCrop,
+                        onCropSelected = { crop ->
+                            selectedTempCrop = crop
+                            onCropSelected(crop)
+                        }
+                    )
                 }
             }
         }
@@ -137,13 +129,12 @@ private fun MainSettingsPage(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             ListItem(
                 headlineContent = { Text("Quality") },
                 supportingContent = { Text("Adjust video quality") },
-                trailingContent = { Icon(Icons.Default.ArrowBack, contentDescription = null) },
+                trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null) },
                 onClick = onQualityClick,
                 selected = false,
                 scale = ListItemDefaults.scale(focusedScale = 1.02f)
@@ -153,7 +144,7 @@ private fun MainSettingsPage(
             ListItem(
                 headlineContent = { Text("Crop") },
                 supportingContent = { Text("Adjust video cropping") },
-                trailingContent = { Icon(Icons.Default.ArrowBack, contentDescription = null) },
+                trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null) },
                 onClick = onCropClick,
                 selected = false,
                 scale = ListItemDefaults.scale(focusedScale = 1.02f)
@@ -172,7 +163,6 @@ private fun QualitySettingsPage(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(qualities) { quality ->
             ListItem(
@@ -200,7 +190,6 @@ private fun CropSettingsPage(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(cropOptions) { option ->
             ListItem(
