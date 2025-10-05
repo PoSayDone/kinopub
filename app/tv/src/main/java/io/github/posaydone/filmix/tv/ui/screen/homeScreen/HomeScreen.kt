@@ -10,12 +10,15 @@ import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.bringIntoViewResponder
@@ -125,6 +128,7 @@ private fun Body(
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
 
     val backdropHeight = LocalConfiguration.current.run { screenHeightDp.dp } - 32.dp
+    val childPadding = rememberChildPadding()
 
     AnimatedVisibility(
         visible = true, enter = fadeIn(), exit = fadeOut()
@@ -139,7 +143,6 @@ private fun Body(
                     .gradientOverlay(MaterialTheme.colorScheme.surface)
             )
 
-            val childPadding = rememberChildPadding()
             ImmersiveDetails(
                 modifier = Modifier
                     .padding(
@@ -148,7 +151,8 @@ private fun Body(
                     .fillMaxWidth(),
                 logoUrl = immersiveState.fullShow.logoUrl,
                 title = immersiveState.fullShow.title,
-                description = immersiveState.fullShow.description ?: immersiveState.fullShow.shortDescription,
+                description = immersiveState.fullShow.description
+                    ?: immersiveState.fullShow.shortDescription,
                 rating = io.github.posaydone.filmix.core.model.Rating(
                     kp = immersiveState.fullShow.ratingKp ?: 0.0,
                     imdb = immersiveState.fullShow.ratingImdb ?: 0.0,
@@ -163,8 +167,16 @@ private fun Body(
                     russianFilmCritics = 0,
                     await = 0
                 ),
-                genres = immersiveState.fullShow.genres.map { io.github.posaydone.filmix.core.model.KinopoiskGenre(name = it) },
-                countries = immersiveState.fullShow.countries.map { io.github.posaydone.filmix.core.model.KinopoiskCountry(name = it) },
+                genres = immersiveState.fullShow.genres.map {
+                    io.github.posaydone.filmix.core.model.KinopoiskGenre(
+                        name = it
+                    )
+                },
+                countries = immersiveState.fullShow.countries.map {
+                    io.github.posaydone.filmix.core.model.KinopoiskCountry(
+                        name = it
+                    )
+                },
                 year = immersiveState.fullShow.year,
                 seriesLength = immersiveState.fullShow.seriesLength,
                 movieLength = immersiveState.fullShow.movieLength,

@@ -1,6 +1,5 @@
 package io.github.posaydone.filmix.core.common.sharedViewModel
 
-import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,18 +9,12 @@ import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.data.TmdbRepository
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.FullShow
-import io.github.posaydone.filmix.core.model.ImageObject
-import io.github.posaydone.filmix.core.model.KinopoiskCountry
-import io.github.posaydone.filmix.core.model.KinopoiskGenre
-import io.github.posaydone.filmix.core.model.KinopoiskMovie
-import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.model.Show
-import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowList
-import io.github.posaydone.filmix.core.model.Votes
-import io.github.posaydone.filmix.core.model.tmdb.TmdbImagesResponse
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -37,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val TAG = "HomeScreenViewModel"
@@ -66,7 +60,7 @@ sealed class HomeScreenUiState {
 sealed interface ImmersiveContentUiState {
     data object Loading : ImmersiveContentUiState
     data class Content(
-        val fullShow: FullShow
+        val fullShow: FullShow,
     ) : ImmersiveContentUiState
 
     data object Error : ImmersiveContentUiState
@@ -107,7 +101,7 @@ class HomeScreenViewModel @Inject constructor(
                     onRetry = { retry() })
             } else {
                 var show = lastSeenResult.getOrThrow().first()
-                
+
                 val fullShow = movieRepository.getFullMovieByFilmixId(show.id)
 
                 HomeScreenUiState.Done(
@@ -133,10 +127,20 @@ class HomeScreenViewModel @Inject constructor(
         _immersiveContentState.asStateFlow()
 
     private val kinopoiskCache = mutableMapOf<Int, ImmersiveContentUiState.Content>()
+    private val cancelledRequests = mutableSetOf<Int>()  // Track cancelled requests
     private var fetchJob: Job? = null
 
     fun onImmersiveShowFocused(show: Show) {
         fetchJob?.cancel()
+
+        // Check if previous request for this show was cancelled
+        val wasCancelled = show.id in cancelledRequests
+        
+        // If it was cancelled, remove it from cache to force a new request
+        if (wasCancelled) {
+            cancelledRequests.remove(show.id)
+            kinopoiskCache.remove(show.id)
+        }
 
         if (kinopoiskCache.containsKey(show.id)) {
             _immersiveContentState.value = kinopoiskCache[show.id]!!
@@ -147,8 +151,9 @@ class HomeScreenViewModel @Inject constructor(
             _immersiveContentState.value = ImmersiveContentUiState.Loading
             try {
                 // Use MovieRepository to get full show information
-                val fullShow = movieRepository.getFullMovieByFilmixId(show.id)
-
+                val fullShow = withContext(Dispatchers.IO) {
+                    movieRepository.getFullMovieByFilmixId(show.id)
+                }
                 
                 val content = ImmersiveContentUiState.Content(
                     fullShow = fullShow
@@ -157,7 +162,12 @@ class HomeScreenViewModel @Inject constructor(
                 kinopoiskCache[show.id] = content
                 _immersiveContentState.value = content
 
+            } catch (e: CancellationException) {
+                // Mark this request as cancelled so it will be retried
+                cancelledRequests.add(show.id)
+                // Don't update UI state when request is cancelled
             } catch (e: Exception) {
+                // Only show error if this isn't a cancellation 
                 _immersiveContentState.value = ImmersiveContentUiState.Error
             }
         }

@@ -78,7 +78,7 @@ fun ShowsRow(
     endPadding: Dp = rememberChildPadding().end,
     title: String? = null,
     titleStyle: TextStyle = MaterialTheme.typography.headlineLarge.copy(
-        fontWeight = FontWeight.Normal, fontSize = 18.sp
+        fontWeight = FontWeight.Medium, fontSize = 16.sp
     ),
     showItemTitle: Boolean = true,
     showIndexOverImage: Boolean = false,

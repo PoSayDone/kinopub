@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -40,8 +41,8 @@ import kotlin.math.max
  */
 @Composable
 fun ImmersiveBackground(
-    imageUrl: String?,
     modifier: Modifier = Modifier,
+    imageUrl: String?,
 ) {
     Crossfade(
         targetState = imageUrl,
@@ -52,7 +53,10 @@ fun ImmersiveBackground(
             model = ImageRequest.Builder(LocalContext.current).data(image).crossfade(true).build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
+                .aspectRatio(16 / 9f)
+                .padding(start = 160.dp)
+                .fillMaxSize()
         )
     }
 }
@@ -114,8 +118,9 @@ fun ImmersiveDetails(
             Text(
                 modifier = Modifier.sizeIn(
                     maxWidth = 400.dp
-                ), text = description, style = MaterialTheme.typography.bodyLarge.copy(
-                    letterSpacing = 0.sp, lineHeight = 22.sp
+                ), text = description,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    letterSpacing = 0.sp, lineHeight = 20.sp
                 ), maxLines = 3, overflow = TextOverflow.Ellipsis
             )
         }

@@ -4,12 +4,15 @@ import android.util.Log
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.KinopoiskMovie
 import io.github.posaydone.filmix.core.model.Show
+import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.tmdb.TmdbImage
 import io.github.posaydone.filmix.core.model.tmdb.TmdbImagesResponse
 import io.github.posaydone.filmix.core.network.Constants
 import io.github.posaydone.filmix.core.network.dataSource.FilmixRemoteDataSource
 import io.github.posaydone.filmix.core.network.dataSource.KinopoiskRemoteDataSource
 import io.github.posaydone.filmix.core.network.dataSource.TmdbRemoteDataSource
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
@@ -17,9 +20,11 @@ class MovieRepository @Inject constructor(
     private val kinopoiskRemoteDataSource: KinopoiskRemoteDataSource,
     private val tmdbRemoteDataSource: TmdbRemoteDataSource,
 ) {
-    private val TAG = "movierepo";
+    private val TAG = "movierepo"
+    private val cacheMutex = Mutex()
 
-    suspend fun getFullMovieByFilmixId(filmixId: Int): FullShow {
+    suspend fun getFullMovieByFilmixId(filmixId: Int): FullShow = cacheMutex.withLock {
+        // Check cache first
         val filmixShow = filmixRepository.getShowDetails(filmixId)
         Log.d(TAG, "$filmixShow")
 
@@ -32,7 +37,6 @@ class MovieRepository @Inject constructor(
             }
         }
 
-
         Log.d(TAG, "$kinopoiskMovie")
 
         var tmdbImages: TmdbImagesResponse? = null
@@ -44,8 +48,7 @@ class MovieRepository @Inject constructor(
             // TMDB ID is not available, try to find it using IMDb ID
             try {
                 val findResponse = tmdbRemoteDataSource.findByExternalId(
-                    externalId = kinopoiskMovie.externalId!!.imdb!!,
-                    externalSource = "imdb_id"
+                    externalId = kinopoiskMovie.externalId!!.imdb!!, externalSource = "imdb_id"
                 )
 
                 // Try to find a movie first, then TV series
@@ -62,20 +65,19 @@ class MovieRepository @Inject constructor(
         // If still no TMDB ID, try searching by name and year
         if (tmdbId == null && kinopoiskMovie != null) {
             try {
-                val query = kinopoiskMovie.name ?: kinopoiskMovie.alternativeName ?: filmixShow.title
+                val query = kinopoiskMovie.alternativeName ?: kinopoiskMovie.name
+                ?: filmixShow.originalTitle ?: filmixShow.title
                 val year = kinopoiskMovie.year
                 val searchResult = if (kinopoiskMovie.isSeries) {
                     tmdbRemoteDataSource.searchTv(
-                        query = query,
-                        year = year
+                        query = query, year = year
                     )
                 } else {
                     tmdbRemoteDataSource.searchMovies(
-                        query = query,
-                        year = year
+                        query = query, year = year
                     )
                 }
-                
+
                 // Use the first result if available
                 if (searchResult.results.isNotEmpty()) {
                     tmdbId = searchResult.results[0].id
@@ -97,7 +99,6 @@ class MovieRepository @Inject constructor(
             }
         }
 
-        // Start with basic Filmix data
         var fullShow = FullShow.fromFilmixShow(
             Show(
                 id = filmixShow.id,
@@ -120,12 +121,12 @@ class MovieRepository @Inject constructor(
             title = kinopoiskMovie?.name ?: filmixShow.title,
             originalTitle = kinopoiskMovie?.alternativeName ?: filmixShow.originalTitle,
             year = kinopoiskMovie?.year ?: filmixShow.year,
-            posterUrl = getBestTmdbImage(tmdbImages?.posters, "w500")?.let { "${Constants.TMDB_IMAGE_URL}w500$it" }
-                ?: kinopoiskMovie?.poster?.url
-                ?: filmixShow.poster,
+            posterUrl = getBestTmdbImage(
+                tmdbImages?.posters, "w500"
+            )?.let { "${Constants.TMDB_IMAGE_URL}w500$it" } ?: kinopoiskMovie?.poster?.url
+            ?: filmixShow.poster,
             backdropUrl = getBestTmdbBackdrop(tmdbImages?.backdrops)?.let { "${Constants.TMDB_IMAGE_URL}w1280$it" }
-                ?: kinopoiskMovie?.backdrop?.url
-                ?: filmixShow.poster,
+                ?: kinopoiskMovie?.backdrop?.url ?: filmixShow.poster,
             logoUrl = kinopoiskMovie?.logo?.url
                 ?: getBestTmdbLogo(tmdbImages?.logos)?.let { "${Constants.TMDB_IMAGE_URL}original$it" },
             description = kinopoiskMovie?.description,
@@ -145,54 +146,55 @@ class MovieRepository @Inject constructor(
             status = kinopoiskMovie?.status ?: filmixShow.status?.status_text,
             tmdbPosterPaths = tmdbImages?.posters?.mapNotNull { it.filePath } ?: emptyList(),
             tmdbBackdropPaths = tmdbImages?.backdrops?.mapNotNull { it.filePath } ?: emptyList(),
-            tmdbLogoPaths = tmdbImages?.logos?.mapNotNull { it.filePath } ?: emptyList()
-        )
+            tmdbLogoPaths = tmdbImages?.logos?.mapNotNull { it.filePath } ?: emptyList())
 
+        // Cache the result before returning
         return fullShow
     }
-    
+
     /**
      * Gets the best TMDB backdrop prioritizing ones with null language
      */
     private fun getBestTmdbBackdrop(backdrops: List<TmdbImage>?): String? {
         if (backdrops.isNullOrEmpty()) return null
-        
+
         // First, try to find a backdrop with null language
-        val nullLanguageBackdrop = backdrops.find { it.iso6391 == null || it.iso6391 == "null" }
+        val nullLanguageBackdrop =
+            backdrops.find { it.iso6391 == null || it.iso6391 == "null" || it.iso6391 == "xx" }
         if (nullLanguageBackdrop?.filePath != null) return nullLanguageBackdrop.filePath
-        
+
         // If no null language backdrop found, return the first one
         return backdrops.firstOrNull()?.filePath
     }
-    
+
     /**
      * Gets the best TMDB logo prioritizing ru language, then en language
      */
     private fun getBestTmdbLogo(logos: List<TmdbImage>?): String? {
         if (logos.isNullOrEmpty()) return null
-        
+
         // First, try to find a logo with ru language
         val ruLogo = logos.find { it.iso6391 == "ru" }
         if (ruLogo?.filePath != null) return ruLogo.filePath
-        
+
         // Then try to find a logo with en language
         val enLogo = logos.find { it.iso6391 == "en" }
         if (enLogo?.filePath != null) return enLogo.filePath
-        
+
         // If no ru or en logo found, return the first one
         return logos.firstOrNull()?.filePath
     }
-    
+
     /**
      * Gets the best TMDB image (for posters) prioritizing ones with null language
      */
     private fun getBestTmdbImage(images: List<TmdbImage>?, size: String = "w500"): String? {
         if (images.isNullOrEmpty()) return null
-        
+
         // First, try to find an image with null language
         val nullLanguageImage = images.find { it.iso6391 == null || it.iso6391 == "null" }
         if (nullLanguageImage?.filePath != null) return nullLanguageImage.filePath
-        
+
         // If no null language image found, return the first one
         return images.firstOrNull()?.filePath
     }
