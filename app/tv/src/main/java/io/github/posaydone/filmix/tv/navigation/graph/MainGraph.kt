@@ -46,7 +46,7 @@ import io.github.posaydone.filmix.shared.util.TopLevelBackStack
 import io.github.posaydone.filmix.tv.ui.screen.exploreScreen.ExploreScreen
 import io.github.posaydone.filmix.tv.ui.screen.favoritesScreen.FavoritesScreen
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.HomeScreen
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.VideoPlayerScreen
+import io.github.posaydone.filmix.tv.ui.screen.playerScreen.PlayerScreen
 import io.github.posaydone.filmix.tv.ui.screen.showDetailsScreen.ShowDetailsScreen
 import io.github.posaydone.filmix.tv.ui.screen.showsGridScreen.ShowsGridScreen
 
@@ -187,7 +187,7 @@ fun MainGraph() {
                             creationCallback = { factory ->
                                 factory.create(PlayerScreenNavKey(showId = key.showId))
                             })
-                    VideoPlayerScreen(key.showId, viewModel = viewModel)
+                    PlayerScreen(key.showId, viewModel = viewModel)
                 }
             })
     }

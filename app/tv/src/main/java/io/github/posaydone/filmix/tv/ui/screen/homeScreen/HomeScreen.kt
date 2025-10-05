@@ -49,14 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
-import coil.request.Tags
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ImmersiveContentUiState
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
-import io.github.posaydone.filmix.tv.ui.common.BackdropMask
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails

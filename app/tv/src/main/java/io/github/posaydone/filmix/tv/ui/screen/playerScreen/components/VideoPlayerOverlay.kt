@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +38,7 @@ fun VideoPlayerOverlay(
     focusRequester: FocusRequester = remember { FocusRequester() },
     centerButton: @Composable () -> Unit = {},
     subtitles: @Composable () -> Unit = {},
+    header: @Composable () -> Unit = {},
     controls: @Composable () -> Unit = {},
 ) {
 
@@ -59,17 +61,42 @@ fun VideoPlayerOverlay(
     }
 
     Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(state.controlsVisible, Modifier, fadeIn(), fadeOut()) {
             CinematicBackground(Modifier.fillMaxSize())
         }
 
+        AnimatedVisibility(
+            state.controlsVisible,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(alignment = Alignment.TopCenter),
+            enter = slideInVertically(
+                initialOffsetY = {
+                    it / 2
+                },
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = {
+                    it / 2
+                },
+            ),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 56.dp)
+                    .padding(top = 32.dp, bottom = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                header()
+            }
+        }
+
         Column {
             Box(
-                Modifier.weight(1f),
-                contentAlignment = Alignment.BottomCenter
+                Modifier.weight(1f), contentAlignment = Alignment.BottomCenter
             ) {
                 subtitles()
             }
@@ -78,8 +105,7 @@ fun VideoPlayerOverlay(
                 state.controlsVisible,
                 Modifier,
                 slideInVertically { it },
-                slideOutVertically { it }
-            ) {
+                slideOutVertically { it }) {
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 56.dp)

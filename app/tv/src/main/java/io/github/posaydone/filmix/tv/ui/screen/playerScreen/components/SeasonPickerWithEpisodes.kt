@@ -20,9 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
@@ -38,15 +40,6 @@ fun ScrollableTabRow(
     modifier: Modifier = Modifier,
 ) {
     var currentIndex by remember { mutableIntStateOf(selectedTabIndex) }
-    var focusedIndex by remember { mutableIntStateOf(selectedTabIndex) }
-    val transition = updateTransition(focusedIndex, label = "Tab Transition")
-
-    val offsetX by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 300, easing = FastOutSlowInEasing) },
-        label = "Offset Animation"
-    ) { targetIndex ->
-        -targetIndex * 100f // Adjust per tab width
-    }
 
     Box(
         modifier = modifier
@@ -55,7 +48,6 @@ fun ScrollableTabRow(
     ) {
         Row(
             modifier = Modifier
-                .offset(x = offsetX.dp)
                 .padding(horizontal = 24.dp)
                 .focusGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -63,11 +55,10 @@ fun ScrollableTabRow(
             items.forEachIndexed { index, text ->
                 key(index) {
                     Tab(text = text, selected = index == currentIndex, onFocus = {
-                        focusedIndex = index
+                        currentIndex = index
                         onTabSelected(index)
                     }, onClick = {
                         currentIndex = index
-                        focusedIndex = index
                         onTabSelected(index)
                     })
                 }
@@ -110,33 +101,8 @@ fun Tab(
     ) {
         Text(
             text = text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
-//    Box(
-//        modifier = modifier
-//            .padding(horizontal = 8.dp)
-//            .size(140.dp, 50.dp)
-//            .clip(RoundedCornerShape(100.dp))
-//            .background(
-//                when {
-//                    isFocused -> Color.White
-//                    selected -> Color.White.copy(alpha = 0.2f)
-//                    else -> Color.Transparent
-//                }
-//            )
-//            .focusable()
-//            .onFocusChanged { focusState ->
-//                isFocused = focusState.isFocused
-//                if (isFocused) onFocus()
-//            }
-//            .clickable { onClick() },
-//        contentAlignment = Alignment.Center
-//    ) {
-//        Text(
-//            text = text,
-//            fontSize = 18.sp,
-//            color = if (selected) Color.Black else Color.White,
-//            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal
-//        )
-//    }
 }

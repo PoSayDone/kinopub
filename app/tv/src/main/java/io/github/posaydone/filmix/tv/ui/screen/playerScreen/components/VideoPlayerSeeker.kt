@@ -34,18 +34,10 @@ import kotlin.time.Duration
 
 @Composable
 fun VideoPlayerSeeker(
-    focusRequester: FocusRequester,
     state: VideoPlayerState,
-    isPlaying: Boolean,
-    onPlayPauseToggle: (Boolean) -> Unit,
-    showType: ShowType?,
     onSeek: (Float) -> Unit,
     contentProgress: Duration,
     contentDuration: Duration,
-    hasPrevEpisode: Boolean,
-    hasNextEpisode: Boolean,
-    onPrevEpisodeClick: () -> Unit,
-    onNextEpisodeClick: () -> Unit,
 ) {
     val contentProgressString = contentProgress.toComponents { h, m, s, _ ->
         if (h > 0) {
@@ -65,36 +57,6 @@ fun VideoPlayerSeeker(
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(
-                space = 12.dp, alignment = Alignment.CenterHorizontally
-            ),
-        ) {
-            if (showType != ShowType.MOVIE) VideoPlayerControlsIcon(
-                icon = Icons.Default.SkipPrevious,
-                onClick = onPrevEpisodeClick,
-                state = state,
-                isPlaying = isPlaying,
-                contentDescription = "Previous episode button",
-                disabled = !hasPrevEpisode
-            )
-            VideoPlayerControlsIcon(
-                modifier = Modifier.focusRequester(focusRequester),
-                icon = if (!isPlaying) Icons.Default.PlayArrow else Icons.Default.Pause,
-                onClick = { onPlayPauseToggle(!isPlaying) },
-                state = state,
-                isPlaying = isPlaying,
-                contentDescription = "Play pause button"
-            )
-            if (showType != ShowType.MOVIE) VideoPlayerControlsIcon(
-                icon = Icons.Default.SkipNext,
-                onClick = onNextEpisodeClick,
-                state = state,
-                isPlaying = isPlaying,
-                contentDescription = "Next episode button",
-                disabled = !hasNextEpisode
-            )
-        }
         VideoPlayerControllerText(text = contentProgressString)
         VideoPlayerControllerIndicator(
             progress = (contentProgress / contentDuration).toFloat(), onSeek = onSeek, state = state

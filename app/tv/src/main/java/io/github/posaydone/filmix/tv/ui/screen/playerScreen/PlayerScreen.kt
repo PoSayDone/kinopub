@@ -6,21 +6,29 @@ package io.github.posaydone.filmix.tv.ui.screen.playerScreen
 
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Crop
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.rounded.AutoAwesomeMotion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -61,17 +69,16 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.File
+import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
-import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.Translation
 import io.github.posaydone.filmix.core.model.VideoWithQualities
 import io.github.posaydone.filmix.tv.ui.common.Loading
-import io.github.posaydone.filmix.tv.ui.common.PlayerDialog
+import io.github.posaydone.filmix.tv.ui.common.SideDialog
+import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerShowHeader
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.ScrollableTabRow
+import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.SettingsDialog
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerControlsIcon
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerMainFrame
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerMediaTitle
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerMediaTitleType
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerOverlay
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerPulse
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerPulseState
@@ -86,11 +93,11 @@ import kotlin.time.Duration.Companion.milliseconds
  * [Work in progress] A composable screen for playing a video.
  *
  * @param onBackPressed The callback to invoke when the user presses the back button.
- * @param videoPlayerScreenViewModel The view model for the video player screen.
+ * @param viewModel The view model for the video player screen.
  */
 @OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayerScreen(
+fun PlayerScreen(
     showId: Int,
     viewModel: PlayerScreenViewModel = hiltViewModel(),
 ) {
@@ -117,7 +124,7 @@ fun VideoPlayerScreenContent(
     player: MediaController,
     viewModel: PlayerScreenViewModel,
     playerState: PlayerState,
-    showDetails: ShowDetails,
+    showDetails: FullShow,
 ) {
     val showType by viewModel.contentType.collectAsState()
 
@@ -194,16 +201,22 @@ fun VideoPlayerScreenContent(
 
 
         VideoPlayerOverlay(
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier.fillMaxSize(),
             focusRequester = focusRequester,
             state = videoPlayerState,
             isPlaying = player.isPlaying,
             pulseState = pulseState,
             centerButton = { VideoPlayerPulse(pulseState, playerState.isLoading) },
             subtitles = { /* TODO Implement subtitles */ },
+            header = {
+                PlayerShowHeader(
+                    showDetails = showDetails,
+                    currentSeason = if (showType == ShowType.SERIES) "Season 1" else null,  // Will be updated with real data
+                    currentEpisode = if (showType == ShowType.SERIES) "Episode 1" else null
+                )
+            },
             controls = {
                 VideoPlayerControls(
-                    showDetails,
                     isPlaying = player.isPlaying,
                     showType,
                     currentPosition = playerState.currentPosition,
@@ -242,7 +255,6 @@ fun VideoPlayerScreenContent(
 @OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerControls(
-    showDetails: ShowDetails,
     isPlaying: Boolean,
     showType: ShowType?,
     currentPosition: Long,
@@ -267,71 +279,105 @@ fun VideoPlayerControls(
         }
     }
 
+    Column {
+        VideoPlayerSeeker(
+            state = state,
+            onSeek = { player.seekTo(player.duration.times(it).toLong()) },
+            contentProgress = currentPosition.milliseconds,
+            contentDuration = duration.milliseconds
+        )
 
-    VideoPlayerMainFrame(
-        mediaTitle = {
-            VideoPlayerMediaTitle(
-                title = showDetails.title,
-                secondaryText = showDetails.year.toString(),
-                tertiaryText = showDetails.directors?.get(0)?.name ?: "",
-                type = VideoPlayerMediaTitleType.DEFAULT
-            )
-        }, mediaActions = {
+        // New controls row below seeker
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left side controls
             Row(
-                modifier = Modifier.padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (showType == ShowType.SERIES) {
+                // Previous episode button
+                if (showType == ShowType.SERIES && hasPrevEpisode) {
                     VideoPlayerControlsIcon(
-                        icon = Icons.Rounded.AutoAwesomeMotion,
+                        icon = Icons.Default.SkipPrevious,
                         state = state,
                         isPlaying = isPlaying,
-                        contentDescription = "Playlist button",
-                        onClick = openEpisodeSheet,
+                        contentDescription = "Previous episode",
+                        onClick = onPrevEpisodeClick,
                     )
                 }
+
+                // Play/Pause button
                 VideoPlayerControlsIcon(
-                    modifier = Modifier.padding(start = 12.dp),
-                    icon = Icons.Default.Audiotrack,
+                    modifier = Modifier.focusRequester(focusRequester),
+                    icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     state = state,
                     isPlaying = isPlaying,
-                    contentDescription = "Captions button",
-                    onClick = openAudioSheet,
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    onClick = { onPlayPauseToggle(!isPlaying) },
                 )
-                VideoPlayerControlsIcon(
-                    modifier = Modifier.padding(start = 12.dp),
-                    icon = Icons.Default.Crop,
-                    state = state,
-                    isPlaying = isPlaying,
-                    contentDescription = "Video crop button",
-                    onClick = changeSizing
-                )
-                VideoPlayerControlsIcon(
-                    modifier = Modifier.padding(start = 12.dp),
-                    icon = Icons.Default.Settings,
-                    state = state,
-                    isPlaying = isPlaying,
-                    contentDescription = "Settings button",
-                    onClick = openQualitySheet,
-                )
+
+                // Next episode button
+                if (showType == ShowType.SERIES && hasNextEpisode) {
+                    VideoPlayerControlsIcon(
+                        icon = Icons.Default.SkipNext,
+                        state = state,
+                        isPlaying = isPlaying,
+                        contentDescription = "Next episode",
+                        onClick = onNextEpisodeClick,
+                    )
+                }
+
+                // All episodes button (icon + text)
+                if (showType == ShowType.SERIES) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clickable { openEpisodeSheet() }
+                            .padding(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Rounded.AutoAwesomeMotion,
+                            contentDescription = "All episodes"
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Episodes")
+                    }
+                }
             }
-        }, seeker = {
-            VideoPlayerSeeker(
-                focusRequester = focusRequester,
-                state = state,
-                isPlaying = isPlaying,
-                onPlayPauseToggle = onPlayPauseToggle,
-                showType = showType,
-                onPrevEpisodeClick = onPrevEpisodeClick,
-                onNextEpisodeClick = onNextEpisodeClick,
-                hasPrevEpisode = hasPrevEpisode,
-                hasNextEpisode = hasNextEpisode,
-                onSeek = { player.seekTo(player.duration.times(it).toLong()) },
-                contentProgress = currentPosition.milliseconds,
-                contentDuration = duration.milliseconds
-            )
-        }, more = null
-    )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable { openAudioSheet() }
+                        .padding(8.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Audiotrack, contentDescription = "Audio tracks"
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Audio")
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable { openQualitySheet() }
+                        .padding(8.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Settings, contentDescription = "Settings"
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Settings")
+                }
+            }
+        }
+    }
 }
 
 @UnstableApi
@@ -355,14 +401,13 @@ private fun EpisodeDialog(
         )
     }
 
-    PlayerDialog(
-        modifier = Modifier
-            .focusRequester(focusRequester)
-            .padding(12.dp),
+    SideDialog(
+        modifier = Modifier.focusRequester(focusRequester),
         showDialog = isEpisodeDialogOpen,
         onDismissRequest = onDismiss,
-
-        ) {
+        title = "Select Episode",
+        description = null
+    ) {
         Column {
             ScrollableTabRow(
                 items = seasonsList,
@@ -405,10 +450,12 @@ private fun <T> AudioDialog(
     onDismiss: () -> Unit,
 ) {
 
-    PlayerDialog(
+    SideDialog(
         modifier = Modifier.focusRequester(focusRequester),
         showDialog = isAudioDialogOpen,
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        title = "Select Audio Track",
+        description = null
     ) {
         LazyColumn(
             modifier = Modifier.focusRequester(focusRequester),
@@ -443,10 +490,12 @@ private fun QualityDialog(
     onDismiss: () -> Unit,
 ) {
 
-    PlayerDialog(
+    SideDialog(
         modifier = Modifier.focusRequester(focusRequester),
         showDialog = isQualitySheetOpen,
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        title = "Select Quality",
+        description = null
     ) {
         LazyColumn(
             modifier = Modifier.focusRequester(focusRequester),
@@ -525,15 +574,20 @@ private fun Dialogs(
                 onDismiss = closeAudioSheet
             )
         }
+
+        // Use SettingsDialog instead of QualityDialog
         selectedTranslation?.files?.let { qualities ->
-            QualityDialog(
+            SettingsDialog(
                 focusRequester = focusRequester,
-                qualities,
-                selectedQuality,
-                viewModel,
-                isQualitySheetOpen,
-                onDismiss = closeQualitySheet
-            )
+                qualities = qualities,
+                selectedQuality = selectedQuality,
+                cropOptions = listOf("Fit", "Fill", "Zoom"), // Sample crop options
+                selectedCrop = "Fit", // Sample selected crop
+                viewModel = viewModel,
+                isSettingsSheetOpen = isQualitySheetOpen,
+                onDismiss = closeQualitySheet,
+                onQualitySelected = { quality -> viewModel.setQuality(quality) },
+                onCropSelected = { crop -> /* Handle crop selection */ })
         }
     } else {
         moviePieces?.let { translations ->
@@ -547,16 +601,20 @@ private fun Dialogs(
                 onDismiss = closeAudioSheet
             )
         }
-        selectedMovieTranslation?.files?.let { qualities ->
-            QualityDialog(
-                focusRequester = focusRequester,
-                qualities,
-                selectedQuality,
-                viewModel,
-                isQualitySheetOpen,
-                onDismiss = closeQualitySheet
-            )
 
+        // Use SettingsDialog instead of QualityDialog
+        selectedMovieTranslation?.files?.let { qualities ->
+            SettingsDialog(
+                focusRequester = focusRequester,
+                qualities = qualities,
+                selectedQuality = selectedQuality,
+                cropOptions = listOf("Fit", "Fill", "Zoom"), // Sample crop options
+                selectedCrop = "Fit", // Sample selected crop
+                viewModel = viewModel,
+                isSettingsSheetOpen = isQualitySheetOpen,
+                onDismiss = closeQualitySheet,
+                onQualitySelected = { quality -> viewModel.setQuality(quality) },
+                onCropSelected = { crop -> /* Handle crop selection */ })
         }
     }
 }

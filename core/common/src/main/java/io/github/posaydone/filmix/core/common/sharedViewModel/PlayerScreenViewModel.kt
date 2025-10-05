@@ -27,8 +27,10 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.common.services.PlaybackService
 import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.File
+import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.core.model.Series
 import io.github.posaydone.filmix.core.model.SessionManager
@@ -66,7 +68,7 @@ data class PlayerState(
 sealed class VideoPlayerScreenUiState {
     object Loading : VideoPlayerScreenUiState()
     object Error : VideoPlayerScreenUiState()
-    data class Done(val showDetails: ShowDetails) : VideoPlayerScreenUiState()
+    data class Done(val showDetails: FullShow) : VideoPlayerScreenUiState()
 }
 
 data class PlayerScreenNavKey(val showId: Int)
@@ -77,6 +79,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     @Assisted val navKey: PlayerScreenNavKey,
     val sessionManager: SessionManager,
     private val repository: FilmixRepository,
+    private val movieRepository: MovieRepository,
     context: Application,
 ) : ViewModel() {
     @AssistedFactory
@@ -112,7 +115,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     val selectedMovieTranslation: StateFlow<VideoWithQualities?> =
         _selectedMovieTranslation.asStateFlow()
 
-    private val _details = MutableStateFlow<ShowDetails?>(null)
+    private val _details = MutableStateFlow<FullShow?>(null)
     val details = _details.asStateFlow()
 
     private val _contentType = MutableStateFlow<ShowType?>(null)
@@ -228,7 +231,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
             when (val response = repository.getShowResource(showId)) {
                 is ShowResourceResponse.MovieResourceResponse -> {
                     movie = response.movies
-                    _details.value = repository.getShowDetails(showId)
+                    _details.value = movieRepository.getFullMovieByFilmixId(showId)
                     _moviePieces.value = movie
                     _contentType.value = ShowType.MOVIE
                     restoreMovieProgress()
@@ -237,7 +240,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 is ShowResourceResponse.SeriesResourceResponse -> {
                     val seriesTransformed = response.series
                     series = seriesTransformed
-                    _details.value = repository.getShowDetails(showId)
+                    _details.value = movieRepository.getFullMovieByFilmixId(showId)
                     _contentType.value = ShowType.SERIES
                     _seasons.value = seriesTransformed.seasons
                     restoreSeriesProgress()
