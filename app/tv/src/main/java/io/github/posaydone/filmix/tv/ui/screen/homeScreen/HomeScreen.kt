@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.tv.ui.screen.homeScreen
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -30,7 +31,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -44,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
+import coil.request.Tags
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
@@ -61,6 +67,8 @@ import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import io.github.posaydone.filmix.tv.ui.utils.Padding
 
 val ParentPadding = PaddingValues(vertical = 16.dp, horizontal = 12.dp)
+
+private val TAG = "HOME"
 
 @Composable
 fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.current): Padding {
@@ -189,9 +197,21 @@ private fun Body(
         }
     }
 
+    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+
     CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
         LazyColumn(
             modifier = Modifier
+                .focusRequester(lazyColumn)
+                .focusRestorer(firstItem)
+                .focusProperties {
+                    onEnter = {
+                        Log.d(TAG, "Enter focus event in home column")
+                    }
+                    onExit = {
+                        Log.d(TAG, "Exit focus event in home column")
+                    }
+                }
                 .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
                 .drawWithContent {
                     drawContent()
@@ -209,12 +229,19 @@ private fun Body(
             }
             item(contentType = "LastSeenRow") {
                 ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .focusRequester(firstItem),
                     showItemTitle = false,
                     showList = lastSeenShows,
                     title = stringResource(R.string.continue_watching),
-                    onShowSelected = { show -> navigateToShowDetails(show.id) },
-                    onShowFocused = onImmersiveShowFocused
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = {
+                        onImmersiveShowFocused(it)
+                    }
                 )
             }
 
@@ -224,8 +251,13 @@ private fun Body(
                     showItemTitle = false,
                     showList = viewingShows,
                     title = stringResource(R.string.watching_now),
-                    onShowSelected = { show -> navigateToShowDetails(show.id) },
-                    onShowFocused = onImmersiveShowFocused
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = {
+                        onImmersiveShowFocused(it)
+                    }
                 )
             }
 
@@ -235,8 +267,13 @@ private fun Body(
                     showItemTitle = false,
                     showList = popularMovies,
                     title = stringResource(R.string.popular_movies),
-                    onShowSelected = { show -> navigateToShowDetails(show.id) },
-                    onShowFocused = onImmersiveShowFocused
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = {
+                        onImmersiveShowFocused(it)
+                    }
                 )
             }
 
@@ -246,8 +283,13 @@ private fun Body(
                     showItemTitle = false,
                     showList = popularSeries,
                     title = stringResource(R.string.popular_series),
-                    onShowSelected = { show -> navigateToShowDetails(show.id) },
-                    onShowFocused = onImmersiveShowFocused
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = {
+                        onImmersiveShowFocused(it)
+                    }
                 )
             }
 
@@ -257,8 +299,13 @@ private fun Body(
                     showItemTitle = false,
                     showList = popularCartoons,
                     title = stringResource(R.string.popular_cartoons),
-                    onShowSelected = { show -> navigateToShowDetails(show.id) },
-                    onShowFocused = onImmersiveShowFocused
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = {
+                        onImmersiveShowFocused(it)
+                    }
                 )
             }
         }

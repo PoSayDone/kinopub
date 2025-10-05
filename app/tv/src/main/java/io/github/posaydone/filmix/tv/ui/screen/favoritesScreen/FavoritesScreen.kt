@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.tv.ui.screen.favoritesScreen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -7,11 +8,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.common.sharedViewModel.FavoritesScreenUiState
@@ -61,9 +66,16 @@ fun FavoritesScreenContent(
     val childPadding = rememberChildPadding()
     val lazyListState = rememberLazyListState()
 
+    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+
+    val TAG = "FAVORITE"
+
     LazyColumn(
         state = lazyListState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(lazyColumn)
+            .focusRestorer(firstItem),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -79,10 +91,10 @@ fun FavoritesScreenContent(
         item {
             ShowsRow(
                 title = "Favorite",
-                requestInitialFocus = true,
-                modifier = Modifier,
+                modifier = Modifier.focusRequester(firstItem),
                 showList = favoritesList,
                 onShowSelected = { show ->
+                    lazyColumn.saveFocusedChild()
                     navigateToShowDetails(show.id)
                 },
                 onViewAll = {
@@ -94,14 +106,15 @@ fun FavoritesScreenContent(
         item {
             ShowsRow(
                 title = "History", modifier = Modifier.padding(
-                bottom = childPadding.bottom
-            ), showList = historyList, onShowSelected = { show ->
-                navigateToShowDetails(show.id)
-            }, onViewAll = {
-                navigateToShowsGrid(
-                    ShowsGridQueryType.HISTORY.name
-                )
-            })
+                    bottom = childPadding.bottom
+                ), showList = historyList, onShowSelected = { show ->
+                    lazyColumn.saveFocusedChild()
+                    navigateToShowDetails(show.id)
+                }, onViewAll = {
+                    navigateToShowsGrid(
+                        ShowsGridQueryType.HISTORY.name
+                    )
+                })
         }
     }
 }

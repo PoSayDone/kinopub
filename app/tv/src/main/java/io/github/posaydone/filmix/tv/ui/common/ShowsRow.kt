@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -84,23 +85,16 @@ fun ShowsRow(
     showIndexOverImage: Boolean = false,
     onShowSelected: (show: Show) -> Unit = {},
     onShowFocused: ((Show) -> Unit)? = {},
-    requestInitialFocus: Boolean = false,
     onViewAll: (() -> Unit)? = null,
 ) {
     val (lazyRow, firstItem) = remember { FocusRequester.createRefs() }
-    var isInitiallyFocused = remember { mutableStateOf(false) }
     val horizontalBivs = remember { CustomBringIntoViewSpec(0.4f, 0f) }
 
     CompositionLocalProvider(LocalBringIntoViewSpec provides horizontalBivs) {
         Column(
             modifier = modifier
-                .focusGroup()
-                .onGloballyPositioned {
-                    if (!isInitiallyFocused.value && requestInitialFocus) {
-                        lazyRow.requestFocus()
-                        isInitiallyFocused.value = true
-                    }
-                }) {
+                .focusable(false)
+        ) {
             if (title != null) {
                 Text(
                     text = title,
@@ -232,7 +226,8 @@ fun ImmersiveShowsRow(
                             .fillMaxWidth(),
                         logoUrl = immersiveState.fullShow.logoUrl,
                         title = immersiveState.fullShow.title,
-                        description = immersiveState.fullShow.description ?: immersiveState.fullShow.shortDescription,
+                        description = immersiveState.fullShow.description
+                            ?: immersiveState.fullShow.shortDescription,
                         rating = io.github.posaydone.filmix.core.model.Rating(
                             kp = immersiveState.fullShow.ratingKp ?: 0.0,
                             imdb = immersiveState.fullShow.ratingImdb ?: 0.0,
@@ -247,8 +242,16 @@ fun ImmersiveShowsRow(
                             russianFilmCritics = 0,
                             await = 0
                         ),
-                        genres = immersiveState.fullShow.genres.map { io.github.posaydone.filmix.core.model.KinopoiskGenre(name = it) },
-                        countries = immersiveState.fullShow.countries.map { io.github.posaydone.filmix.core.model.KinopoiskCountry(name = it) },
+                        genres = immersiveState.fullShow.genres.map {
+                            io.github.posaydone.filmix.core.model.KinopoiskGenre(
+                                name = it
+                            )
+                        },
+                        countries = immersiveState.fullShow.countries.map {
+                            io.github.posaydone.filmix.core.model.KinopoiskCountry(
+                                name = it
+                            )
+                        },
                         year = immersiveState.fullShow.year,
                         seriesLength = immersiveState.fullShow.seriesLength,
                         movieLength = immersiveState.fullShow.movieLength,
@@ -275,8 +278,7 @@ fun ImmersiveShowsRow(
                     showItemTitle = showItemTitle,
                     showIndexOverImage = showIndexOverImage,
                     onShowSelected = onShowSelected,
-                    onShowFocused = {
-                        selectedShow = it
+                    onShowFocused = { it ->
                         onShowFocused(it)
                     },
                 )
@@ -303,10 +305,10 @@ private fun ShowsRowItem(
 
     ShowCard(
         onClick = { onShowSelected(show) }, title = {
-        ShowsRowItemText(
-            showItemTitle = showItemTitle, isItemFocused = isFocused, show = show
-        )
-    }, modifier = Modifier
+            ShowsRowItemText(
+                showItemTitle = showItemTitle, isItemFocused = isFocused, show = show
+            )
+        }, modifier = Modifier
             .width(cardWidth)
             .onFocusChanged {
                 isFocused = it.isFocused
