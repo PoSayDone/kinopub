@@ -78,7 +78,6 @@ fun MainGraph() {
                 LazyColumn(
                     userScrollEnabled = false,
                     modifier = Modifier
-                        .focusRequester(firstItem)
                         .padding(12.dp)
                         .fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(
@@ -95,6 +94,7 @@ fun MainGraph() {
                             onClick = {
                                 topLevelBackStack.addTopLevel(item)
                                 drawerState.setValue(DrawerValue.Closed)
+                                firstItem.requestFocus()
                             },
                             leadingContent = {
                                 Icon(
@@ -110,6 +110,7 @@ fun MainGraph() {
             }
         }) {
         NavDisplay(
+            modifier = Modifier.focusRequester(firstItem),
             backStack = topLevelBackStack.backStack,
             onBack = { topLevelBackStack.removeLast() },
             entryDecorators = listOf(
