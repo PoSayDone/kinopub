@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="season">Сезон %1$d</string>
+    <string name="seasonString">Сезон</string>
     <string name="episode">Эпизод %1$d</string>
     <string name="continueWatchingMovie">Продолжить</string>
     <string name="continueWatchingSeries">Сеозн %1$d, Эпизод %2$d</string>

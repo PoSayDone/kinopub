@@ -23,7 +23,7 @@ import kotlin.time.Duration
 
 @Composable
 fun PlayerSeeker(
-    state: VideoPlayerState,
+    onShowControls: () -> Unit,
     onSeek: (Float) -> Unit,
     contentProgress: Duration,
     contentDuration: Duration,
@@ -48,7 +48,7 @@ fun PlayerSeeker(
     ) {
         PlayerControllerText(text = contentProgressString)
         PlayerSeekPill(
-            progress = (contentProgress / contentDuration).toFloat(), onSeek = onSeek, state = state
+            progress = (contentProgress / contentDuration).toFloat(), onSeek = onSeek, onShowControls = onShowControls
         )
         PlayerControllerText(text = contentDurationString)
     }

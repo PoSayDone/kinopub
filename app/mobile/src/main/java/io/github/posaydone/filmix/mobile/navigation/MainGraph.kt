@@ -164,7 +164,7 @@ fun MainGraph() {
                             creationCallback = { factory ->
                                 factory.create(PlayerScreenNavKey(showId = key.showId))
                             })
-                    PlayerScreen(key.showId, viewModel = viewModel)
+                    PlayerScreen(viewModel = viewModel)
                 }
             })
         AnimatedVisibility(visible = !isPlayerScreen) {

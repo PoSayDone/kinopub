@@ -2,884 +2,171 @@
 
 package io.github.posaydone.filmix.mobile.ui.screen.playerScreen
 
-import android.app.Activity
-import android.app.PictureInPictureParams
-import android.content.Context
-import android.content.pm.ActivityInfo
-import android.os.Build
-import android.util.Log
-import android.util.Rational
 import androidx.annotation.OptIn
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.outlined.PictureInPictureAlt
-import androidx.compose.material.icons.rounded.Audiotrack
-import androidx.compose.material.icons.rounded.AutoAwesomeMotion
-import androidx.compose.material.icons.rounded.HighQuality
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.PlayerView
-import androidx.media3.ui.TimeBar
-import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.core.model.Episode
-import io.github.posaydone.filmix.core.model.File
+import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
-import io.github.posaydone.filmix.core.model.ShowDetails
-import io.github.posaydone.filmix.core.model.Translation
-import io.github.posaydone.filmix.core.model.VideoWithQualities
-import io.github.posaydone.filmix.mobile.MainActivity
+import io.github.posaydone.filmix.mobile.ui.common.Loading
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerLaunchedEffects
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerBottomControls
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerDialogs
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerGestureContainer
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerMediaTitle
-import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerPulse
-import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerPulseState
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerMiddleControls
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerOverlay
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.rememberPlayerPulseState
-import io.github.posaydone.filmix.mobile.ui.utils.toHhMmSs
-import kotlinx.coroutines.delay
 
 private var TAG = "PlayerScreen"
 
-@Composable
-fun LockScreenOrientation() {
-    val context = LocalContext.current
-    val activity = context as? Activity
-
-    // Save the previous orientation
-    val previousOrientation = remember { activity?.requestedOrientation }
-
-    DisposableEffect(Unit) {
-        // Lock to landscape mode (both landscape-left and landscape-right)
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-
-        onDispose {
-            // Restore previous orientation
-            previousOrientation?.let {
-                activity?.requestedOrientation = it
-            }
-        }
-    }
-}
-
-fun isPipSupported(context: Context): Boolean {
-    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && context.packageManager.hasSystemFeature(
-        "android.software.picture_in_picture"
-    )
-}
-
-fun enterPipMode(context: Context) {
-    val activity = context as? Activity
-
-    if (activity != null && isPipSupported(context)) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val params = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
-
-            activity.enterPictureInPictureMode(params)
-        }
-    }
-}
-
-@UnstableApi
+@OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(
-    showId: Int,
     viewModel: PlayerScreenViewModel = hiltViewModel(),
 ) {
+    val showDetails by viewModel.details.collectAsState()
     val playerState by viewModel.playerState.collectAsState()
-    val details by viewModel.details.collectAsState()
-    val seasons by viewModel.seasons.collectAsState()
-    val moviePieces by viewModel.moviePieces.collectAsState()
-    val selectedEpisode by viewModel.selectedEpisode.collectAsState()
-    val selectedSeason by viewModel.selectedSeason.collectAsState()
-    val selectedTranslation by viewModel.selectedTranslation.collectAsState()
-    val selectedMovieTranslation by viewModel.selectedMovieTranslation.collectAsState()
-    val selectedQuality by viewModel.selectedQuality.collectAsState()
-    val showType by viewModel.contentType.collectAsState()
     val player = viewModel.playerController.collectAsState().value
+    val selectedSeason by viewModel.selectedSeason.collectAsState()
+    val selectedEpisode by viewModel.selectedEpisode.collectAsState()
 
-    val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
-    val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
-
-    var showControls by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var isAudioSheetOpen by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var isQualitySheetOpen by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var isEpisodeBottomSheetOpen by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    val view = LocalView.current
-    val window = (view.context as Activity).window
-    val insetsController = WindowCompat.getInsetsController(window, view)
-
-    val context = LocalContext.current
-    val activity = context as? Activity
-
-    val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
-
-    LockScreenOrientation()
-
-    val pulseState = rememberPlayerPulseState()
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            Log.d("Lifecycle", event.name)
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    viewModel.saveProgress()
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity?.isInPictureInPictureMode == true) {
-                        showControls = false
-                    } else {
-                        viewModel.pause()
-                        insetsController.apply {
-                            show(WindowInsetsCompat.Type.systemBars())
-                        }
-                    }
-                }
-
-                else -> {
-                    viewModel.saveProgress()
-                }
-            }
+    when (showDetails == null || player == null) {
+        true -> {
+            Loading(modifier = Modifier.fillMaxSize())
         }
 
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            viewModel.saveProgress()
-            MainActivity.isPlayerActive =
-                false  // Reset player active status when screen is disposed
-            lifecycleOwner.lifecycle.removeObserver(observer)
+        false -> {
+            VideoPlayerScreenContent(
+                player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode
+            )
         }
-    }
-
-
-    if (!view.isInEditMode) {
-        if (!showControls) {
-            insetsController.apply {
-                hide(WindowInsetsCompat.Type.systemBars())
-                systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            insetsController.apply {
-                show(WindowInsetsCompat.Type.navigationBars())
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = showControls) {
-        if (showControls) {
-            delay(10000)
-            showControls = false
-        }
-    }
-
-    // Update the player active status for PiP mode
-    LaunchedEffect(key1 = player) {
-        MainActivity.isPlayerActive = player != null
-    }
-
-    // Also update when player state changes (play/pause)
-    LaunchedEffect(key1 = playerState.isPlaying) {
-        if (player != null) {
-            MainActivity.isPlayerActive = true
-        }
-    }
-
-
-    if (showType == ShowType.SERIES) {
-        if (seasons != null && selectedSeason != null) {
-            EpisodeBottomSheet(
-                viewModel = viewModel,
-                seasons = seasons!!,
-                selectedSeason = selectedSeason,
-                selectedEpisode = selectedEpisode,
-                isEpisodeBottomSheetOpen = isEpisodeBottomSheetOpen,
-                onDismiss = { isEpisodeBottomSheetOpen = false })
-        }
-
-        selectedEpisode?.translations?.let { translations ->
-            AudioBottomSheet(
-                translations, selectedTranslation, viewModel, isAudioSheetOpen, showType
-            ) {
-                isAudioSheetOpen = false
-            }
-        }
-        selectedTranslation?.files?.let { qualities ->
-            QualityBottomSheet(qualities, selectedQuality, viewModel, isQualitySheetOpen) {
-                isQualitySheetOpen = false
-            }
-        }
-    } else {
-        moviePieces?.let { translations ->
-            AudioBottomSheet(
-                translations, selectedMovieTranslation, viewModel, isAudioSheetOpen, showType
-            ) {
-                isAudioSheetOpen = false
-            }
-        }
-        selectedMovieTranslation?.files?.let { qualities ->
-            QualityBottomSheet(qualities, selectedQuality, viewModel, isQualitySheetOpen) {
-                isQualitySheetOpen = false
-            }
-        }
-    }
-
-
-
-    if (player == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    } else {
-        PlayerContent(
-            playerInstance = player,
-            playerState = playerState,
-            details = details,
-            showType = showType,
-            showControls = showControls,
-            onToggleControls = { showControls = !showControls },
-            onShowAudioSheet = { isAudioSheetOpen = true },
-            onShowQualitySheet = { isQualitySheetOpen = true },
-            onShowEpisodeSheet = { isEpisodeBottomSheetOpen = true },
-            pulseState = pulseState,
-            hasPrevEpisode = hasPrevEpisode,
-            hasNextEpisode = hasNextEpisode,
-            setResizeMode = { viewModel.setResizeMode(it) },
-            seekBack = { viewModel.seekBack() },
-            seekForward = { viewModel.seekForward() },
-            goToNextEpisode = { viewModel.goToNextEpisode() },
-            goToPrevEpisode = { viewModel.goToPrevEpisode() },
-            onPlayPauseClick = { viewModel.onPlayPauseClick() },
-            seekTo = { viewModel.seekTo(it) },
-        )
     }
 }
-
 
 @OptIn(UnstableApi::class)
 @Composable
-fun PlayerContent(
-    playerInstance: MediaController,
+fun VideoPlayerScreenContent(
+    player: MediaController,
+    viewModel: PlayerScreenViewModel,
     playerState: PlayerState,
-    details: ShowDetails?,
-    showType: ShowType?,
-    showControls: Boolean,
-    onToggleControls: () -> Unit,
-    onShowAudioSheet: () -> Unit,
-    onShowQualitySheet: () -> Unit,
-    onShowEpisodeSheet: () -> Unit,
-    pulseState: PlayerPulseState,
-    hasPrevEpisode: Boolean,
-    hasNextEpisode: Boolean,
-    setResizeMode: (Int) -> Unit,
-    seekBack: () -> Unit,
-    seekForward: () -> Unit,
-    goToNextEpisode: () -> Unit,
-    goToPrevEpisode: () -> Unit,
-    onPlayPauseClick: () -> Unit,
-    seekTo: (Long) -> Unit,
+    showDetails: FullShow,
+    selectedSeason: Season?,
+    selectedEpisode: Episode?,
 ) {
+    val showType by viewModel.contentType.collectAsState()
+    val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
+    val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
+    val pulseState = rememberPlayerPulseState()
+    val context = LocalContext.current
+    var isAudioDialogOpen by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var isSettingsDialogOpen by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var isEpisodeDialogOpen by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    PlayerLaunchedEffects(playerState = playerState, pause = { viewModel.pause() }, saveProgress = {
+        viewModel.saveProgress()
+    })
+
     Box(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(color = Color.Black)
             .focusable()
     ) {
         AndroidView(
-            factory = {
-            PlayerView(it).apply {
-                player = playerInstance
-                useController = false
-                resizeMode = playerState.resizeMode
-                keepScreenOn = playerState.isPlaying
-            }
-        }, update = {
-            it.resizeMode = playerState.resizeMode
-            it.keepScreenOn = playerState.isPlaying
-        }, modifier = Modifier.fillMaxSize()
+            factory = { PlayerView(context).apply { useController = false } }, update = {
+                it.player = player
+                it.apply {
+                    resizeMode = playerState.resizeMode
+                    keepScreenOn = playerState.isPlaying
+                }
+            }, modifier = Modifier.fillMaxSize()
         )
 
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        if (zoom > 1) {
-                            setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM)
-                        } else if (zoom < 1) {
-                            setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT)
-                        }
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = { onToggleControls() }, onDoubleTap = { offset ->
-                        val screenWidth = size.width
-                        if (offset.x < screenWidth / 2) {
-                            seekBack()
-                            pulseState.setType(PlayerPulse.Type.BACK)
-                        } else {
-                            seekForward()
-                            pulseState.setType(PlayerPulse.Type.FORWARD)
-                        }
-                    })
-                }) {
+        PlayerGestureContainer(
+            toggleControls = { viewModel.toggleControls() },
+            setResizeMode = { viewModel.setResizeMode(it) },
+            setPulseType = { pulseState.setType(it) },
+            seekForward = { viewModel.seekForward() },
+            seekBack = { viewModel.seekBack() })
 
-            }
-        }
-
-        AnimatedVisibility(visible = showControls, enter = fadeIn(), exit = fadeOut()) {
-            Box(
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .fillMaxSize()
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(WindowInsets.safeDrawing.asPaddingValues())
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PlayerPulse(pulseState)
-            }
-
-
-            AnimatedVisibility(visible = showControls, enter = fadeIn(), exit = fadeOut()) {
-                MiddleControls(
+        PlayerOverlay(
+            modifier = Modifier.fillMaxSize(),
+            playerState = playerState,
+            pulseState = pulseState,
+            onShowControls = { viewModel.showControls(seconds = 4) },
+            onHideControls = { viewModel.hideControls() },
+            isPlaying = playerState.isPlaying,
+            subtitles = { /* TODO Implement subtitles */ },
+            header = {
+                PlayerMediaTitle(
+                    showDetails = showDetails,
+                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) "Season ${selectedSeason!!.season}" else null,
+                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) "Episode ${selectedEpisode!!.episode}" else null,
+                    openSettingsDialog = { isSettingsDialogOpen = true }
+                )
+            },
+            middle = {
+                PlayerMiddleControls(
                     showType = showType,
                     isPlaying = playerState.isPlaying,
                     isLoading = playerState.isLoading,
-                    onPlayPauseClick = onPlayPauseClick,
-                    hasPrevEpisode = hasPrevEpisode,
+                    onPlayPauseClick = { viewModel.onPlayPauseClick() },
                     hasNextEpisode = hasNextEpisode,
-                    onPrevEpisodeClick = goToPrevEpisode,
-                    onNextEpisodeClick = goToNextEpisode,
+                    onNextEpisodeClick = { viewModel.goToNextEpisode() },
+                    hasPrevEpisode = hasPrevEpisode,
+                    onPrevEpisodeClick = { viewModel.goToPrevEpisode() },
                 )
-            }
-
-            AnimatedVisibility(
-                visible = playerState.isLoading, enter = fadeIn(), exit = fadeOut()
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .align(Alignment.Center)
-                    )
-                }
-            }
-
-            AnimatedVisibility(visible = showControls, enter = fadeIn(), exit = fadeOut()) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    val context = LocalContext.current
-                    TopControls(
-                        showType = showType,
-                        showDetails = details,
-                        onMoreClick = onShowQualitySheet,
-                        onAudioClick = onShowAudioSheet,
-                        onEpisodeClick = onShowEpisodeSheet,
-                        onPipClick = { enterPipMode(context) },
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-                    if (playerState.duration > 0L) {
-                        BottomControls(
-                            duration = playerState.duration,
-                            currentPosition = playerState.currentPosition,
-                            seekTo = seekTo
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun MiddleControls(
-    showType: ShowType?,
-    isPlaying: Boolean,
-    isLoading: Boolean,
-    onPlayPauseClick: () -> Unit,
-    hasNextEpisode: Boolean,
-    onNextEpisodeClick: () -> Unit,
-    hasPrevEpisode: Boolean,
-    onPrevEpisodeClick: () -> Unit,
-    interactionSource: MutableInteractionSource? = null,
-) {
-    Row(
-        modifier = Modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.spacedBy(
-            space = 48.dp, alignment = Alignment.CenterHorizontally
-        ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (showType != ShowType.MOVIE) {
-            Box(
-                modifier = Modifier.then(
-                    if (hasPrevEpisode) {
-                    Modifier.clickable(
-                        onClick = onPrevEpisodeClick,
-                        role = Role.Button,
-                        interactionSource = interactionSource,
-                        indication = ripple(bounded = false, radius = 24.dp)
-                    )
-                } else {
-                    Modifier.semantics { disabled() }
-                }),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Default.SkipPrevious,
-                    contentDescription = "Previous episode",
-                    tint = Color.White.copy(alpha = if (hasPrevEpisode) 1f else 0.4f),
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
-
-        Box(
-            modifier = Modifier.clickable(
-                onClick = onPlayPauseClick,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = ripple(bounded = false, radius = 32.dp)
-            ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (isLoading) {
-                Spacer(Modifier.size(48.dp)) // Keeps layout consistent
-            }
-            this@Row.AnimatedVisibility(visible = !isLoading, enter = fadeIn(), exit = fadeOut()) {
-                Icon(
-                    painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        }
-
-        if (showType != ShowType.MOVIE) {
-            Box(
-                modifier = Modifier.then(
-                    if (hasNextEpisode) {
-                    Modifier.clickable(
-                        onClick = onNextEpisodeClick,
-                        role = Role.Button,
-                        interactionSource = interactionSource,
-                        indication = ripple(bounded = false, radius = 24.dp)
-                    )
-                } else {
-                    Modifier.semantics { disabled() }
-                }),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Default.SkipNext,
-                    contentDescription = "Next episode",
-                    tint = Color.White.copy(alpha = if (hasNextEpisode) 1f else 0.4f),
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopControls(
-    showType: ShowType?,
-    showDetails: ShowDetails?,
-    onMoreClick: () -> Unit,
-    onAudioClick: () -> Unit,
-    onEpisodeClick: () -> Unit,
-    onPipClick: () -> Unit = {},
-) {
-    val context = LocalContext.current
-    Row(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth(),
-    ) {
-        PlayerMediaTitle(
-            title = showDetails?.title ?: "",
-            secondaryText = showDetails?.originalTitle ?: "",
-            tertiaryText = "",
-            modifier = Modifier.weight(1f)
-        )
-        if (showType == ShowType.SERIES) {
-            IconButton(
-                modifier = Modifier.focusable(), onClick = onEpisodeClick
-            ) {
-                Icon(
-                    Icons.Rounded.AutoAwesomeMotion,
-                    contentDescription = "Pause",
-                    tint = Color.White,
-                )
-            }
-        }
-        IconButton(
-            modifier = Modifier.focusable(), onClick = onAudioClick
-        ) {
-            Icon(
-                Icons.Rounded.Audiotrack,
-                contentDescription = "Pause",
-                tint = Color.White,
-            )
-        }
-        IconButton(
-            modifier = Modifier.focusable(), onClick = onMoreClick
-        ) {
-            Icon(
-                Icons.Rounded.HighQuality,
-                contentDescription = "Pause",
-                tint = Color.White,
-            )
-        }
-        if (isPipSupported(context)) {
-            IconButton(
-                modifier = Modifier.focusable(), onClick = onPipClick
-            ) {
-                Icon(
-                    Icons.Outlined.PictureInPictureAlt,
-                    contentDescription = "Enter Picture-in-Picture mode",
-                    tint = Color.White,
-                )
-            }
-        }
-    }
-}
-
-@OptIn(UnstableApi::class)
-@Composable
-private fun BottomControls(
-    duration: Long,
-    currentPosition: Long,
-    seekTo: (Long) -> Unit,
-) {
-    var isSeekInProgress by remember { mutableStateOf(false) }
-    var seekBarTime by remember { mutableLongStateOf(currentPosition) }
-
-    // When user is not seeking, keep seekBarTime in sync with currentPosition
-    LaunchedEffect(currentPosition, duration, isSeekInProgress) {
-        if (!isSeekInProgress) {
-            seekBarTime = currentPosition
-        }
-    }
-
-    Row(
-        modifier = Modifier
-            .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (duration > 0L) Box(modifier = Modifier.width(90.dp)) {
-            Text(
-                text = seekBarTime.toHhMmSs(),
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-
-        CustomSeekBar(
-            isSeekInProgress = { isInProgress ->
-            isSeekInProgress = isInProgress
-        },
-            onSeekBarMove = { position ->
-                seekBarTime = position
             },
-            totalDuration = duration,
-            currentTime = seekBarTime,
-            onSeekStop = { position -> seekTo(position) },
-            modifier = Modifier.weight(1f)
-        )
-
-        if (duration > 0L) Box(modifier = Modifier.width(90.dp)) {
-            Text(
-                text = duration.toHhMmSs(),
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+            footer = {
+                PlayerBottomControls(
+                    showType = showType,
+                    resizeMode = playerState.resizeMode,
+                    setResizeMode = { viewModel.setResizeMode(it) },
+                    currentPosition = playerState.currentPosition,
+                    duration = playerState.duration,
+                    seekTo = { viewModel.seekTo(it) },
+                    onShowControls = { viewModel.showControls(seconds = 4) },
+                    openEpisodeDialog = {
+                        player.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true
+                    },
+                    openAudioDialog = { isAudioDialogOpen = true },
+                )
+            })
     }
-}
-
-@UnstableApi
-@Composable
-private fun EpisodeBottomSheet(
-    viewModel: PlayerScreenViewModel,
-    seasons: List<Season>,
-    selectedSeason: Season?,
-    selectedEpisode: Episode?,
-    isEpisodeBottomSheetOpen: Boolean,
-    onDismiss: () -> Unit,
-) {
-    if (isEpisodeBottomSheetOpen) ModalBottomSheet(
-        onDismissRequest = onDismiss
-    ) {
-        var tabIndex by rememberSaveable {
-            mutableIntStateOf(
-                selectedSeason?.season?.minus(1) ?: 0
-            )
-        }
-
-        ScrollableTabRow(
-            selectedTabIndex = tabIndex,
-            edgePadding = 0.dp,
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = Color.Transparent,
-            divider = {}) {
-            seasons.forEachIndexed { index, season ->
-                Tab(
-                    modifier = Modifier.padding(8.dp),
-                    selected = tabIndex == index,
-                    onClick = { tabIndex = index },
-                ) {
-                    Text(stringResource(R.string.season, season.season))
-                }
-            }
-        }
-
-        val selectedSeasonEpisodes = seasons[tabIndex].episodes
-
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            items(selectedSeasonEpisodes) { episode ->
-                SingleSelectionCard(
-                    selectionOption = episode, selectedEpisode
-                ) {
-                    viewModel.setSeason(seasons[tabIndex])
-                    viewModel.setEpisode(episode)
-                    onDismiss()
-                }
-            }
-        }
-    }
-}
-
-
-@OptIn(UnstableApi::class)
-@Composable
-private fun <T> AudioBottomSheet(
-    translations: List<T>,
-    selectedTranslation: T?,
-    viewModel: PlayerScreenViewModel,
-    isAudioSheetOpen: Boolean,
-    showType: ShowType?,
-    onDismiss: () -> Unit,
-) {
-
-    if (isAudioSheetOpen) ModalBottomSheet(
-        onDismissRequest = onDismiss
-    ) {
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp)
-        ) {
-            items(translations) { item ->
-                SingleSelectionCard(
-                    selectionOption = item,
-                    selectedTranslation,
-                ) {
-                    when (showType) {
-                        ShowType.MOVIE -> viewModel.setMovieTranslation(item as VideoWithQualities)
-                        ShowType.SERIES -> viewModel.setTranslation(item as Translation)
-                        null -> {}
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-@OptIn(UnstableApi::class)
-@Composable
-private fun QualityBottomSheet(
-    qualities: List<File>,
-    selectedQuality: File?,
-    viewModel: PlayerScreenViewModel,
-    isQualitySheetOpen: Boolean,
-    onDismiss: () -> Unit,
-) {
-
-    if (isQualitySheetOpen) ModalBottomSheet(
-        onDismissRequest = onDismiss
-    ) {
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp)
-        ) {
-            items(qualities) { item ->
-                SingleSelectionCard(
-                    selectionOption = item,
-                    selectedQuality,
-                ) {
-                    viewModel.setQuality(item)
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun <T> SingleSelectionCard(selectionOption: T, selectedOption: T?, onOptionClicked: (T) -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape = RoundedCornerShape(32.dp))
-            .clickable(true, onClick = { onOptionClicked(selectionOption) }),
-        color = if (selectionOption == selectedOption) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            Color.Transparent
-        },
-    ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = selectionOption.toString(), style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@UnstableApi
-@Composable
-fun CustomSeekBar(
-    currentTime: Long,
-    totalDuration: Long,
-    isSeekInProgress: (Boolean) -> Unit,
-    onSeekBarMove: (Long) -> Unit,
-    onSeekStop: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-
-    AndroidView(factory = { context ->
-        val listener = object : TimeBar.OnScrubListener {
-            var previousScrubPosition = 0L
-
-            override fun onScrubStart(timeBar: TimeBar, position: Long) {
-                isSeekInProgress(true)
-                previousScrubPosition = position
-            }
-
-            override fun onScrubMove(timeBar: TimeBar, position: Long) {
-                onSeekBarMove(position)
-            }
-
-            override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
-                if (canceled) {
-                    onSeekStop(previousScrubPosition)
-                } else {
-                    onSeekStop(position)
-                }
-                isSeekInProgress(false)
-            }
-        }
-
-        DefaultTimeBar(context).apply {
-            setScrubberColor(primaryColor.toArgb())
-            setPlayedColor(primaryColor.toArgb())
-            setUnplayedColor(primaryColor.copy(0.3f).toArgb())
-            addListener(listener)
-            setDuration(totalDuration)
-            setPosition(currentTime)
-        }
-    }, update = {
-        it.setDuration(totalDuration)
-        it.setPosition(currentTime)
-    }, modifier = modifier)
+    PlayerDialogs(
+        viewModel = viewModel,
+        showDetails = showDetails,
+        isEpisodeDialogOpen = isEpisodeDialogOpen,
+        isAudioDialogOpen = isAudioDialogOpen,
+        isSettingsDialogOpen = isSettingsDialogOpen,
+        closeEpisodeDialog = { isEpisodeDialogOpen = false },
+        closeAudioDialog = { isAudioDialogOpen = false },
+        closeSettingsDialog = { isSettingsDialogOpen = false })
 }

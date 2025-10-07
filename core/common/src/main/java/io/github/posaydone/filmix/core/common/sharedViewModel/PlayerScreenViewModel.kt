@@ -20,6 +20,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
+
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -62,6 +63,7 @@ data class PlayerState(
     val duration: Long = 0L,
     val resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     val orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE,
+    val controlsVisible: Boolean = true,
 )
 
 @Immutable
@@ -158,6 +160,37 @@ class PlayerScreenViewModel @AssistedInject constructor(
         MediaController.Builder(context, sessionToken).buildAsync()
     var playerController: StateFlow<MediaController?> = _playerController.asStateFlow()
 
+
+    private var controlsHideJob: Job? = null
+
+    fun showControls(seconds: Int = 8) {
+        // Cancel any existing hide job
+        controlsHideJob?.cancel()
+
+        _playerState.update { it.copy(controlsVisible = true) }
+
+        // Create a new job to hide controls after the specified time
+        if (seconds > 0 && seconds != Int.MAX_VALUE) { // Don't auto-hide if using MAX_VALUE
+            controlsHideJob = viewModelScope.launch {
+                delay(seconds.toLong() * 1000)
+                _playerState.update { it.copy(controlsVisible = false) }
+            }
+        }
+    }
+
+    fun hideControls() {
+        controlsHideJob?.cancel()
+        _playerState.update { it.copy(controlsVisible = false) }
+    }
+
+
+    fun toggleControls() {
+        if (_playerState.value.controlsVisible) {
+            hideControls()
+        } else {
+            showControls()
+        }
+    }
 
     init {
         mediaControllerFuture?.let {

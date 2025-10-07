@@ -31,7 +31,7 @@ import io.github.posaydone.filmix.tv.ui.utils.ifElse
 fun RowScope.PlayerSeekPill(
     progress: Float,
     onSeek: (seekProgress: Float) -> Unit,
-    state: VideoPlayerState,
+    onShowControls: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var isSelected by remember { mutableStateOf(false) }
@@ -44,13 +44,12 @@ fun RowScope.PlayerSeekPill(
         targetValue = 4.dp.times((if (isFocused) 2.5f else 1f))
     )
     var seekProgress by remember { mutableStateOf(0f) }
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(isSelected) {
         if (isSelected) {
-            state.showControls(seconds = Int.MAX_VALUE)
+            onShowControls() // Show controls when seek pill is selected
         } else {
-            state.showControls()
+            onShowControls() // Show controls normally when deselected
         }
     }
 

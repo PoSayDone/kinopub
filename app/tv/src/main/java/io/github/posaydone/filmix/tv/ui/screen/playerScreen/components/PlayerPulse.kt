@@ -52,7 +52,7 @@ object PlayerPulse {
 
 @Composable
 fun PlayerPulse(
-    state: VideoPlayerPulseState = rememberVideoPlayerPulseState(),
+    state: PlayerPulseState = rememberPlayerPulseState(),
     isLoading: Boolean,
 ) {
     val icon = when (state.type) {
@@ -85,7 +85,7 @@ fun PlayerPulse(
     }
 }
 
-class VideoPlayerPulseState {
+class PlayerPulseState {
     private var _type by mutableStateOf(PlayerPulse.Type.NONE)
     val type: PlayerPulse.Type get() = _type
 
@@ -105,5 +105,5 @@ class VideoPlayerPulseState {
 }
 
 @Composable
-fun rememberVideoPlayerPulseState() =
-    remember { VideoPlayerPulseState() }.also { LaunchedEffect(it) { it.observe() } }
+fun rememberPlayerPulseState() =
+    remember { PlayerPulseState() }.also { LaunchedEffect(it) { it.observe() } }

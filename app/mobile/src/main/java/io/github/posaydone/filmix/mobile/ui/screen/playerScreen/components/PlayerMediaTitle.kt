@@ -1,85 +1,66 @@
 package io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import io.github.posaydone.filmix.mobile.ui.theme.FilmixTheme
+import coil.compose.AsyncImage
+import io.github.posaydone.filmix.core.model.FullShow
 
 @Composable
 fun PlayerMediaTitle(
-    title: String,
-    secondaryText: String,
-    tertiaryText: String,
+    showDetails: FullShow,
+    currentSeason: String?,
+    currentEpisode: String?,
     modifier: Modifier = Modifier,
+    openSettingsDialog: () -> Unit,
 ) {
-    val subTitle = buildString {
-        append(secondaryText)
-        if (secondaryText.isNotEmpty() && tertiaryText.isNotEmpty()) append(" • ")
-        append(tertiaryText)
-    }
-    Column(modifier.fillMaxWidth()) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
-        Spacer(Modifier.height(4.dp))
-        Row {
-            Text(
-                text = subTitle,
-                color = Color.White.copy(alpha = 0.6f),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.alignByBaseline()
-            )
-        }
-    }
-}
+    CompositionLocalProvider(LocalContentColor provides Color.White) {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column { }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                AsyncImage(
+                    model = showDetails.logoUrl,
+                    contentDescription = showDetails.title,
+                    modifier = Modifier.width(300.dp),
+                    contentScale = ContentScale.Fit,
+                )
 
-@Preview(name = "TV Series", device = "id:tv_4k")
-@Composable
-private fun VideoPlayerMediaTitlePreviewSeries() {
-    FilmixTheme {
-        Surface(shape = RectangleShape) {
-            PlayerMediaTitle(
-                title = "True Detective",
-                secondaryText = "S1E5",
-                tertiaryText = "The Secret Fate Of All Life",
-            )
-        }
-    }
-}
-
-@Preview(name = "Live", device = "id:tv_4k")
-@Composable
-private fun VideoPlayerMediaTitlePreviewLive() {
-    FilmixTheme {
-        Surface(shape = RectangleShape) {
-            PlayerMediaTitle(
-                title = "MacLaren Reveal Their 2022 Car: The MCL36",
-                secondaryText = "Formula 1",
-                tertiaryText = "54K watching now",
-            )
-        }
-    }
-}
-
-@Preview(name = "Ads", device = "id:tv_4k")
-@Composable
-private fun VideoPlayerMediaTitlePreviewAd() {
-    FilmixTheme {
-        Surface(shape = RectangleShape) {
-            PlayerMediaTitle(
-                title = "Samsung Galaxy Note20 | Ultra 5G",
-                secondaryText = "Get the most powerful Note yet",
-                tertiaryText = "",
-            )
+                if (currentSeason != null && currentEpisode != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "$currentSeason • $currentEpisode",
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1
+                    )
+                }
+            }
+            Column {
+                PlayerControlsButton(
+                    icon = Icons.Default.Settings, onClick = { openSettingsDialog() })
+            }
         }
     }
 }

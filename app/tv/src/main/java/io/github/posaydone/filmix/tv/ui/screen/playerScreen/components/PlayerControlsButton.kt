@@ -26,7 +26,7 @@ import androidx.tv.material3.Text
 @Composable
 fun PlayerControlsButton(
     modifier: Modifier = Modifier,
-    state: VideoPlayerState,
+    onShowControls: () -> Unit,
     isPlaying: Boolean,
     icon: ImageVector,
     contentDescription: String? = null,
@@ -39,7 +39,7 @@ fun PlayerControlsButton(
 
     LaunchedEffect(isFocused && isPlaying) {
         if (isFocused && isPlaying) {
-            state.showControls()
+            onShowControls()
         }
     }
 

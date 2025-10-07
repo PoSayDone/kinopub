@@ -14,12 +14,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -35,32 +33,32 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
+import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerDialogs
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerMediaTitle
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerOverlay
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerPulse
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerPulseState
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.rememberVideoPlayerPulseState
-import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.rememberVideoPlayerState
+import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerPulseState
+import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.rememberPlayerPulseState
 import io.github.posaydone.filmix.tv.ui.utils.handleDPadKeyEvents
 
 /**
- * [Work in progress] A composable screen for playing a video.
- *
  * @param onBackPressed The callback to invoke when the user presses the back button.
  * @param viewModel The view model for the video player screen.
  */
 @OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(
-    showId: Int,
     viewModel: PlayerScreenViewModel = hiltViewModel(),
 ) {
     val showDetails by viewModel.details.collectAsState()
     val playerState by viewModel.playerState.collectAsState()
     val player = viewModel.playerController.collectAsState().value
+    val selectedSeason by viewModel.selectedSeason.collectAsState()
+    val selectedEpisode by viewModel.selectedEpisode.collectAsState()
 
     when (showDetails == null || player == null) {
         true -> {
@@ -69,7 +67,7 @@ fun PlayerScreen(
 
         false -> {
             VideoPlayerScreenContent(
-                player, viewModel, playerState, showDetails!!
+                player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode
             )
         }
     }
@@ -82,6 +80,8 @@ fun VideoPlayerScreenContent(
     viewModel: PlayerScreenViewModel,
     playerState: PlayerState,
     showDetails: FullShow,
+    selectedSeason: Season?,
+    selectedEpisode: Episode?,
 ) {
     val showType by viewModel.contentType.collectAsState()
 
@@ -113,7 +113,8 @@ fun VideoPlayerScreenContent(
     }
 
 
-    val videoPlayerState = rememberVideoPlayerState(hideSeconds = 4)
+    // Controls visibility is now handled by the shared ViewModel
+    // No need for TV-specific VideoPlayerState
 
     var isAudioDialogOpen by rememberSaveable {
         mutableStateOf(false)
@@ -125,7 +126,7 @@ fun VideoPlayerScreenContent(
         mutableStateOf(false)
     }
 
-    val pulseState = rememberVideoPlayerPulseState()
+    val pulseState = rememberPlayerPulseState()
 
 
     Box(
@@ -135,31 +136,32 @@ fun VideoPlayerScreenContent(
                 seekForward = { viewModel.seekForward() },
                 pause = { viewModel.pause() },
                 isEpisodeDialogOpen,
-                videoPlayerState,
+                playerState,
+                { viewModel.showControls(seconds = 4) },
                 pulseState
             )
             .fillMaxSize()
             .background(color = Color.Black)
             .focusable()
     ) {
-
-
         AndroidView(
             factory = {
-                PlayerView(context).apply { useController = false }
-            }, update = {
-                it.player = player
-                it.apply {
-                    resizeMode = playerState.resizeMode
-                    keepScreenOn = playerState.isPlaying
-                }
-            }, modifier = Modifier.fillMaxSize()
+            PlayerView(context).apply { useController = false }
+        }, update = {
+            it.player = player
+            it.apply {
+                resizeMode = playerState.resizeMode
+                keepScreenOn = playerState.isPlaying
+            }
+        }, modifier = Modifier.fillMaxSize()
         )
 
 
         PlayerOverlay(
             modifier = Modifier.fillMaxSize(),
-            state = videoPlayerState,
+            playerState = playerState,
+            onShowControls = { viewModel.showControls(seconds = 4) },
+            onHideControls = { viewModel.hideControls() },
             isPlaying = player.isPlaying,
             pulseState = pulseState,
             centerButton = { PlayerPulse(pulseState, playerState.isLoading) },
@@ -167,20 +169,21 @@ fun VideoPlayerScreenContent(
             header = {
                 PlayerMediaTitle(
                     showDetails = showDetails,
-                    currentSeason = if (showType == ShowType.SERIES) "Season 1" else null,  // Will be updated with real data
-                    currentEpisode = if (showType == ShowType.SERIES) "Episode 1" else null
+                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) "Season ${selectedSeason!!.season}" else null,
+                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) "Episode ${selectedEpisode!!.episode}" else null
                 )
             },
             controls = {
-                VideoPlayerControls(
+                PlayerControls(
                     isPlaying = player.isPlaying,
                     showType = showType,
                     currentPosition = playerState.currentPosition,
                     duration = playerState.duration,
                     player = player,
-                    state = videoPlayerState,
+                    onShowControls = { viewModel.showControls(seconds = 4) },
+                    onHideControls = { viewModel.hideControls() },
                     openEpisodeSheet = {
-                        player.pause(); videoPlayerState.hideControls(); isEpisodeDialogOpen = true
+                        player.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true
                     },
                     openAudioSheet = { isAudioDialogOpen = true },
                     openQualitySheet = { isQualityDialogOpen = true },
@@ -204,30 +207,32 @@ fun VideoPlayerScreenContent(
 }
 
 
+@OptIn(UnstableApi::class)
 private fun Modifier.dPadEvents(
     seekBack: () -> Unit,
     seekForward: () -> Unit,
     pause: () -> Unit,
     isEpisodeSheetOpen: Boolean,
-    videoPlayerState: io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.VideoPlayerState,
-    pulseState: VideoPlayerPulseState,
+    playerState: PlayerState,
+    onShowControls: () -> Unit,
+    pulseState: PlayerPulseState,
 ): Modifier = this.handleDPadKeyEvents(onLeft = {
-    if (!videoPlayerState.controlsVisible && !isEpisodeSheetOpen) {
+    if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
         seekBack()
         pulseState.setType(PlayerPulse.Type.BACK)
     }
 }, onRight = {
-    if (!videoPlayerState.controlsVisible && !isEpisodeSheetOpen) {
+    if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
         seekForward()
         pulseState.setType(PlayerPulse.Type.FORWARD)
     }
 }, onUp = {
-    if (!isEpisodeSheetOpen) videoPlayerState.showControls()
+    if (!isEpisodeSheetOpen) onShowControls()
 }, onDown = {
-    if (!isEpisodeSheetOpen) videoPlayerState.showControls()
+    if (!isEpisodeSheetOpen) onShowControls()
 }, onEnter = {
     if (!isEpisodeSheetOpen) {
         pause()
-        videoPlayerState.showControls()
+        onShowControls()
     }
 })

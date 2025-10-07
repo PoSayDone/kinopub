@@ -2,6 +2,7 @@
     <string name="app_name" translatable="false">Filmix</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="season">Season %1$d</string>
+    <string name="seasonString">Season</string>
     <string name="episode">Episode %1$d</string>
     <string name="episodesString">Episodes</string>
     <string name="audioString">Tracks</string>
