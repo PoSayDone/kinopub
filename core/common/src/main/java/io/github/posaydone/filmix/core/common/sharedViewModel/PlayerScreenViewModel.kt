@@ -64,6 +64,7 @@ data class PlayerState(
     val resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     val orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE,
     val controlsVisible: Boolean = true,
+    val isSpeedUpActive: Boolean = false,
 )
 
 @Immutable
@@ -148,14 +149,14 @@ class PlayerScreenViewModel @AssistedInject constructor(
         AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
 
-    private lateinit var series: Series
+    private lateinit var series: Series 
     private lateinit var movie: List<VideoWithQualities>
 
     private var positionJob: Job? = null
 
-    private val _playerController = MutableStateFlow<MediaController?>(null)
     private val sessionToken =
         SessionToken(context, ComponentName(context, PlaybackService::class.java))
+    private val _playerController = MutableStateFlow<MediaController?>(null)
     private var mediaControllerFuture: ListenableFuture<MediaController>? =
         MediaController.Builder(context, sessionToken).buildAsync()
     var playerController: StateFlow<MediaController?> = _playerController.asStateFlow()
@@ -219,7 +220,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 _playerState.update { it.copy(isLoading = true) }
                 initialize()
                 controller.playWhenReady = true
-                _playerController.value = controller // <-- Установка значения в StateFlow
+                _playerController.value = controller
                 startTrackingPlayback()
             }, ContextCompat.getMainExecutor(context))
         }
@@ -257,7 +258,6 @@ class PlayerScreenViewModel @AssistedInject constructor(
         }
     }
 
-    // Инициализация данных
     private fun initialize() {
         viewModelScope.launch {
             savedProgress = repository.getShowProgress(showId)
@@ -591,6 +591,20 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     fun seekTo(to: Long) {
         playerController.value?.let { it.seekTo(to) }
+    }
+
+    fun enableSpeedUp() {
+        playerController.value?.let { player ->
+            player.setPlaybackSpeed(2f)
+            _playerState.update { it.copy(isSpeedUpActive = true) }
+        }
+    }
+
+    fun disableSpeedUp() {
+        playerController.value?.let { player ->
+            player.setPlaybackSpeed(1f)
+            _playerState.update { it.copy(isSpeedUpActive = false) }
+        }
     }
 
 

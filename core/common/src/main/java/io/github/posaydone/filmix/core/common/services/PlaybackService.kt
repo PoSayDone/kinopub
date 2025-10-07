@@ -13,14 +13,14 @@ class PlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
         mediaSession
 
-    // Create your player and media session in the onCreate lifecycle event
     override fun onCreate() {
         super.onCreate()
-        val player = ExoPlayer.Builder(this).build()
+        val player =
+            ExoPlayer.Builder(this).setSeekBackIncrementMs(10000).setSeekForwardIncrementMs(10000)
+                .build()
         mediaSession = MediaSession.Builder(this, player).build()
     }
 
-    // Remember to release the player and media session in onDestroy
     override fun onDestroy() {
         Log.d(TAG, "onDestroy: destroy")
 

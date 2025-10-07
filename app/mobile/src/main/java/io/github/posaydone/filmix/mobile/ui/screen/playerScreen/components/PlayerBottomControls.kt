@@ -37,7 +37,7 @@ fun PlayerBottomControls(
         PlayerSeeker(
             modifier = Modifier.Companion.weight(1f),
             onShowControls = onShowControls,
-            onSeek = { seekTo(duration.times(it).toLong()) },
+            onSeek = { seekTo(it) },
             contentProgress = currentPosition.milliseconds,
             contentDuration = duration.milliseconds
         )

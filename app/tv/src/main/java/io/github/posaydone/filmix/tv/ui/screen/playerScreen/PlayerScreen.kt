@@ -10,7 +10,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,10 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
@@ -38,6 +33,7 @@ import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerDialogs
+import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerEffects
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerMediaTitle
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerOverlay
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerPulse
@@ -83,39 +79,10 @@ fun VideoPlayerScreenContent(
     selectedSeason: Season?,
     selectedEpisode: Episode?,
 ) {
+    val context = LocalContext.current
     val showType by viewModel.contentType.collectAsState()
-
     val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
     val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
-
-    val context = LocalContext.current
-
-    val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    viewModel.saveProgress()
-                    viewModel.pause()
-                }
-
-                else -> {}
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            viewModel.saveProgress()
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
-
-    // Controls visibility is now handled by the shared ViewModel
-    // No need for TV-specific VideoPlayerState
-
     var isAudioDialogOpen by rememberSaveable {
         mutableStateOf(false)
     }
@@ -125,20 +92,28 @@ fun VideoPlayerScreenContent(
     var isEpisodeDialogOpen by rememberSaveable {
         mutableStateOf(false)
     }
-
     val pulseState = rememberPlayerPulseState()
 
+
+    PlayerEffects(
+        playerState = playerState,
+        pulseState = pulseState,
+        onShowControls = { viewModel.showControls(it) },
+        saveProgress = { viewModel.saveProgress() },
+        pause = { viewModel.pause() })
 
     Box(
         Modifier
             .dPadEvents(
+                playerState = playerState,
+                pulseState = pulseState,
                 seekBack = { viewModel.seekBack() },
                 seekForward = { viewModel.seekForward() },
                 pause = { viewModel.pause() },
-                isEpisodeDialogOpen,
-                playerState,
-                { viewModel.showControls(seconds = 4) },
-                pulseState
+                isEpisodeSheetOpen = isEpisodeDialogOpen,
+                onShowControls = { viewModel.showControls() },
+                onEnterHold = { viewModel.enableSpeedUp() },
+                onEnterHoldUp = { viewModel.disableSpeedUp() }
             )
             .fillMaxSize()
             .background(color = Color.Black)
@@ -146,24 +121,20 @@ fun VideoPlayerScreenContent(
     ) {
         AndroidView(
             factory = {
-            PlayerView(context).apply { useController = false }
-        }, update = {
-            it.player = player
-            it.apply {
-                resizeMode = playerState.resizeMode
-                keepScreenOn = playerState.isPlaying
-            }
-        }, modifier = Modifier.fillMaxSize()
+                PlayerView(context).apply { useController = false }
+            }, update = {
+                it.player = player
+                it.apply {
+                    resizeMode = playerState.resizeMode
+                    keepScreenOn = playerState.isPlaying
+                }
+            }, modifier = Modifier.fillMaxSize()
         )
 
 
         PlayerOverlay(
             modifier = Modifier.fillMaxSize(),
             playerState = playerState,
-            onShowControls = { viewModel.showControls(seconds = 4) },
-            onHideControls = { viewModel.hideControls() },
-            isPlaying = player.isPlaying,
-            pulseState = pulseState,
             centerButton = { PlayerPulse(pulseState, playerState.isLoading) },
             subtitles = { /* TODO Implement subtitles */ },
             header = {
@@ -175,22 +146,23 @@ fun VideoPlayerScreenContent(
             },
             controls = {
                 PlayerControls(
-                    isPlaying = player.isPlaying,
                     showType = showType,
+                    playerState = playerState,
                     currentPosition = playerState.currentPosition,
                     duration = playerState.duration,
-                    player = player,
                     onShowControls = { viewModel.showControls(seconds = 4) },
                     onHideControls = { viewModel.hideControls() },
                     openEpisodeSheet = {
-                        player.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true
+                        viewModel.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true
                     },
                     openAudioSheet = { isAudioDialogOpen = true },
                     openQualitySheet = { isQualityDialogOpen = true },
                     hasNextEpisode = hasNextEpisode,
                     hasPrevEpisode = hasPrevEpisode,
                     onPrevEpisodeClick = { viewModel.goToPrevEpisode() },
-                    onNextEpisodeClick = { viewModel.goToNextEpisode() })
+                    onNextEpisodeClick = { viewModel.goToNextEpisode() },
+                    seekTo = { viewModel.seekTo(it) },
+                    onPlayPauseToggle = { viewModel.onPlayPauseClick() })
             })
 
 
@@ -216,6 +188,8 @@ private fun Modifier.dPadEvents(
     playerState: PlayerState,
     onShowControls: () -> Unit,
     pulseState: PlayerPulseState,
+    onEnterHold: () -> Unit,
+    onEnterHoldUp: () -> Unit,
 ): Modifier = this.handleDPadKeyEvents(onLeft = {
     if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
         seekBack()
@@ -234,5 +208,13 @@ private fun Modifier.dPadEvents(
     if (!isEpisodeSheetOpen) {
         pause()
         onShowControls()
+    }
+}, onEnterHold = {
+    if (!isEpisodeSheetOpen) {
+        onEnterHold()
+    }
+}, onEnterHoldUp = {
+    if (!isEpisodeSheetOpen) {
+        onEnterHoldUp()
     }
 })

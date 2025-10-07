@@ -20,30 +20,39 @@ fun PlayerGestureContainer(
     setPulseType: (type: PlayerPulse.Type) -> Unit,
     seekForward: () -> Unit,
     seekBack: () -> Unit,
+    enableSpeedUp: () -> Unit,
+    disableSpeedUp: () -> Unit,
 ) {
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTransformGestures { _, _, zoom, _ ->
-                    if (zoom > 1) {
-                        setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM)
-                    } else if (zoom < 1) {
-                        setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT)
-                    }
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .pointerInput(Unit) {
+            detectTransformGestures { _, _, zoom, _ ->
+                if (zoom > 1) {
+                    setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM)
+                } else if (zoom < 1) {
+                    setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT)
                 }
             }
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = { toggleControls() }, onDoubleTap = { offset ->
-                    val screenWidth = size.width
-                    if (offset.x < screenWidth / 2) {
-                        seekBack()
-                        setPulseType(PlayerPulse.Type.BACK)
-                    } else {
-                        seekForward()
-                        setPulseType(PlayerPulse.Type.FORWARD)
-                    }
-                })
+        }
+        .pointerInput(Unit) {
+            detectTapGestures(onLongPress = {
+                enableSpeedUp()
+            }, onPress = {
+                try {
+                    awaitRelease()
+                } finally {
+                    disableSpeedUp()
+                }
+            }, onTap = { toggleControls() }, onDoubleTap = { offset ->
+                val screenWidth = size.width
+                if (offset.x < screenWidth / 2) {
+                    seekBack()
+                    setPulseType(PlayerPulse.Type.BACK)
+                } else {
+                    seekForward()
+                    setPulseType(PlayerPulse.Type.FORWARD)
+                }
             })
+        })
 }

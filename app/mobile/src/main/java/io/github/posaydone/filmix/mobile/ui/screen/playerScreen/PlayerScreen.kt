@@ -29,7 +29,7 @@ import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.mobile.ui.common.Loading
-import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerLaunchedEffects
+import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerEffects
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerBottomControls
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerDialogs
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.PlayerGestureContainer
@@ -89,7 +89,7 @@ fun VideoPlayerScreenContent(
         mutableStateOf(false)
     }
 
-    PlayerLaunchedEffects(playerState = playerState, pause = { viewModel.pause() }, saveProgress = {
+    PlayerEffects(playerState = playerState, pause = { viewModel.pause() }, saveProgress = {
         viewModel.saveProgress()
     })
 
@@ -114,15 +114,16 @@ fun VideoPlayerScreenContent(
             setResizeMode = { viewModel.setResizeMode(it) },
             setPulseType = { pulseState.setType(it) },
             seekForward = { viewModel.seekForward() },
-            seekBack = { viewModel.seekBack() })
+            seekBack = { viewModel.seekBack() },
+            enableSpeedUp = { viewModel.enableSpeedUp() },
+            disableSpeedUp = { viewModel.disableSpeedUp() }
+        )
+
 
         PlayerOverlay(
             modifier = Modifier.fillMaxSize(),
             playerState = playerState,
             pulseState = pulseState,
-            onShowControls = { viewModel.showControls(seconds = 4) },
-            onHideControls = { viewModel.hideControls() },
-            isPlaying = playerState.isPlaying,
             subtitles = { /* TODO Implement subtitles */ },
             header = {
                 PlayerMediaTitle(

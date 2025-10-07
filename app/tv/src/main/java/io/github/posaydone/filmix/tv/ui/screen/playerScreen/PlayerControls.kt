@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.rounded.AutoAwesomeMotion
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.MediaController
+import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerControlsButton
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerSeeker
@@ -32,11 +33,12 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(UnstableApi::class)
 @Composable
 fun PlayerControls(
-    isPlaying: Boolean,
     showType: ShowType?,
     currentPosition: Long,
+    playerState: PlayerState,
     duration: Long,
-    player: MediaController,
+    seekTo: (Long) -> Unit,
+    onPlayPauseToggle: () -> Unit,
     onShowControls: () -> Unit,
     onHideControls: () -> Unit,
     openEpisodeSheet: () -> Unit,
@@ -48,24 +50,22 @@ fun PlayerControls(
     hasPrevEpisode: Boolean,
 ) {
     val focusRequester = remember { FocusRequester() }
-    
-    val onPlayPauseToggle = { shouldPlay: Boolean ->
-        if (shouldPlay) {
-            player.play()
-        } else {
-            player.pause()
-        }
+
+    LaunchedEffect(
+        playerState.controlsVisible
+    ) {
+        if (playerState.controlsVisible)
+            focusRequester.requestFocus()
     }
 
     Column {
         PlayerSeeker(
             onShowControls = onShowControls,
-            onSeek = { player.seekTo(player.duration.times(it).toLong()) },
+            onSeek = { seekTo(duration.times(it).toLong()) },
             contentProgress = currentPosition.milliseconds,
             contentDuration = duration.milliseconds
         )
 
-        // New controls row below seeker
         Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -77,12 +77,11 @@ fun PlayerControls(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Previous episode button
                 if (showType == ShowType.SERIES && hasPrevEpisode) {
                     PlayerControlsButton(
                         icon = Icons.Default.SkipPrevious,
                         onShowControls = onShowControls,
-                        isPlaying = isPlaying,
+                        isPlaying = playerState.isPlaying,
                         contentDescription = "Previous episode",
                         onClick = onPrevEpisodeClick,
                     )
@@ -91,11 +90,11 @@ fun PlayerControls(
                 // Play/Pause button
                 PlayerControlsButton(
                     modifier = Modifier.focusRequester(focusRequester),
-                    icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    icon = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     onShowControls = onShowControls,
-                    isPlaying = isPlaying,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    onClick = { onPlayPauseToggle(!isPlaying) },
+                    isPlaying = playerState.isPlaying,
+                    contentDescription = if (playerState.isPlaying) "Pause" else "Play",
+                    onClick = { onPlayPauseToggle() },
                 )
 
                 // Next episode button
@@ -103,7 +102,7 @@ fun PlayerControls(
                     PlayerControlsButton(
                         icon = Icons.Default.SkipNext,
                         onShowControls = onShowControls,
-                        isPlaying = isPlaying,
+                        isPlaying = playerState.isPlaying,
                         contentDescription = "Next episode",
                         onClick = onNextEpisodeClick,
                     )
@@ -114,7 +113,7 @@ fun PlayerControls(
                     PlayerControlsButton(
                         icon = Icons.Rounded.AutoAwesomeMotion,
                         onShowControls = onShowControls,
-                        isPlaying = isPlaying,
+                        isPlaying = playerState.isPlaying,
                         contentDescription = "All episodes",
                         text = "Episodes",
                         onClick = openEpisodeSheet,
@@ -129,7 +128,7 @@ fun PlayerControls(
                 PlayerControlsButton(
                     icon = Icons.Default.Audiotrack,
                     onShowControls = onShowControls,
-                    isPlaying = isPlaying,
+                    isPlaying = playerState.isPlaying,
                     contentDescription = "Audio tracks",
                     text = "Audio",
                     onClick = openAudioSheet,
@@ -138,7 +137,7 @@ fun PlayerControls(
                 PlayerControlsButton(
                     icon = Icons.Default.Settings,
                     onShowControls = onShowControls,
-                    isPlaying = isPlaying,
+                    isPlaying = playerState.isPlaying,
                     contentDescription = "Settings",
                     text = "Settings",
                     onClick = openQualitySheet,
