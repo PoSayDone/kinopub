@@ -50,8 +50,11 @@ jobs:
             - name: Build gradle project
               run: ./gradlew build
 
-            - name: Build apk release project (APK) - ${{ env.main_project_module }} module
-              run: ./gradlew assemble
+            - name: Build apk release project (APK) - ${{ env.mobile_project_module }} module
+              run: ./gradlew ${{ env.mobile_project_module }}:assembleRelease
+
+            - name: Build apk release project (APK) - ${{ env.tv_project_module }} module
+              run: ./gradlew ${{ env.tv_project_module }}:assembleRelease
 
             - name: Upload Mobile APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4

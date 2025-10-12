@@ -232,7 +232,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private fun startTrackingPlayback() {
         positionJob?.cancel()
         minuteProgressSaveJob?.cancel()
-        
+
         positionJob = viewModelScope.launch {
             while (isActive) {
                 playerController.value?.let { player ->
@@ -246,7 +246,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 delay(500) // Update every 500ms
             }
         }
-        
+
         // Save progress every minute
         minuteProgressSaveJob = viewModelScope.launch {
             while (isActive) {

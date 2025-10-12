@@ -22,13 +22,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel.Companion.SHOW_CONTROLS_TIME
 import io.github.posaydone.filmix.tv.ui.utils.handleDPadKeyEvents
 import io.github.posaydone.filmix.tv.ui.utils.ifElse
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalTvMaterial3Api::class)
+@UnstableApi
+@OptIn(
+    ExperimentalComposeUiApi::class,
+    ExperimentalTvMaterial3Api::class,
+)
 @Composable
 fun RowScope.PlayerSeekPill(
     progress: Float,
