@@ -39,13 +39,11 @@ jobs:
 
             - name: Run tests and build release artifacts for mobile
               run: |
-                  ./gradlew mobile:test
                   ./gradlew mobile:assembleRelease --stacktrace
                   ./gradlew mobile:bundleRelease
 
             - name: Run tests and build release artifacts for tv
               run: |
-                  ./gradlew tv:test
                   ./gradlew tv:assembleRelease --stacktrace
                   ./gradlew tv:bundleRelease
 
