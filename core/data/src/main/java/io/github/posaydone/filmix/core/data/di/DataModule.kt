@@ -14,8 +14,12 @@ import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.network.dataSource.AuthRemoteDataSource
 import io.github.posaydone.filmix.core.network.dataSource.FilmixRemoteDataSource
 import io.github.posaydone.filmix.core.network.dataSource.KinopoiskRemoteDataSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
+@JvmSuppressWildcards
 @Module
 @InstallIn(SingletonComponent::class)
 object DataModule {
@@ -23,8 +27,9 @@ object DataModule {
     @Singleton
     fun provideFilmixRepository(
         dataSource: FilmixRemoteDataSource,
+        @ApplicationScope externalScope: CoroutineScope
     ): FilmixRepository {
-        return FilmixRepository(dataSource)
+        return FilmixRepository(dataSource, externalScope)
     }
 
     @Provides
@@ -50,4 +55,10 @@ object DataModule {
     ): SessionManager {
         return SessionManagerImpl(context)
     }
+
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 }

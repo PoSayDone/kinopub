@@ -31,7 +31,6 @@ fun PlayerEffects(playerState: PlayerState, saveProgress: () -> Unit, pause: () 
     val insetsController = WindowCompat.getInsetsController(window, view)
     val previousOrientation = remember { activity?.requestedOrientation }
 
-
     if (!view.isInEditMode) {
         if (!playerState.controlsVisible) {
             insetsController.apply {
@@ -46,21 +45,10 @@ fun PlayerEffects(playerState: PlayerState, saveProgress: () -> Unit, pause: () 
         }
     }
 
-
-    LaunchedEffect(playerState.isPlaying) {
-        if (!playerState.isPlaying) {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        } else {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-    }
-
     DisposableEffect(Unit) {
-        // Lock to landscape mode (both landscape-left and landscape-right)
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
         onDispose {
-            // Restore previous orientation
             previousOrientation?.let {
                 activity?.requestedOrientation = it
             }

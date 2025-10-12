@@ -1,6 +1,5 @@
 package io.github.posaydone.filmix.tv.ui.screen.homeScreen
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -28,7 +27,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.BlendMode
@@ -48,8 +46,12 @@ import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ImmersiveContentUiState
+import io.github.posaydone.filmix.core.model.KinopoiskCountry
+import io.github.posaydone.filmix.core.model.KinopoiskGenre
+import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.Votes
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails
@@ -155,14 +157,14 @@ private fun Body(
                 title = immersiveState.fullShow.title,
                 description = immersiveState.fullShow.description
                     ?: immersiveState.fullShow.shortDescription,
-                rating = io.github.posaydone.filmix.core.model.Rating(
+                rating = Rating(
                     kp = immersiveState.fullShow.ratingKp ?: 0.0,
                     imdb = immersiveState.fullShow.ratingImdb ?: 0.0,
                     filmCritics = 0.0,
                     russianFilmCritics = 0.0,
                     await = 0.0
                 ),
-                votes = io.github.posaydone.filmix.core.model.Votes(
+                votes = Votes(
                     kp = immersiveState.fullShow.votesKp ?: 0,
                     imdb = immersiveState.fullShow.votesImdb ?: 0,
                     filmCritics = 0,
@@ -170,12 +172,12 @@ private fun Body(
                     await = 0
                 ),
                 genres = immersiveState.fullShow.genres.map {
-                    io.github.posaydone.filmix.core.model.KinopoiskGenre(
+                    KinopoiskGenre(
                         name = it
                     )
                 },
                 countries = immersiveState.fullShow.countries.map {
-                    io.github.posaydone.filmix.core.model.KinopoiskCountry(
+                    KinopoiskCountry(
                         name = it
                     )
                 },

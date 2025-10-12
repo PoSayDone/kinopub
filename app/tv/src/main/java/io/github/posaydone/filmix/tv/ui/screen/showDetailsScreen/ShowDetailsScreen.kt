@@ -43,17 +43,11 @@ import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
-import io.github.posaydone.filmix.core.model.Country
 import io.github.posaydone.filmix.core.model.FullShow
-import io.github.posaydone.filmix.core.model.Genre
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
-import io.github.posaydone.filmix.core.model.LastEpisode
-import io.github.posaydone.filmix.core.model.MaxEpisode
-import io.github.posaydone.filmix.core.model.KinopoiskPerson
 import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.ShowDetails
-import io.github.posaydone.filmix.core.model.ShowImage
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowTrailers

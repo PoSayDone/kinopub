@@ -62,12 +62,12 @@ fun PlayerDialogs(
             SettingsDialog(
                 qualities = qualities,
                 selectedQuality = selectedQuality,
-                cropOptions = listOf("Fit", "Fill", "Zoom"), // Sample crop options
-                selectedCrop = "Fit", // Sample selected crop
+                cropOptions = listOf("Fit", "Fill", "Zoom"),
+                selectedCrop = viewModel.selectedCrop.value,
                 isSettingsSheetOpen = isQualitySheetOpen,
                 onDismiss = closeQualitySheet,
                 onQualitySelected = { quality -> viewModel.setQuality(quality) },
-                onCropSelected = { crop -> /* Handle crop selection */ })
+                onCropSelected = { crop -> viewModel.setCrop(crop) })
         }
     } else {
         moviePieces?.let { translations ->
@@ -85,12 +85,12 @@ fun PlayerDialogs(
             SettingsDialog(
                 qualities = qualities,
                 selectedQuality = selectedQuality,
-                cropOptions = listOf("Fit", "Fill", "Zoom"), // Sample crop options
-                selectedCrop = "Fit", // Sample selected crop
+                cropOptions = listOf("Fit", "Fill", "Zoom"),
+                selectedCrop = viewModel.selectedCrop.value,
                 isSettingsSheetOpen = isQualitySheetOpen,
                 onDismiss = closeQualitySheet,
                 onQualitySelected = { quality -> viewModel.setQuality(quality) },
-                onCropSelected = { crop -> /* Handle crop selection */ })
+                onCropSelected = { crop -> viewModel.setCrop(crop) })
         }
     }
 }

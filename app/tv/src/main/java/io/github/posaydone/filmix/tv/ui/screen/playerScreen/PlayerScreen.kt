@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
@@ -80,6 +82,7 @@ fun VideoPlayerScreenContent(
     selectedEpisode: Episode?,
 ) {
     val context = LocalContext.current
+    val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
     val showType by viewModel.contentType.collectAsState()
     val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
     val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
@@ -96,6 +99,7 @@ fun VideoPlayerScreenContent(
 
 
     PlayerEffects(
+        lifecycleOwner = lifecycleOwner,
         playerState = playerState,
         pulseState = pulseState,
         onShowControls = { viewModel.showControls(it) },
@@ -150,7 +154,7 @@ fun VideoPlayerScreenContent(
                     playerState = playerState,
                     currentPosition = playerState.currentPosition,
                     duration = playerState.duration,
-                    onShowControls = { viewModel.showControls(seconds = 4) },
+                    onShowControls = { viewModel.showControls(it) },
                     onHideControls = { viewModel.hideControls() },
                     openEpisodeSheet = {
                         viewModel.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true

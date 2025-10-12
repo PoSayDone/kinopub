@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,15 +27,13 @@ fun PlayerMediaTitle(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        // Show logo
         AsyncImage(
             model = showDetails.logoUrl,
             contentDescription = showDetails.title,
-            modifier = Modifier
-                .size(width = 300.dp, height = 80.dp),
+            modifier = Modifier.width(300.dp),
             contentScale = ContentScale.Fit,
         )
-        
+
         // Season and episode information
         if (currentSeason != null && currentEpisode != null) {
             Spacer(Modifier.height(8.dp))

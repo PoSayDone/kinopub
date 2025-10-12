@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.LocalContentColor
@@ -17,7 +17,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import io.github.posaydone.filmix.core.model.FullShow
@@ -30,22 +30,33 @@ fun PlayerMediaTitle(
     modifier: Modifier = Modifier,
     openSettingsDialog: () -> Unit,
 ) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    
     CompositionLocalProvider(LocalContentColor provides Color.White) {
         Row(
             modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column { }
             Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start
+            ) {
+
+            }
+            Column(
+                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
                 AsyncImage(
                     model = showDetails.logoUrl,
                     contentDescription = showDetails.title,
-                    modifier = Modifier.width(300.dp),
-                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.sizeIn(
+                        maxWidth = screenWidth * 0.2f, maxHeight = screenHeight * 0.08f
+                    )
                 )
 
                 if (currentSeason != null && currentEpisode != null) {
@@ -57,7 +68,9 @@ fun PlayerMediaTitle(
                     )
                 }
             }
-            Column {
+            Column(
+                modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End
+            ) {
                 PlayerControlsButton(
                     icon = Icons.Default.Settings, onClick = { openSettingsDialog() })
             }

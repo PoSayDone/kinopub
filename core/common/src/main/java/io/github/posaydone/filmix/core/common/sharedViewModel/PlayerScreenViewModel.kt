@@ -9,7 +9,6 @@ import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
@@ -20,7 +19,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
-
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -35,7 +33,6 @@ import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.core.model.Series
 import io.github.posaydone.filmix.core.model.SessionManager
-import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowProgressItem
 import io.github.posaydone.filmix.core.model.ShowResourceResponse
@@ -52,8 +49,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import kotlin.math.log
 
 @androidx.media3.common.util.UnstableApi
 data class PlayerState(
@@ -124,6 +119,9 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private val _contentType = MutableStateFlow<ShowType?>(null)
     val contentType: StateFlow<ShowType?> = _contentType.asStateFlow()
 
+    private val _selectedCrop = MutableStateFlow<String?>("Fit") // Default crop mode
+    val selectedCrop: StateFlow<String?> = _selectedCrop.asStateFlow()
+
     private lateinit var savedProgress: ShowProgress
 
     // StateFlow for the final video URL
@@ -149,7 +147,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
         AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
 
-    private lateinit var series: Series 
+    private lateinit var series: Series
     private lateinit var movie: List<VideoWithQualities>
 
     private var positionJob: Job? = null
@@ -163,9 +161,9 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
 
     private var controlsHideJob: Job? = null
+    private var minuteProgressSaveJob: Job? = null
 
-    fun showControls(seconds: Int = 8) {
-        // Cancel any existing hide job
+    fun showControls(seconds: Int = SHOW_CONTROLS_TIME) {
         controlsHideJob?.cancel()
 
         _playerState.update { it.copy(controlsVisible = true) }
@@ -207,6 +205,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _playerState.update { it.copy(isPlaying = isPlaying) }
+                        // Save progress when player is paused
+                        if (!isPlaying) {
+                            saveProgress()
+                        }
                     }
 
                     override fun onPlaybackStateChanged(state: Int) {
@@ -229,6 +231,8 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     private fun startTrackingPlayback() {
         positionJob?.cancel()
+        minuteProgressSaveJob?.cancel()
+        
         positionJob = viewModelScope.launch {
             while (isActive) {
                 playerController.value?.let { player ->
@@ -240,6 +244,16 @@ class PlayerScreenViewModel @AssistedInject constructor(
                     }
                 }
                 delay(500) // Update every 500ms
+            }
+        }
+        
+        // Save progress every minute
+        minuteProgressSaveJob = viewModelScope.launch {
+            while (isActive) {
+                delay(60_000) // Wait for 1 minute (60,000 ms)
+                if (playerController.value?.isPlaying == true) { // Only save if currently playing
+                    saveProgress()
+                }
             }
         }
     }
@@ -481,37 +495,46 @@ class PlayerScreenViewModel @AssistedInject constructor(
     }
 
     fun saveProgress() {
-        playerController.value?.let { player ->
-            val season = selectedSeason.value
-            val episode = selectedEpisode.value
-            val translation = _selectedTranslation.value
-            val movieTranslation = _selectedMovieTranslation.value
-            val qualityFile = _selectedQuality.value
-            val time = player.currentPosition / 1000
+        try {
+            playerController.value?.let { player ->
+                val season = selectedSeason.value
+                val episode = selectedEpisode.value
+                val translation = _selectedTranslation.value
+                val movieTranslation = _selectedMovieTranslation.value
+                val qualityFile = _selectedQuality.value
+                val time = player.currentPosition / 1000
 
-            if (contentType.value == ShowType.MOVIE) {
-                if (movieTranslation != null && qualityFile != null) viewModelScope.launch {
-                    val savedSeriesProgress = ShowProgressItem(
-                        0,
-                        0,
-                        movieTranslation.voiceover,
-                        time,
-                        qualityFile.quality,
-                    )
-                    repository.addShowProgress(showId, savedSeriesProgress)
-                }
-            } else {
-                if (season != null && episode != null && translation != null && qualityFile != null) viewModelScope.launch {
-                    val savedSeriesProgress = ShowProgressItem(
-                        season.season,
-                        episode.episode,
-                        translation.translation,
-                        time,
-                        qualityFile.quality,
-                    )
-                    repository.addShowProgress(showId, savedSeriesProgress)
+                if (contentType.value == ShowType.MOVIE) {
+                    if (movieTranslation != null && qualityFile != null) {
+                        viewModelScope.launch {
+                            val savedSeriesProgress = ShowProgressItem(
+                                0,
+                                0,
+                                movieTranslation.voiceover,
+                                time,
+                                qualityFile.quality,
+                            )
+                            repository.addShowProgress(showId, savedSeriesProgress)
+                        }
+                    }
+                } else {
+                    if (season != null && episode != null && translation != null && qualityFile != null) {
+                        viewModelScope.launch {
+                            val savedSeriesProgress = ShowProgressItem(
+                                season.season,
+                                episode.episode,
+                                translation.translation,
+                                time,
+                                qualityFile.quality,
+                            )
+                            repository.addShowProgress(showId, savedSeriesProgress)
+                        }
+                    }
                 }
             }
+        } catch (e: Exception) {
+            Log.e("PlayerScreenViewModel", "Error saving progress: ${e.message}", e)
+            // Continue execution despite the error - don't crash the app
         }
     }
 
@@ -524,6 +547,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     fun pause() {
         playerController.value?.let { player ->
             player.pause()
+            saveProgress()
         }
     }
 
@@ -607,6 +631,17 @@ class PlayerScreenViewModel @AssistedInject constructor(
         }
     }
 
+    fun setCrop(crop: String) {
+        _selectedCrop.value = crop
+        val resizeMode = when (crop) {
+            "Fit" -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+            "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+        }
+        setResizeMode(resizeMode)
+    }
+
 
     override fun onCleared() {
         saveProgress()
@@ -622,12 +657,18 @@ class PlayerScreenViewModel @AssistedInject constructor(
         mediaControllerFuture = null
         positionJob?.cancel()
         positionJob = null
+        minuteProgressSaveJob?.cancel()
+        minuteProgressSaveJob = null
         _playerState.update {
             it.copy(
                 isPlaying = false, isLoading = false, currentPosition = 0L, duration = 0L
             )
         }
         super.onCleared()
+    }
+
+    companion object {
+        var SHOW_CONTROLS_TIME = 4
     }
 }
 

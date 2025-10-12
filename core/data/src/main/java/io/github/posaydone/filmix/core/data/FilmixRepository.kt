@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.core.data
 
+import io.github.posaydone.filmix.core.data.di.ApplicationScope
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.PageWithShows
 import io.github.posaydone.filmix.core.model.Show
@@ -13,11 +14,16 @@ import io.github.posaydone.filmix.core.model.ShowTrailers
 import io.github.posaydone.filmix.core.model.StreamTypeResponse
 import io.github.posaydone.filmix.core.model.UserProfileInfo
 import io.github.posaydone.filmix.core.network.dataSource.FilmixRemoteDataSource
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class FilmixRepository @Inject constructor(private val filmixRemoteDataSource: FilmixRemoteDataSource) {
+class FilmixRepository @Inject constructor(
+    private val filmixRemoteDataSource: FilmixRemoteDataSource,
+    @ApplicationScope private val externalScope: CoroutineScope
+) {
     suspend fun getPage(
         limit: Int = 48,
         page: Int? = null,
@@ -131,8 +137,10 @@ class FilmixRepository @Inject constructor(private val filmixRemoteDataSource: F
         return filmixRemoteDataSource.fetchShowProgress(movieId)
     }
 
-    suspend fun addShowProgress(movieId: Int, showProgressItem: ShowProgressItem) {
-        filmixRemoteDataSource.addShowProgress(movieId, showProgressItem)
+    fun addShowProgress(movieId: Int, showProgressItem: ShowProgressItem) {
+        externalScope.launch {
+            filmixRemoteDataSource.addShowProgress(movieId, showProgressItem)
+        }
     }
 
     // Получение ссылки на видео для выбранного сезона, серии и озвучки

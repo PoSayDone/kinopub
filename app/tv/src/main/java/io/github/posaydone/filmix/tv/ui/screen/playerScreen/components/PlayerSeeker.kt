@@ -23,7 +23,7 @@ import kotlin.time.Duration
 
 @Composable
 fun PlayerSeeker(
-    onShowControls: () -> Unit,
+    onShowControls: (seconds: Int) -> Unit,
     onSeek: (Float) -> Unit,
     contentProgress: Duration,
     contentDuration: Duration,

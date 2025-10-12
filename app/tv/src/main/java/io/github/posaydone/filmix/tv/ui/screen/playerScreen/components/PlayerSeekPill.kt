@@ -17,12 +17,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
+import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel.Companion.SHOW_CONTROLS_TIME
 import io.github.posaydone.filmix.tv.ui.utils.handleDPadKeyEvents
 import io.github.posaydone.filmix.tv.ui.utils.ifElse
 
@@ -31,7 +33,7 @@ import io.github.posaydone.filmix.tv.ui.utils.ifElse
 fun RowScope.PlayerSeekPill(
     progress: Float,
     onSeek: (seekProgress: Float) -> Unit,
-    onShowControls: () -> Unit,
+    onShowControls: (seconds: Int) -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var isSelected by remember { mutableStateOf(false) }
@@ -47,9 +49,17 @@ fun RowScope.PlayerSeekPill(
 
     LaunchedEffect(isSelected) {
         if (isSelected) {
-            onShowControls() // Show controls when seek pill is selected
+            onShowControls(Int.MAX_VALUE)
         } else {
-            onShowControls() // Show controls normally when deselected
+            onShowControls(SHOW_CONTROLS_TIME)
+        }
+    }
+
+    LaunchedEffect(isFocused) {
+        if (!isFocused && isSelected) {
+            isSelected = false
+            seekProgress = progress
+            onShowControls(SHOW_CONTROLS_TIME)
         }
     }
 

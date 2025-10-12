@@ -5,6 +5,6 @@ object Constants {
     const val FILMIX_API_URL = "${BASE_URL}filmix/"
     const val KINOPOISK_API_URL = "${BASE_URL}kinopoisk/"
     const val TMDB_API_URL = "${BASE_URL}tmdb/"
-    const val TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/"
+    const val TMDB_IMAGE_URL = "${BASE_URL}tmdb/images/"
     const val FANART_API_URL = "${BASE_URL}fanarttv/"
 }

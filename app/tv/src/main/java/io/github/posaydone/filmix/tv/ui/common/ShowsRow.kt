@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.relocation.bringIntoViewResponder
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -42,7 +40,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
@@ -55,11 +52,14 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.common.sharedViewModel.ImmersiveContentUiState
+import io.github.posaydone.filmix.core.model.KinopoiskCountry
+import io.github.posaydone.filmix.core.model.KinopoiskGenre
+import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.Votes
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
-import io.github.posaydone.filmix.tv.ui.utils.ImmersiveShowRowViewResponder
 
 enum class ItemDirection(val aspectRatio: Float) {
     Vertical(10.5f / 16f), Horizontal(16f / 9f);
@@ -228,14 +228,14 @@ fun ImmersiveShowsRow(
                         title = immersiveState.fullShow.title,
                         description = immersiveState.fullShow.description
                             ?: immersiveState.fullShow.shortDescription,
-                        rating = io.github.posaydone.filmix.core.model.Rating(
+                        rating = Rating(
                             kp = immersiveState.fullShow.ratingKp ?: 0.0,
                             imdb = immersiveState.fullShow.ratingImdb ?: 0.0,
                             filmCritics = 0.0,
                             russianFilmCritics = 0.0,
                             await = 0.0
                         ),
-                        votes = io.github.posaydone.filmix.core.model.Votes(
+                        votes = Votes(
                             kp = immersiveState.fullShow.votesKp ?: 0,
                             imdb = immersiveState.fullShow.votesImdb ?: 0,
                             filmCritics = 0,
@@ -243,12 +243,12 @@ fun ImmersiveShowsRow(
                             await = 0
                         ),
                         genres = immersiveState.fullShow.genres.map {
-                            io.github.posaydone.filmix.core.model.KinopoiskGenre(
+                            KinopoiskGenre(
                                 name = it
                             )
                         },
                         countries = immersiveState.fullShow.countries.map {
-                            io.github.posaydone.filmix.core.model.KinopoiskCountry(
+                            KinopoiskCountry(
                                 name = it
                             )
                         },

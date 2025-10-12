@@ -40,7 +40,7 @@ fun HomeBanner(
     navigateToMoviePlayer: (showId: Int) -> Unit,
     onClick: (Int) -> Unit,
 ) {
-    val headerHeight = 320.dp
+    val headerHeight = 420.dp
 
     Box(modifier = modifier) {
         ShowPoster(

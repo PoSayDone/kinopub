@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
+import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel.Companion.SHOW_CONTROLS_TIME
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerControlsButton
@@ -39,7 +40,7 @@ fun PlayerControls(
     duration: Long,
     seekTo: (Long) -> Unit,
     onPlayPauseToggle: () -> Unit,
-    onShowControls: () -> Unit,
+    onShowControls: (seconds: Int) -> Unit,
     onHideControls: () -> Unit,
     openEpisodeSheet: () -> Unit,
     openAudioSheet: () -> Unit,
@@ -54,13 +55,12 @@ fun PlayerControls(
     LaunchedEffect(
         playerState.controlsVisible
     ) {
-        if (playerState.controlsVisible)
-            focusRequester.requestFocus()
+        if (playerState.controlsVisible) focusRequester.requestFocus()
     }
 
     Column {
         PlayerSeeker(
-            onShowControls = onShowControls,
+            onShowControls = { onShowControls(it) },
             onSeek = { seekTo(duration.times(it).toLong()) },
             contentProgress = currentPosition.milliseconds,
             contentDuration = duration.milliseconds
@@ -80,7 +80,7 @@ fun PlayerControls(
                 if (showType == ShowType.SERIES && hasPrevEpisode) {
                     PlayerControlsButton(
                         icon = Icons.Default.SkipPrevious,
-                        onShowControls = onShowControls,
+                        onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
                         contentDescription = "Previous episode",
                         onClick = onPrevEpisodeClick,
@@ -91,7 +91,7 @@ fun PlayerControls(
                 PlayerControlsButton(
                     modifier = Modifier.focusRequester(focusRequester),
                     icon = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    onShowControls = onShowControls,
+                    onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
                     contentDescription = if (playerState.isPlaying) "Pause" else "Play",
                     onClick = { onPlayPauseToggle() },
@@ -101,7 +101,7 @@ fun PlayerControls(
                 if (showType == ShowType.SERIES && hasNextEpisode) {
                     PlayerControlsButton(
                         icon = Icons.Default.SkipNext,
-                        onShowControls = onShowControls,
+                        onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
                         contentDescription = "Next episode",
                         onClick = onNextEpisodeClick,
@@ -112,7 +112,7 @@ fun PlayerControls(
                 if (showType == ShowType.SERIES) {
                     PlayerControlsButton(
                         icon = Icons.Rounded.AutoAwesomeMotion,
-                        onShowControls = onShowControls,
+                        onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
                         contentDescription = "All episodes",
                         text = "Episodes",
@@ -127,7 +127,7 @@ fun PlayerControls(
             ) {
                 PlayerControlsButton(
                     icon = Icons.Default.Audiotrack,
-                    onShowControls = onShowControls,
+                    onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
                     contentDescription = "Audio tracks",
                     text = "Audio",
@@ -136,7 +136,7 @@ fun PlayerControls(
 
                 PlayerControlsButton(
                     icon = Icons.Default.Settings,
-                    onShowControls = onShowControls,
+                    onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
                     contentDescription = "Settings",
                     text = "Settings",

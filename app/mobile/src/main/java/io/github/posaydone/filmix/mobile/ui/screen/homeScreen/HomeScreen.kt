@@ -17,7 +17,6 @@ import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.R
-
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
 import io.github.posaydone.filmix.core.model.ShowList
@@ -55,9 +53,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Home") })
-        }, contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(
             NavigationBarDefaults.windowInsets.union(WindowInsets.statusBars)
         )
     ) { paddingValues ->

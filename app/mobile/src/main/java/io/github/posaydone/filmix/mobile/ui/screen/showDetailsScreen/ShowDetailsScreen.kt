@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -144,7 +146,7 @@ private fun Details(
     modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
-    val headerHeight = 400.dp
+    val headerHeight = 420.dp
     val headerHeightPx = with(receiver = LocalDensity.current) { headerHeight.toPx() }
 
     val isScrolled by remember {
@@ -206,7 +208,8 @@ private fun Details(
                         modifier = Modifier.padding(24.dp),
                     ) {
                         DescriptionSection(
-                            description = fullShow.description ?: fullShow.shortDescription ?: showDetails.shortStory
+                            description = fullShow.description ?: fullShow.shortDescription
+                            ?: showDetails.shortStory
                         )
                     }
                 }
@@ -284,6 +287,10 @@ fun TitleSection(
     logoUrl: String?,
     forceTextTitle: Boolean = false,
 ) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+   
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -318,9 +325,9 @@ fun TitleSection(
                 model = ImageRequest.Builder(LocalContext.current).data(logoUrl).build(),
                 contentDescription = title,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(height)
+                modifier = Modifier.sizeIn(
+                    maxWidth = screenWidth * 0.6f, maxHeight = screenHeight * 0.32f
+                )
             )
         } else {
             Text(

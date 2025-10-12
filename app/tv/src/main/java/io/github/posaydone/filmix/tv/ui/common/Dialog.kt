@@ -203,7 +203,8 @@ fun StandardDialog(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalTvMaterial3Api::class,
+@OptIn(
+    ExperimentalComposeUiApi::class, ExperimentalTvMaterial3Api::class,
     ExperimentalFoundationApi::class
 )
 @Composable
@@ -232,16 +233,20 @@ fun SideDialog(
                 .clip(RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
         ) {
             Column(
-                modifier = Modifier.padding(
-                    top = 24.dp,
-                    bottom = 12.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
+                modifier = Modifier
+                    .padding(
+                        top = 24.dp,
+                        bottom = 12.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    )
+                    .focusable(false),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusable(false),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start)
                 ) {
@@ -696,7 +701,7 @@ private fun Modifier.dialogFocusable() = composed {
         focusRequester.requestFocus()
         focusManager.moveFocus(FocusDirection.Enter)
     }
-   
+
     this.then(
         Modifier
             .focusRequester(focusRequester)
