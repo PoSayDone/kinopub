@@ -13,3 +13,59 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Android specific
+*.ap_
+*.dex
+*.class
+
+# Gradle
+.gradle/
+!gradle.properties
+!gradle-wrapper.properties
+
+# APKs
+*.apk
+*.apks
+
+# Release / Debug outputs
+app/build/
+app/*/build/
+app/*/outputs/
+
+# Generated files
+generated/
+gen/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log files
+*.log
+
+# Android coverage reports
+coverage/
+
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+android/outputs/
+
+# Debug outputs
+**/build/
+**/intermediates/
+**/tmp/
+**/out/
+**/bin/
+**/gen/
+
+# Ignore all .DS_Store files
+**/.DS_Store
