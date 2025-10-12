@@ -50,20 +50,20 @@ jobs:
             - name: Build gradle project
               run: ./gradlew build
 
-            - name: Build apk release project (APK) - ${{ env.mobile_project_module }} module
-              run: ./gradlew ${{ env.mobile_project_module }}:assembleRelease
+            # - name: Build apk release project (APK) - ${{ env.mobile_project_module }} module
+            #   run: ./gradlew ${{ env.mobile_project_module }}:assembleRelease
 
-            - name: Build apk release project (APK) - ${{ env.tv_project_module }} module
-              run: ./gradlew ${{ env.tv_project_module }}:assembleRelease
+            # - name: Build apk release project (APK) - ${{ env.tv_project_module }} module
+            #   run: ./gradlew ${{ env.tv_project_module }}:assembleRelease
 
             - name: Upload Mobile APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
                   name: ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
-                  path: ${{ env.mobile_project_module }}/build/outputs/apk/release/
+                  path: mobile/build/outputs/apk/release/
 
             - name: Upload TV APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
                   name: ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
-                  path: ${{ env.tv_project_module }}/build/outputs/apk/release/
+                  path: tv/build/outputs/apk/release/
