@@ -1,13 +1,15 @@
 name: Build TV and Mobile App
 
-on:
-    push:
-        branches: [main, master]
-
 env:
+    mobile_project_module: app:mobile
+    tv_project_module: app:tv
     KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
     RELEASE_SIGN_KEY_ALIAS: ${{ secrets.RELEASE_SIGN_KEY_ALIAS }}
     RELEASE_SIGN_KEY_PASSWORD: ${{ secrets.RELEASE_SIGN_KEY_PASSWORD }}
+
+on:
+    push:
+        branches: [main, master]
 
 jobs:
     build_apk_aab:
@@ -37,24 +39,28 @@ jobs:
                   token: ${{ secrets.KEYSTORE_ACCESS_TOKEN }}
                   path: app/keystore
 
-            - name: Run tests and build release artifacts for mobile
-              run: |
-                  ./gradlew app:mobile:assembleRelease --stacktrace
-                  ./gradlew app:mobile:bundleRelease
+            - name: Change wrapper permissions
+              run: chmod +x ./gradlew
 
-            - name: Run tests and build release artifacts for tv
-              run: |
-                  ./gradlew app:tv:assembleRelease --stacktrace
-                  ./gradlew app:tv:bundleRelease
+            # Run Tests Build
+            - name: Run gradle tests
+              run: ./gradlew test
 
-            - name: Upload mobile signed APK
+            # Run Build Project
+            - name: Build gradle project
+              run: ./gradlew build
+
+            - name: Build apk release project (APK) - ${{ env.main_project_module }} module
+              run: ./gradlew assemble
+
+            - name: Upload Mobile APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
-                  name: app-release.apk
-                  path: app/mobile/build/outputs/apk/release/mobile-release.apk
+                  name: ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
+                  path: ${{ env.mobile_project_module }}/build/outputs/apk/release/
 
-            - name: Upload TV signed APK
+            - name: Upload TV APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
-                  name: app-release.apk
-                  path: app/tv/build/outputs/apk/release/tv-release.apk
+                  name: ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
+                  path: ${{ env.tv_project_module }}/build/outputs/apk/release/
