@@ -33,13 +33,13 @@ jobs:
                   ./gradlew bundleRelease
 
             - name: Upload mobile signed APK
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
                   name: app-release.apk
                   path: app/mobile/build/outputs/apk/release/mobile-release.apk
 
             - name: Upload TV signed APK
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
                   name: app-release.apk
                   path: app/tv/build/outputs/apk/release/tv-release.apk
