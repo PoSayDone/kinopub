@@ -59,11 +59,11 @@ jobs:
             - name: Upload Mobile APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
-                  name: ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
+                  name: mobile - ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
                   path: app/mobile/build/outputs/apk/release/
 
             - name: Upload TV APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
-                  name: ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
+                  name: tv - ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
                   path: app/tv/build/outputs/apk/release/
