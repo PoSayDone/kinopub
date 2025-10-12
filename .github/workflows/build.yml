@@ -11,7 +11,7 @@ env:
 
 jobs:
     build_apk_aab:
-        if: startsWith(github.head_ref, 'release/') == true
+        if: startsWith(github.head_ref, 'release/') == true || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         name: Build release artifacts
         runs-on: ubuntu-20.04
         steps:
