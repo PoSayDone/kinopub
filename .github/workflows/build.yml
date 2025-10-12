@@ -1,0 +1,60 @@
+name: Build TV and Mobile App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: 'platform-tools, platforms;android-34, build-tools;34.0.0'
+    
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Build Debug APKs
+      run: ./gradlew assembleDebug --no-daemon
+
+    - name: Build Release APKs
+      run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+    - name: Run Unit Tests
+      run: ./gradlew test --no-daemon
+
+    - name: Upload Mobile APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mobile-debug-apk
+        path: app/mobile/build/outputs/apk/debug/mobile-debug.apk
+
+    - name: Upload TV APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: tv-debug-apk
+        path: app/tv/build/outputs/apk/debug/tv-debug.apk
