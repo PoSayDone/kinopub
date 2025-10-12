@@ -16,12 +16,15 @@
 
 package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
 
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.media3.common.util.UnstableApi
 import kotlin.time.Duration
 
 @Composable
+@OptIn(UnstableApi::class)
 fun PlayerSeeker(
     onShowControls: (seconds: Int) -> Unit,
     onSeek: (Float) -> Unit,

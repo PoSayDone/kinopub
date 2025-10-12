@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components
 
+import androidx.annotation.OptIn
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
@@ -11,16 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -29,8 +29,8 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewMo
 import io.github.posaydone.filmix.tv.ui.utils.handleDPadKeyEvents
 import io.github.posaydone.filmix.tv.ui.utils.ifElse
 
-@UnstableApi
 @OptIn(
+    UnstableApi::class,
     ExperimentalComposeUiApi::class,
     ExperimentalTvMaterial3Api::class,
 )
@@ -50,7 +50,7 @@ fun RowScope.PlayerSeekPill(
     val animatedIndicatorHeight by animateDpAsState(
         targetValue = 4.dp.times((if (isFocused) 2.5f else 1f))
     )
-    var seekProgress by remember { mutableStateOf(0f) }
+    var seekProgress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(isSelected) {
         if (isSelected) {
