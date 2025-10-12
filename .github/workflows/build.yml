@@ -37,11 +37,17 @@ jobs:
                   token: ${{ secrets.KEYSTORE_ACCESS_TOKEN }}
                   path: app/keystore
 
-            - name: Run tests and build release artifacts
+            - name: Run tests and build release artifacts for mobile
               run: |
-                  ./gradlew test
-                  ./gradlew assembleRelease --stacktrace
-                  ./gradlew bundleRelease
+                  ./gradlew mobile:test
+                  ./gradlew mobile:assembleRelease --stacktrace
+                  ./gradlew mobile:bundleRelease
+
+            - name: Run tests and build release artifacts for tv
+              run: |
+                  ./gradlew tv:test
+                  ./gradlew tv:assembleRelease --stacktrace
+                  ./gradlew tv:bundleRelease
 
             - name: Upload mobile signed APK
               uses: actions/upload-artifact@v4
