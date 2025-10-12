@@ -11,6 +11,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
@@ -34,7 +36,7 @@ fun <T> AudioDialog(
     SideDialog(
         showDialog = isAudioDialogOpen,
         onDismissRequest = onDismiss,
-        title = "Select Audio Track",
+        title = stringResource(R.string.select_audio_track),
         description = null
     ) {
         LazyColumn(

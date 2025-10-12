@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.R
@@ -41,7 +42,7 @@ fun SearchResultsScreen(
                             navigateBack()
                         }) {
                             Icon(
-                                contentDescription = "Navback icon",
+                                contentDescription = stringResource(R.string.navback_icon),
                                 painter = painterResource(R.drawable.ic_arrow_back)
                             )
                         }

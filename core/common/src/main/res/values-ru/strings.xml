@@ -33,4 +33,57 @@
     <plurals name="minutes_plural" tools:ignore="MissingQuantity">
         <item quantity="other">%d мин</item>
     </plurals>
+    
+    <!-- Settings related strings -->
+    <string name="video_quality">Качество видео</string>
+    <string name="stream_type">Тип потока</string>
+    <string name="server_location">Расположение сервера</string>
+    <string name="account">Аккаунт</string>
+    <string name="username">Имя пользователя</string>
+    <string name="email">Email</string>
+    <string name="subscription">Подписка</string>
+    <string name="player">Плеер</string>
+    <string name="logout">Выйти</string>
+    <string name="settings">Настройки</string>
+    <string name="quality">Качество</string>
+    <string name="crop">Обрезка</string>
+    <string name="stream_type_description">Тип видеопотока, выберите автоматически, если не уверены</string>
+    <string name="server_location_description">Выберите ближайшее расположение для лучшей скорости</string>
+    <string name="video_quality_description">Выберите качество видео по умолчанию, которое будет использоваться в плеере</string>
+    
+    <!-- Player dialog related strings -->
+    <string name="select_audio_track">Выбрать аудиодорожку</string>
+    <string name="select_episode">Выбрать эпизод</string>
+    <string name="continue_watching_banner">Продолжить просмотр</string>
+    
+    <!-- Content descriptions and UI text -->
+    <string name="selected">Выбрано</string>
+    <string name="open_settings">Открыть настройки</string>
+    <string name="logout_icon">Значок выхода</string>
+    <string name="user_avatar">Аватар пользователя</string>
+    <string name="clear_expiration_time">Очистить время истечения</string>
+    <string name="remove_token">Удалить токен</string>
+    <string name="save_wrong_token">Сохранить неправильный токен</string>
+    <string name="all_episodes">Все эпизоды</string>
+    <string name="audio_tracks">Аудиодорожки</string>
+    <string name="aspect_ratio">Соотношение сторон</string>
+    <string name="previous_episode">Предыдущий эпизод</string>
+    <string name="next_episode">Следующий эпизод</string>
+    <string name="picture_in_picture">Картинка в картинке</string>
+    <string name="back">Назад</string>
+    <string name="search_icon">Значок поиска</string>
+    <string name="check">Галочка</string>
+    <string name="poster">Постер</string>
+    <string name="visibility">Видимость</string>
+    <string name="filmix_icon">Значок Filmix</string>
+    <string name="navback_icon">Значок навигации назад</string>
+    <string name="play">Воспроизвести</string>
+    <string name="pause">Пауза</string>
+    <string name="favorite">Избранное</string>
+    <string name="favorites">Избранное</string>
+    <string name="mine">Мои</string>
+    <string name="home">Главная</string>
+    <string name="explore">Поиск</string>
+    <string name="favorite_nav">Избранное</string>
+    <string name="profile">Профиль</string>
 </resources>

@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.FullShow
@@ -51,7 +53,7 @@ fun PlayerTopControls(
             IconButton(onClick = onPipClick) {
                 Icon(
                     imageVector = Icons.Outlined.PictureInPictureAlt,
-                    contentDescription = "Picture in Picture"
+                    contentDescription = stringResource(R.string.picture_in_picture)
                 )
             }
         }
@@ -65,7 +67,7 @@ fun PlayerTopControls(
         // Right: Settings button
         IconButton(onClick = onMoreClick) {
             Icon(
-                imageVector = Icons.Rounded.HighQuality, contentDescription = "Settings"
+                imageVector = Icons.Rounded.HighQuality, contentDescription = stringResource(R.string.settings)
             )
         }
     }

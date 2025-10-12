@@ -30,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.model.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,10 +102,10 @@ private fun MainSettingsPage(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 leadingContent = {
                     Icon(
-                        imageVector = Icons.Default.Settings, contentDescription = "Quality"
+                        imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.quality)
                     )
                 },
-                headlineContent = { Text("Quality") },
+                headlineContent = { Text(stringResource(R.string.quality)) },
                 trailingContent = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -136,7 +138,7 @@ private fun QualitySettingsPage(
                 headlineContent = { Text("${quality.quality}p") },
                 trailingContent = {
                     if (quality == selectedQuality) {
-                        Icon(Icons.Default.Check, contentDescription = "Selected")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
                     }
                 },
                 modifier = Modifier.clickable { onQualitySelected(quality) })

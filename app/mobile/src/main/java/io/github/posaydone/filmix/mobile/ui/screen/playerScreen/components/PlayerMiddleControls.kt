@@ -26,6 +26,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 
 @Composable
@@ -64,7 +66,7 @@ fun PlayerMiddleControls(
             ) {
                 Icon(
                     Icons.Default.SkipPrevious,
-                    contentDescription = "Previous episode",
+                    contentDescription = stringResource(R.string.previous_episode),
                     tint = Color.White.copy(alpha = if (hasPrevEpisode) 1f else 0.4f),
                     modifier = Modifier.size(32.dp)
                 )
@@ -86,7 +88,7 @@ fun PlayerMiddleControls(
             this@Row.AnimatedVisibility(visible = !isLoading, enter = fadeIn(), exit = fadeOut()) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    contentDescription = if (isPlaying) stringResource(R.string.pause) else stringResource(R.string.play),
                     tint = Color.White,
                     modifier = Modifier.size(48.dp)
                 )
@@ -110,7 +112,7 @@ fun PlayerMiddleControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.SkipNext,
-                    contentDescription = "Next episode",
+                    contentDescription = stringResource(R.string.next_episode),
                     tint = Color.White.copy(alpha = if (hasNextEpisode) 1f else 0.4f),
                     modifier = Modifier.size(32.dp)
                 )

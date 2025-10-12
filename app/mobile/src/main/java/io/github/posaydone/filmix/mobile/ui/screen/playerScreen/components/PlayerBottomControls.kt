@@ -15,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -55,14 +57,14 @@ fun PlayerBottomControls(
                 if (showType == ShowType.SERIES) {
                     PlayerControlsButton(
                         icon = Icons.Rounded.AutoAwesomeMotion,
-                        contentDescription = "All episodes",
+                        contentDescription = stringResource(R.string.all_episodes),
                         text = "Episodes",
                         onClick = openEpisodeDialog,
                     )
                 }
                 PlayerControlsButton(
                     icon = Icons.Default.Audiotrack,
-                    contentDescription = "Audio tracks",
+                    contentDescription = stringResource(R.string.audio_tracks),
                     text = "Audio",
                     onClick = openAudioDialog,
                 )
@@ -75,7 +77,7 @@ fun PlayerBottomControls(
 
                 PlayerControlsButton(
                     icon = Icons.Default.AspectRatio,
-                    contentDescription = "Aspect Ratio",
+                    contentDescription = stringResource(R.string.aspect_ratio),
                     onClick = {
                         when (resizeMode) {
                             AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> {

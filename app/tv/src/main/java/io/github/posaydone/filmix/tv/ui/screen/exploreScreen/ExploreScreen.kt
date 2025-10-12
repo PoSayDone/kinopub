@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -53,7 +55,8 @@ fun ExploreScreen(
         TextField(
             trailingIcon = {
                 Icon(
-                    imageVector = Icons.Rounded.Search, contentDescription = "Search Icon"
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = stringResource(R.string.search_icon)
                 )
             },
             contentPadding = PaddingValues(horizontal = 24.dp),
@@ -66,7 +69,7 @@ fun ExploreScreen(
                 .width(500.dp)
                 .height(64.dp)
                 .focusRequester(focusRequester),
-            placeholderText = "Search...",
+            placeholderText = "${stringResource(R.string.search)}...",
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                 autoCorrectEnabled = false, imeAction = ImeAction.Search
             ),

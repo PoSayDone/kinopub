@@ -10,6 +10,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.mobile.ui.common.settings.SettingItem
 import io.github.posaydone.filmix.mobile.ui.common.settings.SettingsGroup
 
@@ -34,7 +36,7 @@ fun SettingScreenContent(
                 }, trailingContent = {
                     if (currentValue == item.key) Icon(
                         imageVector = Icons.Rounded.Check,
-                        contentDescription = "Checked",
+                        contentDescription = stringResource(R.string.check),
                     )
                 })
             }

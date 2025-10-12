@@ -71,21 +71,21 @@ fun HomeScreen(
                                 System.currentTimeMillis() - 1000
                             )
                         }) {
-                            Text("clear expiration time")
+                            Text(stringResource(R.string.clear_expiration_time))
                         }
                         Button(onClick = {
                             s.sessionManager.saveAccessToken(
                                 null, System.currentTimeMillis() - 1000
                             )
                         }) {
-                            Text("remove token")
+                            Text(stringResource(R.string.remove_token))
                         }
                         Button(onClick = {
                             s.sessionManager.saveAccessToken(
                                 "adsfjskjdfkaksjf", System.currentTimeMillis() + 10 * 60 * 1000
                             )
                         }) {
-                            Text("save wrong token")
+                            Text(stringResource(R.string.save_wrong_token))
                         }
                     })
                 }

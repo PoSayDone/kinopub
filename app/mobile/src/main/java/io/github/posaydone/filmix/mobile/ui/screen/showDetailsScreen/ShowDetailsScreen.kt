@@ -442,7 +442,7 @@ fun ActionButtons(
             onClick = navigateToMoviePlayer
         ) {
             Icon(
-                contentDescription = "Play",
+                contentDescription = stringResource(R.string.play),
                 modifier = Modifier.size(28.dp),
                 imageVector = Icons.Rounded.PlayArrow,
             )
@@ -458,7 +458,7 @@ fun ActionButtons(
             ) else ButtonDefaults.outlinedButtonColors()
         ) {
             Icon(
-                contentDescription = "Favorite",
+                contentDescription = stringResource(R.string.favorite),
                 modifier = Modifier.size(28.dp),
                 imageVector = if (isFavorite) Icons.Rounded.BookmarkRemove else Icons.Rounded.BookmarkAdd,
             )

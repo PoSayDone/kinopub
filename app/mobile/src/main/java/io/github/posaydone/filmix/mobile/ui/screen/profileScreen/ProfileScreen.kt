@@ -27,11 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenViewModel
 import io.github.posaydone.filmix.core.model.UserProfileInfo
@@ -131,33 +133,33 @@ fun ProfileScreenContent(
 
         }
         SettingsGroup(
-            title = "Account"
+            title = stringResource(R.string.account)
         ) {
             SettingItemLink(
-                title = "Username", currentValue = userProfile.login, onClick = {})
+                title = stringResource(R.string.username), currentValue = userProfile.login, onClick = {})
             SettingItemLink(
-                title = "Email", currentValue = userProfile.email, onClick = {})
+                title = stringResource(R.string.email), currentValue = userProfile.email, onClick = {})
             SettingItemLink(
-                title = "Subscription", currentValue = proStatus, onClick = {})
+                title = stringResource(R.string.subscription), currentValue = proStatus, onClick = {})
         }
         SettingsGroup(
-            title = "Player"
+            title = stringResource(R.string.player)
         ) {
 
             SettingItemLink(
-                title = "Video Quality",
+                title = stringResource(R.string.video_quality),
                 currentValue = videoQualities[currentVideoQuality] ?: currentVideoQuality,
                 onClick = {
                     navigateToVideoQualityScreen()
                 })
             SettingItemLink(
-                title = "Stream Type",
+                title = stringResource(R.string.stream_type),
                 currentValue = streamTypes[currentStreamType] ?: currentStreamType,
                 onClick = {
                     navigateToVideoStreamTypeScreen()
                 })
             SettingItemLink(
-                title = "Server Location",
+                title = stringResource(R.string.server_location),
                 currentValue = serverLocations[currentServerLocation] ?: currentServerLocation,
                 onClick = {
                     navigateToServerLocationScreen()
@@ -167,10 +169,10 @@ fun ProfileScreenContent(
             style = LargeButtonStyle.TEXT, onClick = onLogout, modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                contentDescription = "Logout icon", imageVector = Icons.AutoMirrored.Rounded.Logout
+                contentDescription = stringResource(R.string.logout_icon), imageVector = Icons.AutoMirrored.Rounded.Logout
             )
             Spacer(Modifier.size(12.dp))
-            Text(text = "Logout")
+            Text(text = stringResource(R.string.logout))
         }
     }
 }
@@ -186,7 +188,7 @@ fun UserAvatar(avatarUrl: String?) {
 
     Image(
         painter = painter,
-        contentDescription = "User Avatar",
+        contentDescription = stringResource(R.string.user_avatar),
         modifier = Modifier
             .size(64.dp)
             .clip(CircleShape)

@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,7 +37,7 @@ fun HistoryCard(showDetails: ShowDetails, onClick: () -> Unit) {
                     .crossfade(true)
                     .data(showDetails.poster)
                     .build(),
-                contentDescription = "poster",
+                contentDescription = stringResource(R.string.poster),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(124.dp, 186.dp)

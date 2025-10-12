@@ -9,6 +9,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 
 @Composable
 fun SettingItemLink(
@@ -27,7 +29,7 @@ fun SettingItemLink(
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                contentDescription = "Open settings",
+                contentDescription = stringResource(R.string.open_settings),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)
             )

@@ -41,6 +41,8 @@ import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.model.File
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.tv.ui.common.SideDialog
 
 @OptIn(UnstableApi::class)
@@ -71,9 +73,9 @@ fun SettingsDialog(
             { currentPage = SettingsPage.MAIN }
         } else null,
         title = when (currentPage) {
-            SettingsPage.MAIN -> "Settings"
-            SettingsPage.QUALITY -> "Quality"
-            SettingsPage.CROP -> "Crop"
+            SettingsPage.MAIN -> stringResource(R.string.settings)
+            SettingsPage.QUALITY -> stringResource(R.string.quality)
+            SettingsPage.CROP -> stringResource(R.string.crop)
         },
         description = null
     ) {
@@ -142,10 +144,10 @@ private fun MainSettingsPage(
                     lazyColumn.saveFocusedChild()
                 },
                 selected = false,
-                headlineContent = { Text("Quality") },
+                headlineContent = { Text(stringResource(R.string.quality)) },
                 leadingContent = {
                     Icon(
-                        imageVector = Icons.Default.Settings, contentDescription = "Quality"
+                        imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.quality)
                     )
                 },
                 trailingContent = {
@@ -165,10 +167,10 @@ private fun MainSettingsPage(
             ListItem(
                 onClick = { onCropClick() },
                 selected = false,
-                headlineContent = { Text("Crop") },
+                headlineContent = { Text(stringResource(R.string.crop)) },
                 leadingContent = {
                     Icon(
-                        imageVector = Icons.Default.AspectRatio, contentDescription = "Crop"
+                        imageVector = Icons.Default.AspectRatio, contentDescription = stringResource(R.string.crop)
                     )
                 },
                 trailingContent = {
@@ -214,7 +216,7 @@ private fun QualitySettingsPage(
                 headlineContent = { Text("${quality.quality}p") },
                 trailingContent = {
                     if (quality == selectedQuality) {
-                        Icon(Icons.Default.Check, contentDescription = "Selected")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
                     }
                 },
                 onClick = { onQualitySelected(quality) },
@@ -253,7 +255,7 @@ private fun CropSettingsPage(
                 headlineContent = { Text(option) },
                 trailingContent = {
                     if (option == selectedCrop) {
-                        Icon(Icons.Default.Check, contentDescription = "Selected")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
                     }
                 },
                 onClick = { onCropSelected(option) },

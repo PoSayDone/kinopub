@@ -26,6 +26,8 @@ import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowsRow
 import org.w3c.dom.Text
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +41,7 @@ fun FavoritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mine") }
+                title = { Text(stringResource(R.string.mine)) }
             )
         },
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(NavigationBarDefaults.windowInsets),
@@ -81,7 +83,7 @@ fun FavoritesScreenContent(
         verticalArrangement = Arrangement.Center
     ) {
         ShowsRow(
-            title = "Favorites",
+            title = stringResource(R.string.favorites),
             modifier = Modifier.fillMaxWidth(),
             showList = favoritesList,
             onShowClick = { show ->
@@ -92,7 +94,7 @@ fun FavoritesScreenContent(
             })
 
         ShowsRow(
-            title = "History",
+            title = stringResource(R.string.history),
             modifier = Modifier.padding(top = 16.dp),
             showList = historyList,
             onShowClick = { show ->

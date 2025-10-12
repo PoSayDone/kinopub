@@ -19,6 +19,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
@@ -27,6 +28,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
@@ -117,22 +119,20 @@ fun VideoPlayerScreenContent(
                 isEpisodeSheetOpen = isEpisodeDialogOpen,
                 onShowControls = { viewModel.showControls() },
                 onEnterHold = { viewModel.enableSpeedUp() },
-                onEnterHoldUp = { viewModel.disableSpeedUp() }
-            )
+                onEnterHoldUp = { viewModel.disableSpeedUp() })
             .fillMaxSize()
             .background(color = Color.Black)
-            .focusable()
-    ) {
+            .focusable()) {
         AndroidView(
             factory = {
-                PlayerView(context).apply { useController = false }
-            }, update = {
-                it.player = player
-                it.apply {
-                    resizeMode = playerState.resizeMode
-                    keepScreenOn = playerState.isPlaying
-                }
-            }, modifier = Modifier.fillMaxSize()
+            PlayerView(context).apply { useController = false }
+        }, update = {
+            it.player = player
+            it.apply {
+                resizeMode = playerState.resizeMode
+                keepScreenOn = playerState.isPlaying
+            }
+        }, modifier = Modifier.fillMaxSize()
         )
 
 
@@ -144,8 +144,12 @@ fun VideoPlayerScreenContent(
             header = {
                 PlayerMediaTitle(
                     showDetails = showDetails,
-                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) "Season ${selectedSeason!!.season}" else null,
-                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) "Episode ${selectedEpisode!!.episode}" else null
+                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) stringResource(
+                        R.string.seasonString
+                    ) + " " + selectedSeason!!.season.toString() else null,
+                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) stringResource(
+                        R.string.episode, selectedEpisode!!.episode
+                    ) else null,
                 )
             },
             controls = {

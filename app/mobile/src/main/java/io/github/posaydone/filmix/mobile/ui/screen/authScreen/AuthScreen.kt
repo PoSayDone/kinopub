@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,13 +29,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.AuthScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.AuthScreenViewModel
 import io.github.posaydone.filmix.mobile.ui.common.PasswordTextField
@@ -68,7 +68,7 @@ fun AuthScreen(
             Icon(
                 modifier = Modifier.size(60.dp),
                 painter = painterResource(id = R.drawable.ic_filmix),
-                contentDescription = "Filmix icon",
+                contentDescription = stringResource(R.string.filmix_icon),
             )
 
             Spacer(modifier = Modifier.height(24.dp))

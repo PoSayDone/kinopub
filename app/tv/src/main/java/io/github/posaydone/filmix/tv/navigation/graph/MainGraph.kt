@@ -49,6 +49,8 @@ import io.github.posaydone.filmix.tv.ui.screen.homeScreen.HomeScreen
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.PlayerScreen
 import io.github.posaydone.filmix.tv.ui.screen.showDetailsScreen.ShowDetailsScreen
 import io.github.posaydone.filmix.tv.ui.screen.showsGridScreen.ShowsGridScreen
+import androidx.compose.ui.platform.LocalContext
+import io.github.posaydone.filmix.core.common.R
 
 fun getIcon(iconName: String): ImageVector {
     return when (iconName) {
@@ -57,6 +59,16 @@ fun getIcon(iconName: String): ImageVector {
         "Favorite" -> Icons.Default.Favorite
         "Profile" -> Icons.Default.Person
         else -> Icons.Default.Error
+    }
+}
+
+fun getLocalizedTitle(context: android.content.Context, item: NavBarGraphData): String {
+    return when (item) {
+        NavBarGraphData.Home -> context.getString(R.string.home)
+        NavBarGraphData.Explore -> context.getString(R.string.explore)
+        NavBarGraphData.Favorite -> context.getString(R.string.favorite_nav)
+        NavBarGraphData.ProfileGraph -> context.getString(R.string.profile)
+        else -> item.title
     }
 }
 
@@ -73,7 +85,8 @@ fun MainGraph() {
         modifier = Modifier
             .focusRequester(drawer)
             .focusRestorer(firstItem),
-        drawerState = drawerState, drawerContent = {
+        drawerState = drawerState,
+        drawerContent = {
             if (destination) {
                 LazyColumn(
                     userScrollEnabled = false,
@@ -85,7 +98,8 @@ fun MainGraph() {
                     ),
                 ) {
                     itemsIndexed(navBarScreenItems) { index, item ->
-                        val text = item.title
+                        val context = LocalContext.current
+                        val text = getLocalizedTitle(context, item)
                         val icon = getIcon(item.icon)
                         val isSelected = item == topLevelBackStack.topLevelKey
 
@@ -187,7 +201,7 @@ fun MainGraph() {
                             creationCallback = { factory ->
                                 factory.create(PlayerScreenNavKey(showId = key.showId))
                             })
-                    PlayerScreen( viewModel = viewModel)
+                    PlayerScreen(viewModel = viewModel)
                 }
             })
     }

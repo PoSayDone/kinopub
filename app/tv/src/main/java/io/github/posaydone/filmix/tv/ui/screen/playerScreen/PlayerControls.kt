@@ -23,7 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.media3.common.util.UnstableApi
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel.Companion.SHOW_CONTROLS_TIME
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
@@ -82,7 +84,7 @@ fun PlayerControls(
                         icon = Icons.Default.SkipPrevious,
                         onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
-                        contentDescription = "Previous episode",
+                        contentDescription = stringResource(R.string.previous_episode),
                         onClick = onPrevEpisodeClick,
                     )
                 }
@@ -93,7 +95,7 @@ fun PlayerControls(
                     icon = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
-                    contentDescription = if (playerState.isPlaying) "Pause" else "Play",
+                    contentDescription = if (playerState.isPlaying) stringResource(R.string.pause) else stringResource(R.string.play),
                     onClick = { onPlayPauseToggle() },
                 )
 
@@ -103,7 +105,7 @@ fun PlayerControls(
                         icon = Icons.Default.SkipNext,
                         onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
-                        contentDescription = "Next episode",
+                        contentDescription = stringResource(R.string.next_episode),
                         onClick = onNextEpisodeClick,
                     )
                 }
@@ -114,7 +116,7 @@ fun PlayerControls(
                         icon = Icons.Rounded.AutoAwesomeMotion,
                         onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
-                        contentDescription = "All episodes",
+                        contentDescription = stringResource(R.string.all_episodes),
                         text = "Episodes",
                         onClick = openEpisodeSheet,
                     )
@@ -129,7 +131,7 @@ fun PlayerControls(
                     icon = Icons.Default.Audiotrack,
                     onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
-                    contentDescription = "Audio tracks",
+                    contentDescription = stringResource(R.string.audio_tracks),
                     text = "Audio",
                     onClick = openAudioSheet,
                 )
@@ -138,7 +140,7 @@ fun PlayerControls(
                     icon = Icons.Default.Settings,
                     onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.settings),
                     text = "Settings",
                     onClick = openQualitySheet,
                 )

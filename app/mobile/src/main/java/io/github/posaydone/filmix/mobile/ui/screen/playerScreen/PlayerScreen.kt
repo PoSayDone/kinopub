@@ -17,11 +17,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
@@ -128,8 +130,13 @@ fun VideoPlayerScreenContent(
             header = {
                 PlayerMediaTitle(
                     showDetails = showDetails,
-                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) "Season ${selectedSeason!!.season}" else null,
-                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) "Episode ${selectedEpisode!!.episode}" else null,
+                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) stringResource(
+                        R.string.seasonString
+                    ) + " " + selectedSeason!!.season.toString() else null,
+                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) stringResource(
+                        R.string.episode,
+                        selectedEpisode!!.episode
+                    ) else null,
                     openSettingsDialog = { isSettingsDialogOpen = true }
                 )
             },

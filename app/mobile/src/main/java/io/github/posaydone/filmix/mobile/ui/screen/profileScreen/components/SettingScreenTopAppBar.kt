@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,7 +20,7 @@ fun SettingScreenTopAppBar(title: String, navigateBack: () -> Unit) {
         title = { Text(text = title) }, navigationIcon = {
             IconButton(onClick = { navigateBack() }) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back"
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back)
                 )
             }
         }, colors = TopAppBarDefaults.topAppBarColors(

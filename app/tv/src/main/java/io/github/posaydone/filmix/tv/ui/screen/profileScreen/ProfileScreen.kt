@@ -58,6 +58,8 @@ import coil.compose.rememberAsyncImagePainter
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenViewModel
 import io.github.posaydone.filmix.core.model.UserProfileInfo
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.LargeButton
 import io.github.posaydone.filmix.tv.ui.common.LargeButtonStyle
@@ -137,8 +139,8 @@ fun ProfileScreenContent(
 
     // Stream Type Dialog
     SettingDialog(
-        title = "Stream type",
-        description = "Type of video stream, pick auto if unsure",
+        title = stringResource(R.string.stream_type),
+        description = stringResource(R.string.stream_type),
         currentValue = currentStreamType,
         values = streamTypes,
         onValueSelected = { streamType ->
@@ -150,8 +152,8 @@ fun ProfileScreenContent(
 
     // Server Location Dialog
     SettingDialog(
-        title = "Server location",
-        description = "Pick the nearest location for a better speed",
+        title = stringResource(R.string.server_location),
+        description = stringResource(R.string.server_location_description),
         currentValue = currentServerLocation,
         values = serverLocations,
         onValueSelected = { serverLocation ->
@@ -197,29 +199,29 @@ fun ProfileScreenContent(
             }
 
             item {
-                SettingsGroup(modifier = Modifier.focusRequester(firstItem), title = "Account") {
+                SettingsGroup(modifier = Modifier.focusRequester(firstItem), title = stringResource(R.string.account)) {
                     SettingItem(
-                        title = "Username", currentValue = userProfile.login, onClick = {})
+                        title = stringResource(R.string.username), currentValue = userProfile.login, onClick = {})
                     SettingItem(
-                        title = "Email", currentValue = userProfile.email, onClick = {})
+                        title = stringResource(R.string.email), currentValue = userProfile.email, onClick = {})
                     SettingItem(
-                        title = "Subscription", currentValue = proStatus, onClick = {})
+                        title = stringResource(R.string.subscription), currentValue = proStatus, onClick = {})
                 }
             }
 
             item {
-                SettingsGroup(title = "Player") {
+                SettingsGroup(title = stringResource(R.string.player)) {
                     SettingItem(
-                        title = "Video Quality",
+                        title = stringResource(R.string.video_quality),
                         currentValue = videoQualities[currentVideoQuality] ?: currentVideoQuality,
                         onClick = { showVideoQualityDialog = true })
 
                     SettingItem(
-                        title = "Stream Type",
+                        title = stringResource(R.string.stream_type),
                         currentValue = streamTypes[currentStreamType] ?: currentStreamType,
                         onClick = { showStreamTypeDialog = true })
                     SettingItem(
-                        title = "Server Location",
+                        title = stringResource(R.string.server_location),
                         currentValue = serverLocations[currentServerLocation]
                             ?: currentServerLocation,
                         onClick = { showServerLocationDialog = true })
@@ -234,19 +236,19 @@ fun ProfileScreenContent(
                     Icon(
                         modifier = Modifier.size(28.dp),
                         imageVector = Icons.AutoMirrored.Rounded.Logout,
-                        contentDescription = "Logout icon"
+                        contentDescription = stringResource(R.string.logout_icon)
                     )
                     Spacer(Modifier.size(12.dp))
                     Text(
-                        text = "Logout", style = MaterialTheme.typography.titleMedium
+                        text = stringResource(R.string.logout), style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
         }
 
         SettingDialog(
-            title = "Video quality",
-            description = "Choose the default video quality, which will be used in the player",
+            title = stringResource(R.string.video_quality),
+            description = stringResource(R.string.video_quality_description),
             currentValue = currentVideoQuality,
             values = videoQualities,
             onValueSelected = { quality ->
@@ -375,7 +377,7 @@ fun SettingDialog(
                         if (key == currentValue) {
                             Icon(
                                 imageVector = Icons.Rounded.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.selected),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -396,7 +398,7 @@ fun UserAvatar(avatarUrl: String?) {
 
     Image(
         painter = painter,
-        contentDescription = "User Avatar",
+        contentDescription = stringResource(R.string.user_avatar),
         modifier = Modifier
             .size(64.dp)
             .clip(CircleShape)

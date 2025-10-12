@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenViewModel
 import io.github.posaydone.filmix.mobile.ui.common.Error
@@ -23,7 +25,7 @@ fun StreamTypeScreen(
 
     Scaffold(
         topBar = {
-            SettingScreenTopAppBar(title = "Stream Type", navigateBack)
+            SettingScreenTopAppBar(title = stringResource(R.string.stream_type), navigateBack)
         }) { paddingValues ->
         when (val state = uiState) {
             is ProfileScreenUiState.Loading -> {

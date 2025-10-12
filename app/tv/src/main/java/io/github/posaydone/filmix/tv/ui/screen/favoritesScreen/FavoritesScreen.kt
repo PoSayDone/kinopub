@@ -27,6 +27,8 @@ import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.common.ShowsRow
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 
 @Composable
 fun FavoritesScreen(
@@ -83,14 +85,14 @@ fun FavoritesScreenContent(
                 modifier = Modifier.padding(
                     top = 24.dp + childPadding.top, bottom = 24.dp, start = childPadding.start
                 ),
-                text = "Favorites",
+                text = stringResource(R.string.favorites),
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
         item {
             ShowsRow(
-                title = "Favorite",
+                title = stringResource(R.string.favorites),
                 modifier = Modifier.focusRequester(firstItem),
                 showList = favoritesList,
                 onShowSelected = { show ->
@@ -105,7 +107,7 @@ fun FavoritesScreenContent(
         }
         item {
             ShowsRow(
-                title = "History", modifier = Modifier.padding(
+                title = stringResource(R.string.history), modifier = Modifier.padding(
                     bottom = childPadding.bottom
                 ), showList = historyList, onShowSelected = { show ->
                     lazyColumn.saveFocusedChild()

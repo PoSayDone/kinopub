@@ -17,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
@@ -60,7 +59,7 @@ fun EpisodeDialog(
     SideDialog(
         showDialog = isEpisodeDialogOpen,
         onDismissRequest = onDismiss,
-        title = "Select Episode",
+        title = stringResource(R.string.select_episode),
         description = null
     ) {
         val selectedSeasonEpisodes = if (selectedTab >= 0 && selectedTab < seasons.size) {
