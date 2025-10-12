@@ -1,9 +1,8 @@
 name: Build TV and Mobile App
 
 on:
-    pull_request:
-        branches:
-            - "main"
+    push:
+        branches: [main, master]
 
 jobs:
     build_apk_aab:
