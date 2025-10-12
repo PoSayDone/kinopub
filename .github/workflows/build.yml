@@ -39,13 +39,13 @@ jobs:
 
             - name: Run tests and build release artifacts for mobile
               run: |
-                  ./gradlew mobile:assembleRelease --stacktrace
-                  ./gradlew mobile:bundleRelease
+                  ./gradlew app:mobile:assembleRelease --stacktrace
+                  ./gradlew app:mobile:bundleRelease
 
             - name: Run tests and build release artifacts for tv
               run: |
-                  ./gradlew tv:assembleRelease --stacktrace
-                  ./gradlew tv:bundleRelease
+                  ./gradlew app:tv:assembleRelease --stacktrace
+                  ./gradlew app:tv:bundleRelease
 
             - name: Upload mobile signed APK
               uses: actions/upload-artifact@v4
