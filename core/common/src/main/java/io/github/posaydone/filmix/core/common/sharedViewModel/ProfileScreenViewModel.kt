@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.AuthRepository
 import io.github.posaydone.filmix.core.data.FilmixRepository
 import io.github.posaydone.filmix.core.data.SettingsManager
 import io.github.posaydone.filmix.core.model.SessionManager
@@ -30,7 +29,6 @@ sealed interface ProfileScreenUiState {
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
     private val repository: FilmixRepository,
-    private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
     private val settingsManager: SettingsManager,
 ) : ViewModel() {
@@ -74,12 +72,10 @@ class ProfileScreenViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             try {
-                // Call the backend logout endpoint first
-                authRepository.logout()
+                repository.logout()
             } catch (e: Exception) {
                 // Even if the backend logout fails, we still want to clear the local session
             }
-            // Clear the local session
             sessionManager.logout()
         }
     }

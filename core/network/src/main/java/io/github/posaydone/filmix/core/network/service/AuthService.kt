@@ -36,12 +36,4 @@ interface AuthService {
 
     @POST("v1/device/unlink")
     suspend fun logout(): Response<KinoPubStatusResponse>
-
-    @POST("v1/device/notify")
-    @FormUrlEncoded
-    suspend fun notifyDevice(
-        @Field("title") title: String,
-        @Field("hardware") hardware: String,
-        @Field("software") software: String,
-    ): Response<KinoPubStatusResponse>
 }

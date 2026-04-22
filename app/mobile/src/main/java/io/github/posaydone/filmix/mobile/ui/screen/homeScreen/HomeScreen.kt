@@ -34,6 +34,7 @@ import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowsRow
@@ -47,7 +48,7 @@ import kotlin.time.Duration.Companion.seconds
 fun HomeScreen(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (showId: Int) -> Unit,
-    navigateToMoviePlayer: (showId: Int) -> Unit,
+    navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -98,6 +99,7 @@ fun HomeScreen(
                         .animateContentSize()
                         .padding(paddingValues),
                     featuredShow = s.featuredShow,
+                    featuredShowProgress = s.featuredShowProgress,
                     lastSeenShows = s.lastSeenShows,
                     popularMovies = s.popularMovies,
                     newMovies = s.newMovies,
@@ -121,6 +123,7 @@ fun HomeScreen(
 private fun Body(
     modifier: Modifier = Modifier,
     featuredShow: io.github.posaydone.filmix.core.model.FullShow,
+    featuredShowProgress: ShowProgress,
     lastSeenShows: ShowList,
     popularMovies: ShowList,
     newMovies: ShowList,
@@ -131,7 +134,7 @@ private fun Body(
     newDocumentaryFilms: ShowList,
     newDocumentarySeries: ShowList,
     newTvShows: ShowList,
-    navigateToMoviePlayer: (showId: Int) -> Unit,
+    navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToShowDetails: (Int) -> Unit,
     reload: () -> Unit,
 ) {
@@ -156,7 +159,9 @@ private fun Body(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             HomeBanner(
-                featuredShow = featuredShow, navigateToMoviePlayer = navigateToMoviePlayer
+                featuredShow = featuredShow,
+                featuredShowProgress = featuredShowProgress,
+                navigateToMoviePlayer = navigateToMoviePlayer,
             ) { }
             ShowsRow(
                 showList = lastSeenShows,
@@ -201,4 +206,3 @@ private fun Body(
         }
     }
 }
-

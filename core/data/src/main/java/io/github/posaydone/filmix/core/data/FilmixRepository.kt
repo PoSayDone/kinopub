@@ -14,6 +14,7 @@ import io.github.posaydone.filmix.core.model.ShowResourceResponse
 import io.github.posaydone.filmix.core.model.ShowTrailers
 import io.github.posaydone.filmix.core.model.StreamTypeResponse
 import io.github.posaydone.filmix.core.model.UserProfileInfo
+import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.network.dataSource.FilmixRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,7 @@ import javax.inject.Inject
 
 class FilmixRepository @Inject constructor(
     private val filmixRemoteDataSource: FilmixRemoteDataSource,
+    private val sessionManager: SessionManager,
     @ApplicationScope private val externalScope: CoroutineScope
 ) {
     suspend fun getPage(
@@ -194,7 +196,9 @@ class FilmixRepository @Inject constructor(
     }
 
     suspend fun getUserProfile(): UserProfileInfo {
-        return filmixRemoteDataSource.fetchUserProfile()
+        val profile = filmixRemoteDataSource.fetchUserProfile()
+        sessionManager.saveUsername(profile.login)
+        return profile
     }
 
     suspend fun getStreamType(): StreamTypeResponse {
@@ -211,6 +215,14 @@ class FilmixRepository @Inject constructor(
 
     suspend fun updateServerLocation(serverLocation: String): Boolean {
         return filmixRemoteDataSource.updateServerLocation(serverLocation)
+    }
+
+    suspend fun notifyDevice() {
+        filmixRemoteDataSource.notifyDevice()
+    }
+
+    suspend fun logout() {
+        filmixRemoteDataSource.logout()
     }
 
     suspend fun toggleFavorite(showId: Int, isFavorite: Boolean): Boolean {

@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.BookmarkAdd
 import androidx.compose.material.icons.rounded.BookmarkRemove
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -354,7 +355,7 @@ fun TitleSection(
                 )
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Bottom
     ) {
 
         if (logoUrl != null && !forceTextTitle) {
@@ -495,10 +496,8 @@ fun ActionButtons(
                 Icon(
                     contentDescription = stringResource(R.string.episodesString),
                     modifier = Modifier.size(28.dp),
-                    imageVector = Icons.Rounded.ViewList,
+                    imageVector = Icons.AutoMirrored.Rounded.ViewList,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = stringResource(R.string.episodesString))
             }
         }
         if (toggleFavorites != null && isFavorite != null) LargeButton(

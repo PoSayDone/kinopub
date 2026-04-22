@@ -83,8 +83,14 @@ fun MainGraph() {
             ),
             entryProvider = entryProvider {
                 entry<NavBarGraphData.Home> {
-                    HomeScreen(navigateToMoviePlayer = { showId ->
-                        topLevelBackStack.add(MainGraphData.Player(showId))
+                    HomeScreen(navigateToMoviePlayer = { showId, startSeason, startEpisode ->
+                        topLevelBackStack.add(
+                            MainGraphData.Player(
+                                showId,
+                                startSeason = startSeason,
+                                startEpisode = startEpisode,
+                            )
+                        )
                     }, navigateToShowDetails = { showId ->
                         topLevelBackStack.add(
                             MainGraphData.ShowDetails(

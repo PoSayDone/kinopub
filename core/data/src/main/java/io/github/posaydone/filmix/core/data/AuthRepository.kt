@@ -24,10 +24,6 @@ class AuthRepository @Inject constructor(
         return remoteDataSource.refresh(refreshToken)
     }
 
-    suspend fun notifyDevice() {
-        remoteDataSource.notifyDevice()
-    }
-
     suspend fun logout() {
         remoteDataSource.logout()
     }

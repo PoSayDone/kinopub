@@ -33,6 +33,7 @@ fun PlayerBottomControls(
     seekTo: (time: Long) -> Unit,
     onShowControls: () -> Unit,
     openEpisodeDialog: () -> Unit,
+    isAudioTrackSelectionEnabled: Boolean,
     openAudioDialog: () -> Unit,
 ) {
     Column {
@@ -62,12 +63,14 @@ fun PlayerBottomControls(
                         onClick = openEpisodeDialog,
                     )
                 }
-                PlayerControlsButton(
-                    icon = Icons.Default.Audiotrack,
-                    contentDescription = stringResource(R.string.audio_tracks),
-                    text = "Audio",
-                    onClick = openAudioDialog,
-                )
+                if (isAudioTrackSelectionEnabled) {
+                    PlayerControlsButton(
+                        icon = Icons.Default.Audiotrack,
+                        contentDescription = stringResource(R.string.audio_tracks),
+                        text = "Audio",
+                        onClick = openAudioDialog,
+                    )
+                }
             }
 
             Row(

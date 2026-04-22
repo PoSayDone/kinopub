@@ -6,7 +6,6 @@ import io.github.posaydone.filmix.core.model.kinopub.KinoPubAuthErrorResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceCodeResponse
 import io.github.posaydone.filmix.core.network.KinoPubAuthConfig
 import io.github.posaydone.filmix.core.network.service.AuthService
-import android.os.Build
 import com.google.gson.Gson
 import javax.inject.Inject
 
@@ -62,14 +61,6 @@ class AuthRemoteDataSource @Inject constructor(
             parseErrorMessage(response.errorBody()?.string()) ?: "Failed to refresh access token."
         }
         return response.body()!!
-    }
-
-    suspend fun notifyDevice() {
-        authService.notifyDevice(
-            title = "Filmix",
-            hardware = Build.MODEL ?: "Android",
-            software = "Android ${Build.VERSION.RELEASE ?: "unknown"}",
-        )
     }
 
     suspend fun logout() {

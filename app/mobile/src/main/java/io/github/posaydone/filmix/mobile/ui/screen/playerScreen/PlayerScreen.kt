@@ -79,6 +79,7 @@ fun VideoPlayerScreenContent(
     val showType by viewModel.contentType.collectAsState()
     val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
     val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
+    val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
     val pulseState = rememberPlayerPulseState()
     val context = LocalContext.current
     var isAudioDialogOpen by rememberSaveable {
@@ -164,7 +165,12 @@ fun VideoPlayerScreenContent(
                     openEpisodeDialog = {
                         player.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true
                     },
-                    openAudioDialog = { isAudioDialogOpen = true },
+                    isAudioTrackSelectionEnabled = isHls4AudioTrackSelectionEnabled,
+                    openAudioDialog = {
+                        if (isHls4AudioTrackSelectionEnabled) {
+                            isAudioDialogOpen = true
+                        }
+                    },
                 )
             })
     }

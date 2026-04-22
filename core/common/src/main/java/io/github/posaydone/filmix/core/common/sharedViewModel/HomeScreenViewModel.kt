@@ -12,6 +12,7 @@ import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.ShowProgress
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,6 +45,7 @@ sealed class HomeScreenUiState {
     data class Done(
         val sessionManager: SessionManager,
         val featuredShow: FullShow,
+        val featuredShowProgress: ShowProgress,
         val lastSeenShows: ShowList,
         val popularMovies: ShowList,
         val newMovies: ShowList,
@@ -143,10 +145,14 @@ class HomeScreenViewModel @Inject constructor(
                     ?: throw IllegalStateException("No content available for the home screen.")
 
                 val fullShow = movieRepository.getFullMovieByFilmixId(featuredShowId)
+                val featuredShowProgress = runCatching {
+                    filmixRepository.getShowProgress(featuredShowId)
+                }.getOrDefault(emptyList())
 
                 HomeScreenUiState.Done(
                     sessionManager = sessionManager,
                     featuredShow = fullShow,
+                    featuredShowProgress = featuredShowProgress,
                     lastSeenShows = lastSeenShows,
                     popularMovies = popularMovies,
                     newMovies = newMovies,

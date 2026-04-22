@@ -455,9 +455,9 @@ class FilmixRemoteDataSource @Inject constructor(
             kinoPubApiService.getCurrentDevice().device.id
         }.getOrElse {
             kinoPubApiService.notifyDevice(
-                title = "Filmix",
-                hardware = Build.MODEL ?: "Android",
-                software = "Android ${Build.VERSION.RELEASE ?: "unknown"}",
+                title = "Android KinoPub",
+                hardware = Build.DEVICE.lowercase().replace(" ", "_"),
+                software = "Android${Build.VERSION.SDK_INT}",
             )
             kinoPubApiService.getCurrentDevice().device.id
         }
@@ -1064,6 +1064,18 @@ class FilmixRemoteDataSource @Inject constructor(
             totalPages != null && perPage != null -> pageNumber < totalPages
             else -> itemCount >= limit
         }
+    }
+
+    suspend fun notifyDevice() {
+        kinoPubApiService.notifyDevice(
+            title = "Android KinoPub",
+            hardware = Build.DEVICE.lowercase().replace(" ", "_"),
+            software = "Android${Build.VERSION.SDK_INT}",
+        )
+    }
+
+    suspend fun logout() {
+        kinoPubApiService.unlink()
     }
 
     private fun <T> List<T>.toPage(page: Int, limit: Int): PageWithShows<T> {

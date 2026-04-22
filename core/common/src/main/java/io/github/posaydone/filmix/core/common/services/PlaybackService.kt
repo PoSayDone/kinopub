@@ -7,6 +7,7 @@ import androidx.media3.session.MediaSessionService
 import dagger.hilt.android.AndroidEntryPoint
 import okhttp3.OkHttpClient
 import javax.inject.Inject
+import javax.inject.Named
 
 private const val TAG = "PlaybackService"
 
@@ -14,6 +15,7 @@ private const val TAG = "PlaybackService"
 @UnstableApi
 class PlaybackService : MediaSessionService() {
     @Inject
+    @Named("playbackOkHttpClient")
     lateinit var okHttpClient: OkHttpClient
 
     private var mediaSession: MediaSession? = null

@@ -17,7 +17,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -131,6 +130,13 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private val _contentType = MutableStateFlow<ShowType?>(null)
     val contentType: StateFlow<ShowType?> = _contentType.asStateFlow()
 
+    private val _currentStreamType = MutableStateFlow<String?>(null)
+    val currentStreamType: StateFlow<String?> = _currentStreamType.asStateFlow()
+
+    val isHls4AudioTrackSelectionEnabled: StateFlow<Boolean> = currentStreamType.map {
+        it.equals(HLS4_STREAM_TYPE, ignoreCase = true)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val _selectedCrop = MutableStateFlow<String?>("Fit") // Default crop mode
     val selectedCrop: StateFlow<String?> = _selectedCrop.asStateFlow()
 
@@ -233,7 +239,8 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
                     override fun onTracksChanged(tracks: Tracks) {
                         Log.d(TAG, "onTracksChanged: groups=${tracks.groups.size}")
-                        // Apply audio selection using ExoPlayer's real track groups via custom command
+                        // HLS4 exposes all audio renditions inside one master playlist.
+                        // Use TrackSelectionParameters preferences instead of manual overrides.
                         applyAudioSelection(tracks)
                     }
                 })
@@ -298,6 +305,22 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 TAG,
                 "initialize: showId=$showId navStartSeason=${navKey.startSeason} navStartEpisode=${navKey.startEpisode}"
             )
+            runCatching { repository.getStreamType() }
+                .onSuccess { streamType ->
+                    _currentStreamType.value = streamType.streamType
+                    Log.d(
+                        TAG,
+                        "initialize: streamType=${streamType.streamType} allowedTypes=${streamType.allowedTypes}"
+                    )
+                }
+                .onFailure { error ->
+                    _currentStreamType.value = null
+                    Log.w(
+                        TAG,
+                        "initialize: failed to fetch stream type, audio track switching disabled",
+                        error
+                    )
+                }
             savedProgress = repository.getShowProgress(showId)
             Log.d(TAG, "initialize: savedProgress=${savedProgress.toDebugString()}")
             when (val response = repository.getShowResource(showId)) {
@@ -569,7 +592,18 @@ class PlayerScreenViewModel @AssistedInject constructor(
         }
     }
 
+    private fun canChangeAudioTrack(): Boolean {
+        return isHls4AudioTrackSelectionEnabled.value
+    }
+
     private fun applyAudioSelection(tracks: Tracks): Boolean {
+        if (!canChangeAudioTrack()) {
+            Log.d(
+                TAG,
+                "applyAudio: skipped because streamType=${currentStreamType.value} is not $HLS4_STREAM_TYPE"
+            )
+            return false
+        }
         val controller = playerController.value ?: run {
             Log.w(TAG, "applyAudio: controller is null")
             return false
@@ -582,11 +616,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
             Log.w(TAG, "applyAudio: no selected audio option")
             return false
         }
-        Log.d(TAG, "applyAudio: contentType=${contentType.value} label=${selectedAudio.label} audioIndex=${selectedAudio.audioIndex}")
-        if (selectedAudio.audioIndex <= 0) {
-            Log.w(TAG, "applyAudio: audioIndex <= 0, skipping")
-            return false
-        }
+        Log.d(
+            TAG,
+            "applyAudio: contentType=${contentType.value} label=${selectedAudio.label} audioIndex=${selectedAudio.audioIndex}"
+        )
 
         val audioGroups = tracks.groups.filter {
             it.type == C.TRACK_TYPE_AUDIO && it.isSupported(true)
@@ -599,52 +632,101 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
         logAudioGroups(audioGroups)
 
-        // Resolve an override for each audio group (HLS4 has one group per quality level).
-        // Applying overrides to all groups ensures the correct track is selected regardless
-        // of which quality variant ExoPlayer switches to during adaptive streaming.
-        val overrides = audioGroups.mapNotNull { group ->
-            resolveAudioOverrideForGroup(group, selectedAudio)
-        }
-
-        if (overrides.isEmpty()) {
-            Log.w(TAG, "applyAudio: unable to resolve override for label=${selectedAudio.label} audioIndex=${selectedAudio.audioIndex}")
+        val preferredAudioLabels = resolvePreferredAudioLabels(audioGroups, selectedAudio)
+        val preferredAudioLanguages = resolvePreferredAudioLanguages(audioGroups, selectedAudio)
+        if (preferredAudioLabels.isEmpty() && preferredAudioLanguages.isEmpty()) {
+            Log.w(
+                TAG,
+                "applyAudio: unable to resolve audio preferences for label=${selectedAudio.label} audioIndex=${selectedAudio.audioIndex}"
+            )
             return false
         }
 
-        val paramsBuilder = controller.trackSelectionParameters
+        val currentParameters = controller.trackSelectionParameters
+        if (currentParameters.preferredAudioLabels == preferredAudioLabels &&
+            currentParameters.preferredAudioLanguages == preferredAudioLanguages
+        ) {
+            Log.d(
+                TAG,
+                "applyAudio: preferences already applied labels=$preferredAudioLabels languages=$preferredAudioLanguages"
+            )
+            return true
+        }
+
+        val paramsBuilder = currentParameters
             .buildUpon()
             .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
-        overrides.forEach { override ->
-            paramsBuilder.addOverride(override)
-            Log.d(TAG, "applyAudio: adding override groupId=${override.mediaTrackGroup.id} tracks=${override.trackIndices}")
-        }
+            .setPreferredAudioLabels(*preferredAudioLabels.toTypedArray())
+            .setPreferredAudioLanguages(*preferredAudioLanguages.toTypedArray())
+
         controller.setTrackSelectionParameters(paramsBuilder.build())
+        Log.d(
+            TAG,
+            "applyAudio: applied preferredLabels=$preferredAudioLabels preferredLanguages=$preferredAudioLanguages"
+        )
         return true
     }
 
-    private fun resolveAudioOverrideForGroup(
-        group: Tracks.Group,
+    private fun resolvePreferredAudioLabels(
+        audioGroups: List<Tracks.Group>,
         selectedAudio: SelectedAudioOption,
-    ): TrackSelectionOverride? {
-        val requestedTrackIndex = selectedAudio.audioIndex - 1
+    ): List<String> {
+        val strongMatches = linkedSetOf<String>()
+        val weakMatches = linkedSetOf<String>()
+        val indexPrefixes = selectedAudio.audioIndex.toHlsAudioIndexPrefixes()
 
-        // 1. Try to match by track label/language within this group
-        for (trackIndex in 0 until group.length) {
-            if (!group.isTrackSupported(trackIndex, true)) continue
-            val format = group.getTrackFormat(trackIndex)
-            if (matchesSelectedAudio(format.label, format.language, selectedAudio.label)) {
-                Log.d(TAG, "resolveAudioOverride: label match in group=${group.mediaTrackGroup.id} track=$trackIndex")
-                return TrackSelectionOverride(group.mediaTrackGroup, trackIndex)
+        audioGroups.forEach { group ->
+            for (trackIndex in 0 until group.length) {
+                if (!group.isTrackSupported(trackIndex, true)) continue
+                val format = group.getTrackFormat(trackIndex)
+                val trackLabel = format.label?.trim().orEmpty()
+                if (trackLabel.isBlank()) continue
+
+                val hasIndexMatch = indexPrefixes.any { prefix ->
+                    trackLabel.startsWith(prefix)
+                }
+                val hasLabelMatch = matchesSelectedAudio(
+                    trackLabel = format.label,
+                    trackLanguage = format.language,
+                    selectedLabel = selectedAudio.label,
+                )
+
+                when {
+                    hasIndexMatch && hasLabelMatch -> strongMatches += trackLabel
+                    hasIndexMatch || hasLabelMatch -> weakMatches += trackLabel
+                }
             }
         }
 
-        // 2. Fall back to audioIndex - 1 if it is a valid track index in this group
-        if (requestedTrackIndex in 0 until group.length) {
-            Log.d(TAG, "resolveAudioOverride: index fallback in group=${group.mediaTrackGroup.id} track=$requestedTrackIndex")
-            return TrackSelectionOverride(group.mediaTrackGroup, requestedTrackIndex)
+        return when {
+            strongMatches.isNotEmpty() -> strongMatches.toList()
+            weakMatches.isNotEmpty() -> weakMatches.toList()
+            else -> emptyList()
+        }
+    }
+
+    private fun resolvePreferredAudioLanguages(
+        audioGroups: List<Tracks.Group>,
+        selectedAudio: SelectedAudioOption,
+    ): List<String> {
+        val preferredLabels = resolvePreferredAudioLabels(audioGroups, selectedAudio).toSet()
+        if (preferredLabels.isEmpty()) {
+            return emptyList()
         }
 
-        return null
+        val languages = linkedSetOf<String>()
+        audioGroups.forEach { group ->
+            for (trackIndex in 0 until group.length) {
+                if (!group.isTrackSupported(trackIndex, true)) continue
+                val format = group.getTrackFormat(trackIndex)
+                val trackLabel = format.label?.trim().orEmpty()
+                val trackLanguage = format.language?.trim().orEmpty()
+                if (trackLabel in preferredLabels && trackLanguage.isNotBlank()) {
+                    languages += trackLanguage
+                }
+            }
+        }
+        return languages.toList()
     }
 
     private fun matchesSelectedAudio(
@@ -670,6 +752,13 @@ class PlayerScreenViewModel @AssistedInject constructor(
             .trim()
     }
 
+    private fun Int.toHlsAudioIndexPrefixes(): List<String> {
+        if (this <= 0) return emptyList()
+        val rawIndex = toString()
+        val paddedIndex = rawIndex.padStart(2, '0')
+        return linkedSetOf("$rawIndex.", "$paddedIndex.").toList()
+    }
+
     private fun logAudioGroups(audioGroups: List<Tracks.Group>) {
         audioGroups.forEachIndexed { groupIndex, group ->
             for (trackIndex in 0 until group.length) {
@@ -683,9 +772,15 @@ class PlayerScreenViewModel @AssistedInject constructor(
     }
 
     fun setTranslation(translation: Translation) {
+        if (!canChangeAudioTrack()) {
+            Log.d(
+                TAG,
+                "setTranslation: ignored because streamType=${currentStreamType.value} is not $HLS4_STREAM_TYPE"
+            )
+            return
+        }
         Log.d(TAG, "setTranslation: ${translation.translation} audioIndex=${translation.audioIndex}")
         playerController.value?.let { player ->
-            val currentTime = player.currentPosition / 1000
             val oldQuality = selectedQuality.value?.quality
             _selectedTranslation.value = translation
 
@@ -698,17 +793,22 @@ class PlayerScreenViewModel @AssistedInject constructor(
             val applied = applyAudioSelection(player.currentTracks)
             Log.d(TAG, "setTranslation: applyAudioSelection returned $applied")
             if (!applied) {
-                Log.d(TAG, "setTranslation: falling back to playVideo(currentTime=$currentTime)")
-                playVideo(currentTime)
+                Log.d(TAG, "setTranslation: audio preferences will be retried onTracksChanged")
             }
             saveProgress()
         }
     }
 
     fun setMovieTranslation(movieTranslation: VideoWithQualities) {
+        if (!canChangeAudioTrack()) {
+            Log.d(
+                TAG,
+                "setMovieTranslation: ignored because streamType=${currentStreamType.value} is not $HLS4_STREAM_TYPE"
+            )
+            return
+        }
         Log.d(TAG, "setMovieTranslation: ${movieTranslation.voiceover} audioIndex=${movieTranslation.audioIndex}")
         playerController.value?.let { player ->
-            val currentTime = player.currentPosition / 1000
             val oldQuality = selectedQuality.value?.quality
             _selectedMovieTranslation.value = movieTranslation
 
@@ -721,8 +821,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
             val applied = applyAudioSelection(player.currentTracks)
             Log.d(TAG, "setMovieTranslation: applyAudioSelection returned $applied")
             if (!applied) {
-                Log.d(TAG, "setMovieTranslation: falling back to playVideo(currentTime=$currentTime)")
-                playVideo(currentTime)
+                Log.d(TAG, "setMovieTranslation: audio preferences will be retried onTracksChanged")
             }
             saveProgress()
         }
@@ -999,7 +1098,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private fun logSelectionSnapshot(source: String) {
         Log.d(
             TAG,
-            "$source: selection season=${selectedSeason.value?.season} episode=${selectedEpisode.value?.episode} translation=${selectedTranslation.value?.translation} movieTranslation=${selectedMovieTranslation.value?.voiceover} quality=${selectedQuality.value?.quality} url=${selectedQuality.value?.url} savedVideoUrl=${videoUrl.value}"
+            "$source: streamType=${currentStreamType.value} selection season=${selectedSeason.value?.season} episode=${selectedEpisode.value?.episode} translation=${selectedTranslation.value?.translation} movieTranslation=${selectedMovieTranslation.value?.voiceover} quality=${selectedQuality.value?.quality} url=${selectedQuality.value?.url} savedVideoUrl=${videoUrl.value}"
         )
     }
 
@@ -1038,6 +1137,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     companion object {
         var SHOW_CONTROLS_TIME = 4
+        private const val HLS4_STREAM_TYPE = "hls4"
     }
 }
 

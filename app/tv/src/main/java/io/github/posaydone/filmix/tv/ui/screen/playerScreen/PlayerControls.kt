@@ -45,6 +45,7 @@ fun PlayerControls(
     onShowControls: (seconds: Int) -> Unit,
     onHideControls: () -> Unit,
     openEpisodeSheet: () -> Unit,
+    isAudioTrackSelectionEnabled: Boolean,
     openAudioSheet: () -> Unit,
     openQualitySheet: () -> Unit,
     onPrevEpisodeClick: () -> Unit,
@@ -127,14 +128,16 @@ fun PlayerControls(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                PlayerControlsButton(
-                    icon = Icons.Default.Audiotrack,
-                    onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
-                    isPlaying = playerState.isPlaying,
-                    contentDescription = stringResource(R.string.audio_tracks),
-                    text = "Audio",
-                    onClick = openAudioSheet,
-                )
+                if (isAudioTrackSelectionEnabled) {
+                    PlayerControlsButton(
+                        icon = Icons.Default.Audiotrack,
+                        onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
+                        isPlaying = playerState.isPlaying,
+                        contentDescription = stringResource(R.string.audio_tracks),
+                        text = "Audio",
+                        onClick = openAudioSheet,
+                    )
+                }
 
                 PlayerControlsButton(
                     icon = Icons.Default.Settings,

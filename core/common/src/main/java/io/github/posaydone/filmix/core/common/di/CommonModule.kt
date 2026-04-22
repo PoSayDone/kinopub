@@ -18,6 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import okhttp3.OkHttpClient
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -28,6 +29,7 @@ internal object CommonModule {
     @Singleton
     fun providePlayer(
         @ApplicationContext context: Context,
+        @Named("playbackOkHttpClient")
         okHttpClient: OkHttpClient,
     ): ExoPlayer {
         return buildPlaybackPlayer(context, okHttpClient)

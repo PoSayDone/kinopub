@@ -32,6 +32,7 @@ class SessionManagerImpl @Inject constructor(@ApplicationContext context: Contex
         const val USER_TOKEN = "user_token"
         const val USER_REFRESH_TOKEN = "user_refresh_token"
         const val USER_TOKEN_EXPIRES_IN = "user_token_expires_in"
+        const val USERNAME = "username"
     }
 
     override fun saveAccessToken(
@@ -52,12 +53,22 @@ class SessionManagerImpl @Inject constructor(@ApplicationContext context: Contex
         }
     }
 
+    override fun saveUsername(username: String) {
+        prefs.edit() {
+            putString(USERNAME, username)
+        }
+    }
+
     override fun fetchAccessToken(): String? {
         return prefs.getString(USER_TOKEN, null)
     }
 
     override fun fetchRefreshToken(): String? {
         return prefs.getString(USER_REFRESH_TOKEN, null)
+    }
+
+    override fun fetchUsername(): String? {
+        return prefs.getString(USERNAME, null)
     }
 
     override fun logout() {

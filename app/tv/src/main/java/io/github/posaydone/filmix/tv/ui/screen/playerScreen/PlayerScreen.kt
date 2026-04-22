@@ -88,6 +88,7 @@ fun VideoPlayerScreenContent(
     val showType by viewModel.contentType.collectAsState()
     val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
     val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
+    val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
     var isAudioDialogOpen by rememberSaveable {
         mutableStateOf(false)
     }
@@ -163,7 +164,12 @@ fun VideoPlayerScreenContent(
                     openEpisodeSheet = {
                         viewModel.pause(); viewModel.hideControls(); isEpisodeDialogOpen = true
                     },
-                    openAudioSheet = { isAudioDialogOpen = true },
+                    isAudioTrackSelectionEnabled = isHls4AudioTrackSelectionEnabled,
+                    openAudioSheet = {
+                        if (isHls4AudioTrackSelectionEnabled) {
+                            isAudioDialogOpen = true
+                        }
+                    },
                     openQualitySheet = { isQualityDialogOpen = true },
                     hasNextEpisode = hasNextEpisode,
                     hasPrevEpisode = hasPrevEpisode,

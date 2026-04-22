@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import io.github.posaydone.filmix.core.common.R
+import io.github.posaydone.filmix.core.model.ShowProgress
+import io.github.posaydone.filmix.core.model.latestProgressItem
+import io.github.posaydone.filmix.core.model.latestSeriesProgress
 import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.ActionButtons
 import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.ShowPoster
 import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.TitleSection
@@ -39,10 +42,26 @@ import io.github.posaydone.filmix.mobile.ui.utils.bottomBorder
 fun HomeBanner(
     modifier: Modifier = Modifier,
     featuredShow: io.github.posaydone.filmix.core.model.FullShow,
-    navigateToMoviePlayer: (showId: Int) -> Unit,
+    featuredShowProgress: ShowProgress,
+    navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     onClick: (Int) -> Unit,
 ) {
     val headerHeight = 420.dp
+    val playProgress = if (featuredShow.isSeries) {
+        featuredShowProgress.latestSeriesProgress()
+    } else {
+        featuredShowProgress.latestProgressItem()
+    }
+    val playButtonText = when {
+        featuredShow.isSeries && playProgress != null -> stringResource(
+            R.string.continueWatchingSeries,
+            playProgress.season,
+            playProgress.episode,
+        )
+
+        !featuredShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
+        else -> stringResource(R.string.playString)
+    }
 
     Box(modifier = modifier) {
         ShowPoster(
@@ -65,7 +84,7 @@ fun HomeBanner(
                 TitleSection(
                     title = featuredShow.title,
                     logoUrl = featuredShow.logoUrl,
-                    height = 70.dp,
+                    height = 80.dp,
                 )
                 Column(
                     modifier = Modifier
@@ -83,8 +102,14 @@ fun HomeBanner(
                         maxLines = 3
                     )
                     ActionButtons(
-                        playButtonText = stringResource(R.string.continue_watching_banner),
-                        navigateToMoviePlayer = { navigateToMoviePlayer(featuredShow.id) },
+                        playButtonText = playButtonText,
+                        navigateToMoviePlayer = {
+                            navigateToMoviePlayer(
+                                featuredShow.id,
+                                playProgress?.season ?: -1,
+                                playProgress?.episode ?: -1,
+                            )
+                        },
                     )
                 }
             }

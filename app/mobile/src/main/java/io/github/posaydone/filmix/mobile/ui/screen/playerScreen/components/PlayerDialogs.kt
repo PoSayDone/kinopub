@@ -34,6 +34,7 @@ fun PlayerDialogs(
     val selectedMovieTranslation by viewModel.selectedMovieTranslation.collectAsState()
     val selectedQuality by viewModel.selectedQuality.collectAsState()
     val showType by viewModel.contentType.collectAsState()
+    val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
 
     if (showType == ShowType.SERIES) {
         if (seasons != null && selectedSeason != null) {
@@ -48,7 +49,7 @@ fun PlayerDialogs(
             )
         }
 
-        selectedEpisode?.translations?.let { translations ->
+        if (isHls4AudioTrackSelectionEnabled) selectedEpisode?.translations?.let { translations ->
             AudioDialog(
                 translations,
                 selectedTranslation,
@@ -68,7 +69,7 @@ fun PlayerDialogs(
                 onQualitySelected = { quality -> viewModel.setQuality(quality) })
         }
     } else {
-        moviePieces?.let { translations ->
+        if (isHls4AudioTrackSelectionEnabled) moviePieces?.let { translations ->
             AudioDialog(
                 translations,
                 selectedMovieTranslation,

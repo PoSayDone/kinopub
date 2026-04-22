@@ -10,18 +10,22 @@ import io.github.posaydone.filmix.core.network.KinoPubAuthConfig
 import io.github.posaydone.filmix.core.network.interceptor.AuthInterceptor
 import io.github.posaydone.filmix.core.network.interceptor.RetryInterceptor
 import io.github.posaydone.filmix.core.network.interceptor.TokenAuthenticator
+import io.github.posaydone.filmix.core.network.interceptor.UserAgentInterceptor
 import io.github.posaydone.filmix.core.network.service.AuthService
 import io.github.posaydone.filmix.core.network.service.KinoPubApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Named
 import javax.inject.Singleton
 
 
 @Module
 @InstallIn(SingletonComponent::class)
 internal object NetworkModule {
+    private const val PLAYBACK_OKHTTP_CLIENT = "playbackOkHttpClient"
+
     @Provides
     @Singleton
     fun provideKinoPubAuthConfig(): KinoPubAuthConfig {
@@ -37,22 +41,42 @@ internal object NetworkModule {
         authInterceptor: AuthInterceptor,
         retryInterceptor: RetryInterceptor,
         tokenAuthenticator: TokenAuthenticator,
+        userAgentInterceptor: UserAgentInterceptor,
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-            .addInterceptor(authInterceptor).addInterceptor(retryInterceptor)
-            .authenticator(tokenAuthenticator).build()
+            .addInterceptor(userAgentInterceptor)
+            .addInterceptor(authInterceptor)
+            .addInterceptor(retryInterceptor)
+            .authenticator(tokenAuthenticator)
+            .build()
+    }
 
+    @Provides
+    @Singleton
+    @Named(PLAYBACK_OKHTTP_CLIENT)
+    fun providePlaybackOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator,
+        userAgentInterceptor: UserAgentInterceptor,
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(userAgentInterceptor)
+            .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideAuthService(
+        userAgentInterceptor: UserAgentInterceptor,
     ): AuthService {
         return Retrofit.Builder().baseUrl(Constants.KINOPUB_API_URL)
             .addConverterFactory(GsonConverterFactory.create()).client(
                 OkHttpClient.Builder()
                     .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                    .addInterceptor(userAgentInterceptor)
                     .build()
             ).build().create(AuthService::class.java)
     }

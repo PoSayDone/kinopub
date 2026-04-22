@@ -172,4 +172,7 @@ interface KinoPubApiService {
         @Field("hardware") hardware: String,
         @Field("software") software: String,
     ): Response<KinoPubStatusResponse>
+
+    @POST("v1/device/unlink")
+    suspend fun unlink(): Response<KinoPubStatusResponse>
 }

@@ -25,9 +25,10 @@ object DataModule {
     @Singleton
     fun provideFilmixRepository(
         dataSource: FilmixRemoteDataSource,
+        sessionManager: SessionManager,
         @ApplicationScope externalScope: CoroutineScope
     ): FilmixRepository {
-        return FilmixRepository(dataSource, externalScope)
+        return FilmixRepository(dataSource, sessionManager, externalScope)
     }
 
     @Provides
