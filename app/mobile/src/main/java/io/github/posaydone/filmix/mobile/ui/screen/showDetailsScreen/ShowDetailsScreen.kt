@@ -80,6 +80,8 @@ import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowTrailers
+import io.github.posaydone.filmix.core.model.latestProgressItem
+import io.github.posaydone.filmix.core.model.latestSeriesProgress
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.LargeButton
 import io.github.posaydone.filmix.mobile.ui.common.LargeButtonStyle
@@ -92,7 +94,7 @@ val TAG = "ShowDetailsScreen"
 @Composable
 fun ShowDetailsScreen(
     showId: Int,
-    navigateToMoviePlayer: (showId: Int) -> Unit,
+    navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateBack: () -> Unit,
     navigateToEpisodes: (showId: Int) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -116,6 +118,21 @@ fun ShowDetailsScreen(
 
 
             is ShowDetailsScreenUiState.Done -> {
+                val playProgress = if (s.fullShow.isSeries) {
+                    s.showProgress.latestSeriesProgress()
+                } else {
+                    s.showProgress.latestProgressItem()
+                }
+                val playButtonText = when {
+                    s.fullShow.isSeries && playProgress != null -> stringResource(
+                        R.string.continueWatchingSeries,
+                        playProgress.season,
+                        playProgress.episode,
+                    )
+
+                    !s.fullShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
+                    else -> stringResource(R.string.playString)
+                }
                 Details(
                     showDetails = s.showDetails,
                     fullShow = s.fullShow,
@@ -123,7 +140,14 @@ fun ShowDetailsScreen(
                     showImages = s.showImages,
                     showTrailers = s.showTrailers,
                     toggleFavorites = s.toggleFavorites,
-                    navigateToMoviePlayer = { navigateToMoviePlayer(showId) },
+                    navigateToMoviePlayer = {
+                        navigateToMoviePlayer(
+                            showId,
+                            playProgress?.season ?: -1,
+                            playProgress?.episode ?: -1,
+                        )
+                    },
+                    playButtonText = playButtonText,
                     navigateToEpisodes = if (s.fullShow.isSeries) {
                         { navigateToEpisodes(showId) }
                     } else null,
@@ -147,6 +171,7 @@ private fun Details(
     showTrailers: ShowTrailers,
     toggleFavorites: () -> Unit,
     navigateToMoviePlayer: () -> Unit,
+    playButtonText: String,
     navigateBack: () -> Unit,
     navigateToEpisodes: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -200,6 +225,7 @@ private fun Details(
                     ageRating = fullShow.ageRating.takeIf { it > 0 },
                     isFavorite = showDetails.isFavorite,
                     onPlayClick = navigateToMoviePlayer,
+                    playButtonText = playButtonText,
                     onToggleFavoritesClick = toggleFavorites,
                     onEpisodesClick = navigateToEpisodes,
                 )
@@ -247,6 +273,7 @@ fun ShowBannerContent(
     totalMinutes: Int? = null,
     ageRating: Int?,
     onPlayClick: () -> Unit,
+    playButtonText: String,
     isFavorite: Boolean? = null,
     onToggleFavoritesClick: (() -> Unit)? = null,
     onEpisodesClick: (() -> Unit)? = null,
@@ -281,6 +308,7 @@ fun ShowBannerContent(
                 navigateToMoviePlayer = onPlayClick,
                 toggleFavorites = onToggleFavoritesClick,
                 isFavorite = isFavorite,
+                playButtonText = playButtonText,
                 navigateToEpisodes = onEpisodesClick,
             )
         }
@@ -560,4 +588,3 @@ private fun DynamicTopAppBar(
             }
         })
 }
-

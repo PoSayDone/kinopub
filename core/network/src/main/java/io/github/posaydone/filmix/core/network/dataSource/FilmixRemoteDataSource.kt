@@ -24,6 +24,7 @@ import io.github.posaydone.filmix.core.model.StreamTypeResponse
 import io.github.posaydone.filmix.core.model.Translation
 import io.github.posaydone.filmix.core.model.UserProfileInfo
 import io.github.posaydone.filmix.core.model.VideoWithQualities
+import io.github.posaydone.filmix.core.model.sortedForResume
 import io.github.posaydone.filmix.core.model.Episode as AppEpisode
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubHistoryEntry
@@ -159,15 +160,15 @@ class FilmixRemoteDataSource @Inject constructor(
         val item = kinoPubApiService.getWatchingInfo(movieId).item
             ?: return emptyList()
         val movieProgress = item.videos.orEmpty()
-            .sortedByDescending { it.updated ?: 0L }
             .mapNotNull { it.toMovieProgress() }
+            .sortedForResume()
         if (movieProgress.isNotEmpty()) {
             return movieProgress
         }
 
         return item.seasons.orEmpty().flatMap { season ->
             season.episodes.mapNotNull { episode -> episode.toSeriesProgress(season.number) }
-        }.sortedByDescending(ShowProgressItem::time)
+        }.sortedForResume()
     }
 
     suspend fun addShowProgress(movieId: Int, showProgressItem: ShowProgressItem) {
@@ -907,6 +908,7 @@ class FilmixRemoteDataSource @Inject constructor(
             voiceover = "",
             time = progressTime,
             quality = 1080,
+            updatedAt = updated,
         )
     }
 
@@ -921,6 +923,7 @@ class FilmixRemoteDataSource @Inject constructor(
             voiceover = "",
             time = progressTime,
             quality = 1080,
+            updatedAt = updated,
         )
     }
 

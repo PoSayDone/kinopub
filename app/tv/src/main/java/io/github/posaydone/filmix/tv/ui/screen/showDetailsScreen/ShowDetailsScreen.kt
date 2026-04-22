@@ -53,6 +53,8 @@ import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowTrailers
 import io.github.posaydone.filmix.core.model.Votes
+import io.github.posaydone.filmix.core.model.latestProgressItem
+import io.github.posaydone.filmix.core.model.latestSeriesProgress
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails
@@ -70,7 +72,7 @@ private const val TAG = "ShowDetailsScreen"
 fun ShowDetailsScreen(
     modifier: Modifier = Modifier,
     showId: Int,
-    navigateToMoviePlayer: (showId: Int) -> Unit,
+    navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToEpisodes: (showId: Int) -> Unit = {},
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
@@ -86,6 +88,21 @@ fun ShowDetailsScreen(
         }
 
         is ShowDetailsScreenUiState.Done -> {
+            val playProgress = if (s.fullShow.isSeries) {
+                s.showProgress.latestSeriesProgress()
+            } else {
+                s.showProgress.latestProgressItem()
+            }
+            val playButtonText = when {
+                s.fullShow.isSeries && playProgress != null -> stringResource(
+                    R.string.continueWatchingSeries,
+                    playProgress.season,
+                    playProgress.episode,
+                )
+
+                !s.fullShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
+                else -> stringResource(R.string.playString)
+            }
             Details(
                 showDetails = s.showDetails,
                 fullShow = s.fullShow,
@@ -93,7 +110,14 @@ fun ShowDetailsScreen(
                 showImages = s.showImages,
                 showTrailers = s.showTrailers,
                 toggleFavorites = s.toggleFavorites,
-                goToMoviePlayer = { navigateToMoviePlayer(showId) },
+                goToMoviePlayer = {
+                    navigateToMoviePlayer(
+                        showId,
+                        playProgress?.season ?: -1,
+                        playProgress?.episode ?: -1,
+                    )
+                },
+                playButtonText = playButtonText,
                 goToEpisodes = if (s.fullShow.isSeries) {
                     { navigateToEpisodes(showId) }
                 } else null,
@@ -115,6 +139,7 @@ private fun Details(
     showTrailers: ShowTrailers?,
     toggleFavorites: () -> Unit,
     goToMoviePlayer: () -> Unit,
+    playButtonText: String,
     goToEpisodes: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -183,6 +208,7 @@ private fun Details(
                         }
                     },
                     goToMoviePlayer = goToMoviePlayer,
+                    playButtonText = playButtonText,
                     goToEpisodes = goToEpisodes,
                     toggleFavorites = toggleFavorites,
                     isFavorite = showDetails.isFavorite == true
@@ -328,6 +354,7 @@ fun InfoItemPreview() {
 private fun ShowDetailsButtons(
     modifier: Modifier = Modifier,
     goToMoviePlayer: () -> Unit,
+    playButtonText: String,
     goToEpisodes: (() -> Unit)? = null,
     toggleFavorites: () -> Unit,
     isFavorite: Boolean,
@@ -349,7 +376,7 @@ private fun ShowDetailsButtons(
             )
             Spacer(Modifier.size(12.dp))
             Text(
-                text = stringResource(R.string.playString),
+                text = playButtonText,
                 style = MaterialTheme.typography.titleMedium
             )
         }

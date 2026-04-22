@@ -37,6 +37,9 @@ import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.core.model.Series
 import io.github.posaydone.filmix.core.model.SessionManager
+import io.github.posaydone.filmix.core.model.findEpisodeProgress
+import io.github.posaydone.filmix.core.model.latestProgressItem
+import io.github.posaydone.filmix.core.model.latestSeriesProgress
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowProgressItem
 import io.github.posaydone.filmix.core.model.ShowResourceResponse
@@ -171,6 +174,8 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     private var controlsHideJob: Job? = null
     private var minuteProgressSaveJob: Job? = null
+    private var isPreparingMediaItem = false
+    private var pendingResumePositionMs: Long? = null
 
     fun showControls(seconds: Int = SHOW_CONTROLS_TIME) {
         controlsHideJob?.cancel()
@@ -223,6 +228,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
                         val isLoading =
                             state == Player.STATE_BUFFERING || state == Player.STATE_IDLE
                         _playerState.update { it.copy(isLoading = isLoading) }
+                        maybeClearPendingPlaybackState(controller)
                     }
 
                     override fun onTracksChanged(tracks: Tracks) {
@@ -249,6 +255,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
         positionJob = viewModelScope.launch {
             while (isActive) {
                 playerController.value?.let { player ->
+                    maybeClearPendingPlaybackState(player)
                     _playerState.update {
                         it.copy(
                             currentPosition = player.currentPosition,
@@ -287,13 +294,22 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     private fun initialize() {
         viewModelScope.launch {
+            Log.d(
+                TAG,
+                "initialize: showId=$showId navStartSeason=${navKey.startSeason} navStartEpisode=${navKey.startEpisode}"
+            )
             savedProgress = repository.getShowProgress(showId)
+            Log.d(TAG, "initialize: savedProgress=${savedProgress.toDebugString()}")
             when (val response = repository.getShowResource(showId)) {
                 is ShowResourceResponse.MovieResourceResponse -> {
                     movie = response.movies
                     _details.value = movieRepository.getFullMovieByFilmixId(showId)
                     _moviePieces.value = movie
                     _contentType.value = ShowType.MOVIE
+                    Log.d(
+                        TAG,
+                        "initialize: contentType=MOVIE translations=${movie.size} firstVoices=${movie.take(3).joinToString { it.voiceover }}"
+                    )
                     restoreMovieProgress()
                 }
 
@@ -303,6 +319,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
                     _details.value = movieRepository.getFullMovieByFilmixId(showId)
                     _contentType.value = ShowType.SERIES
                     _seasons.value = seriesTransformed.seasons
+                    Log.d(
+                        TAG,
+                        "initialize: contentType=SERIES seasons=${seriesTransformed.seasons.size} seasonSummary=${seriesTransformed.seasons.joinToString { "S${it.season}:${it.episodes.size}ep" }}"
+                    )
                     restoreSeriesProgress()
                 }
             }
@@ -311,9 +331,12 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     private fun restoreMovieProgress() {
         viewModelScope.launch {
-            if (savedProgress.isNotEmpty()) {
-                restoreMovieSavedProgress(savedProgress.first())
+            Log.d(TAG, "restoreMovieProgress: savedProgressCount=${savedProgress.size}")
+            val latestProgress = savedProgress.latestProgressItem()
+            if (latestProgress != null) {
+                restoreMovieSavedProgress(latestProgress)
             } else {
+                Log.d(TAG, "restoreMovieProgress: no saved progress, using defaults")
                 setDefaultMovieProgress()
             }
         }
@@ -330,6 +353,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
         } ?: translation?.files?.getOrNull(0)
         _selectedQuality.value = file
         file?.url?.let { _videoUrl.value = it }
+        Log.d(
+            TAG,
+            "restoreMovieSavedProgress: saved=${savedMovie.toDebugString()} savedVoiceover=$savedVoiceover selectedVoice=${translation?.voiceover} selectedAudioIndex=${translation?.audioIndex} selectedQuality=${file?.quality} selectedUrl=${file?.url}"
+        )
+        logSelectionSnapshot("restoreMovieSavedProgress")
         playVideo(savedMovie.time)
     }
 
@@ -346,25 +374,43 @@ class PlayerScreenViewModel @AssistedInject constructor(
         val defaultFile = defaultTranslation?.files?.getOrNull(0)
         _selectedQuality.value = defaultFile
         defaultFile?.url?.let { _videoUrl.value = it }
+        Log.d(
+            TAG,
+            "setDefaultMovieProgress: savedVoiceover=$savedVoiceover selectedVoice=${defaultTranslation?.voiceover} selectedAudioIndex=${defaultTranslation?.audioIndex} selectedQuality=${defaultFile?.quality} selectedUrl=${defaultFile?.url}"
+        )
+        logSelectionSnapshot("setDefaultMovieProgress")
         playVideo()
     }
 
     private fun restoreSeriesProgress() {
-        Log.d(TAG, "restoreSeriesProgress: restoring series")
+        Log.d(
+            TAG,
+            "restoreSeriesProgress: navStartSeason=${navKey.startSeason} navStartEpisode=${navKey.startEpisode} savedProgress=${savedProgress.toDebugString()}"
+        )
         viewModelScope.launch {
             val requestedSeason = navKey.startSeason
             val requestedEpisode = navKey.startEpisode
             if (requestedSeason != -1 && requestedEpisode != -1) {
+                Log.d(TAG, "restoreSeriesProgress: using nav key override")
                 setSpecificSeriesProgress(requestedSeason, requestedEpisode)
-            } else if (savedProgress.isNotEmpty()) {
-                restoreSeriesSavedProgress(savedProgress.first())
             } else {
-                setDefaultSeriesProgress()
+                val latestProgress = savedProgress.latestSeriesProgress()
+                if (latestProgress != null) {
+                    Log.d(TAG, "restoreSeriesProgress: using latest saved series progress")
+                    restoreSeriesSavedProgress(latestProgress)
+                } else {
+                    Log.d(TAG, "restoreSeriesProgress: no nav override or saved progress, using defaults")
+                    setDefaultSeriesProgress()
+                }
             }
         }
     }
 
     private fun setSpecificSeriesProgress(seasonNumber: Int, episodeNumber: Int) {
+        val savedEpisodeProgress = savedProgress.findEpisodeProgress(
+            season = seasonNumber,
+            episode = episodeNumber,
+        )
         val season = seasons.value?.find { it.season == seasonNumber }
             ?: seasons.value?.getOrNull(0)
         _selectedSeason.value = season
@@ -373,7 +419,9 @@ class PlayerScreenViewModel @AssistedInject constructor(
             ?: season?.episodes?.getOrNull(0)
         _selectedEpisode.value = episode
 
-        val savedVoiceover = settingsManager.getSavedVoiceTrack(showId)
+        val savedVoiceover = savedEpisodeProgress?.voiceover
+            ?.takeIf(String::isNotBlank)
+            ?: settingsManager.getSavedVoiceTrack(showId)
         val translation = if (savedVoiceover != null) {
             episode?.translations?.find { it.translation.equals(savedVoiceover, ignoreCase = true) }
                 ?: episode?.translations?.getOrNull(0)
@@ -382,14 +430,21 @@ class PlayerScreenViewModel @AssistedInject constructor(
         }
         _selectedTranslation.value = translation
 
-        val file = translation?.files?.getOrNull(0)
+        val file = translation?.files?.find {
+            it.quality == savedEpisodeProgress?.quality || it.quality == 1080
+        } ?: translation?.files?.getOrNull(0)
         _selectedQuality.value = file
         file?.url?.let { _videoUrl.value = it }
-        playVideo(0)
+        Log.d(
+            TAG,
+            "setSpecificSeriesProgress: requestedSeason=$seasonNumber requestedEpisode=$episodeNumber matchedSaved=${savedEpisodeProgress?.toDebugString()} resolvedSeason=${season?.season} resolvedEpisode=${episode?.episode} savedVoiceover=$savedVoiceover selectedTranslation=${translation?.translation} selectedAudioIndex=${translation?.audioIndex} selectedQuality=${file?.quality} selectedUrl=${file?.url}"
+        )
+        logSelectionSnapshot("setSpecificSeriesProgress")
+        playVideo(savedEpisodeProgress?.time ?: 0)
     }
 
     private fun restoreSeriesSavedProgress(savedSeries: ShowProgressItem) {
-        Log.d(TAG, "restoreSeriesProgress: restoring series saved")
+        Log.d(TAG, "restoreSeriesSavedProgress: saved=${savedSeries.toDebugString()}")
         val season = seasons.value?.find { it.season == savedSeries.season }
         _selectedSeason.value = season
 
@@ -410,6 +465,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
         file?.url?.let {
             _videoUrl.value = it
         }
+        Log.d(
+            TAG,
+            "restoreSeriesSavedProgress: resolvedSeason=${season?.season} resolvedEpisode=${episode?.episode} savedVoiceover=$savedVoiceover selectedTranslation=${translation?.translation} selectedAudioIndex=${translation?.audioIndex} selectedQuality=${file?.quality} selectedUrl=${file?.url}"
+        )
+        logSelectionSnapshot("restoreSeriesSavedProgress")
         playVideo(savedSeries.time)
     }
 
@@ -436,11 +496,20 @@ class PlayerScreenViewModel @AssistedInject constructor(
             _videoUrl.value = it
         }
 
+        Log.d(
+            TAG,
+            "setDefaultSeriesProgress: savedVoiceover=$savedVoiceover defaultSeason=${defaultSeason?.season} defaultEpisode=${defaultEpisode?.episode} selectedTranslation=${defaultTranslation?.translation} selectedAudioIndex=${defaultTranslation?.audioIndex} selectedQuality=${defaultFile?.quality} selectedUrl=${defaultFile?.url}"
+        )
+        logSelectionSnapshot("setDefaultSeriesProgress")
         playVideo()
     }
 
     // Function to set the selected season
     fun setSeason(season: Season) {
+        Log.d(
+            TAG,
+            "setSeason: previousSeason=${selectedSeason.value?.season} newSeason=${season.season} episodeCount=${season.episodes.size}"
+        )
         _selectedSeason.value = season
     }
 
@@ -448,6 +517,13 @@ class PlayerScreenViewModel @AssistedInject constructor(
     fun setEpisode(episode: Episode) {
         val oldTranslation = selectedTranslation.value?.translation
         val oldQuality = selectedQuality.value?.quality
+        val previousEpisode = selectedEpisode.value?.episode
+
+        Log.d(
+            TAG,
+            "setEpisode: saving current episode before switch previousEpisode=$previousEpisode targetEpisode=${episode.episode}"
+        )
+        saveProgress()
 
         _selectedEpisode.value = episode
 
@@ -468,7 +544,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
             _selectedQuality.value = selectedTranslation.value?.files?.get(0)
         }
         _videoUrl.value = selectedQuality.value?.url
-        saveProgress()
+        Log.d(
+            TAG,
+            "setEpisode: previousEpisode=$previousEpisode newEpisode=${episode.episode} oldTranslation=$oldTranslation oldQuality=$oldQuality resolvedTranslation=${selectedTranslation.value?.translation} resolvedAudioIndex=${selectedTranslation.value?.audioIndex} resolvedQuality=${selectedQuality.value?.quality} resolvedUrl=${selectedQuality.value?.url}"
+        )
+        logSelectionSnapshot("setEpisode")
         playVideo()
     }
 
@@ -654,6 +734,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
             val currentTime = player.currentPosition / 1000
             _selectedQuality.value = qualityFile
             _videoUrl.value = selectedQuality.value?.url
+            Log.d(
+                TAG,
+                "setQuality: newQuality=${qualityFile.quality} currentTime=$currentTime url=${qualityFile.url}"
+            )
+            logSelectionSnapshot("setQuality")
             playVideo(currentTime)
             saveProgress()
         }
@@ -661,9 +746,21 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
 
     fun playVideo(time: Long = 0) {
-        val url = selectedQuality.value?.url ?: return
-        Log.d("video", url)
-        val controller = playerController.value ?: return
+        val quality = selectedQuality.value
+        val url = quality?.url
+        if (url == null) {
+            Log.w(TAG, "playVideo: skipped because selectedQuality/url is null time=$time")
+            logSelectionSnapshot("playVideoSkippedNoUrl")
+            return
+        }
+        val controller = playerController.value
+        if (controller == null) {
+            Log.w(TAG, "playVideo: skipped because controller is null time=$time url=$url")
+            logSelectionSnapshot("playVideoSkippedNoController")
+            return
+        }
+        isPreparingMediaItem = true
+        pendingResumePositionMs = time.takeIf { it > 0 }?.times(1000L)
 
         val showTitle = _details.value?.title ?: ""
         val displayTitle = when (_contentType.value) {
@@ -678,6 +775,12 @@ class PlayerScreenViewModel @AssistedInject constructor(
             }
             else -> showTitle
         }
+
+        Log.d(
+            TAG,
+            "playVideo: time=$time url=$url contentType=${_contentType.value} displayTitle=$displayTitle controllerState=${controller.playbackState} controllerPosition=${controller.currentPosition}"
+        )
+        logSelectionSnapshot("playVideo")
 
         val mediaItem = MediaItem.Builder()
             .setUri(Uri.parse(url))
@@ -697,6 +800,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
             controller.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) {
+                        Log.d(
+                            TAG,
+                            "playVideo: STATE_READY seekTo=${time * 1000L} currentPositionBeforeSeek=${controller.currentPosition}"
+                        )
                         controller.seekTo(time * 1000L)
                         controller.removeListener(this)
                     }
@@ -708,6 +815,9 @@ class PlayerScreenViewModel @AssistedInject constructor(
     fun saveProgress() {
         try {
             playerController.value?.let { player ->
+                if (shouldSkipProgressSave(player)) {
+                    return@let
+                }
                 val season = selectedSeason.value
                 val episode = selectedEpisode.value
                 val translation = _selectedTranslation.value
@@ -718,6 +828,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 if (contentType.value == ShowType.MOVIE) {
                     if (movieTranslation != null && qualityFile != null) {
                         settingsManager.saveVoiceTrack(showId, movieTranslation.voiceover)
+                        Log.d(
+                            TAG,
+                            "saveProgress: movie time=$time voiceover=${movieTranslation.voiceover} audioIndex=${movieTranslation.audioIndex} quality=${qualityFile.quality} url=${qualityFile.url}"
+                        )
                         viewModelScope.launch {
                             repository.addShowProgress(showId, ShowProgressItem(
                                 0, 0, movieTranslation.voiceover, time, qualityFile.quality,
@@ -727,6 +841,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 } else {
                     if (season != null && episode != null && translation != null && qualityFile != null) {
                         settingsManager.saveVoiceTrack(showId, translation.translation)
+                        Log.d(
+                            TAG,
+                            "saveProgress: series season=${season.season} episode=${episode.episode} time=$time translation=${translation.translation} audioIndex=${translation.audioIndex} quality=${qualityFile.quality} url=${qualityFile.url}"
+                        )
                         viewModelScope.launch {
                             repository.addShowProgress(showId, ShowProgressItem(
                                 season = season.season,
@@ -736,6 +854,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
                                 quality = qualityFile.quality,
                             ))
                         }
+                    } else {
+                        Log.d(
+                            TAG,
+                            "saveProgress: skipped for series because season=${season?.season} episode=${episode?.episode} translation=${translation?.translation} quality=${qualityFile?.quality}"
+                        )
                     }
                 }
             }
@@ -873,9 +996,61 @@ class PlayerScreenViewModel @AssistedInject constructor(
         super.onCleared()
     }
 
+    private fun logSelectionSnapshot(source: String) {
+        Log.d(
+            TAG,
+            "$source: selection season=${selectedSeason.value?.season} episode=${selectedEpisode.value?.episode} translation=${selectedTranslation.value?.translation} movieTranslation=${selectedMovieTranslation.value?.voiceover} quality=${selectedQuality.value?.quality} url=${selectedQuality.value?.url} savedVideoUrl=${videoUrl.value}"
+        )
+    }
+
+    private fun maybeClearPendingPlaybackState(player: Player) {
+        val pendingPosition = pendingResumePositionMs
+        if (pendingPosition != null) {
+            val clearThreshold = (pendingPosition - 1_000L).coerceAtLeast(0L)
+            if (player.playbackState == Player.STATE_READY && player.currentPosition >= clearThreshold) {
+                Log.d(
+                    TAG,
+                    "maybeClearPendingPlaybackState: resume seek applied pending=$pendingPosition current=${player.currentPosition}"
+                )
+                pendingResumePositionMs = null
+                isPreparingMediaItem = false
+            }
+            return
+        }
+
+        if (isPreparingMediaItem && player.playbackState == Player.STATE_READY) {
+            Log.d(TAG, "maybeClearPendingPlaybackState: media ready without pending seek")
+            isPreparingMediaItem = false
+        }
+    }
+
+    private fun shouldSkipProgressSave(player: Player): Boolean {
+        maybeClearPendingPlaybackState(player)
+        if (isPreparingMediaItem) {
+            Log.d(
+                TAG,
+                "saveProgress: skipped because media item is preparing currentPosition=${player.currentPosition} playbackState=${player.playbackState} pendingResumePositionMs=$pendingResumePositionMs"
+            )
+            return true
+        }
+        return false
+    }
+
     companion object {
         var SHOW_CONTROLS_TIME = 4
     }
+}
+
+private fun ShowProgress.toDebugString(): String {
+    return if (isEmpty()) {
+        "[]"
+    } else {
+        joinToString(prefix = "[", postfix = "]") { it.toDebugString() }
+    }
+}
+
+private fun ShowProgressItem.toDebugString(): String {
+    return "S$season/E$episode t=$time q=$quality voice=$voiceover updatedAt=$updatedAt"
 }
 
 enum class ShowType {

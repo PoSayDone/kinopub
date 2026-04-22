@@ -123,8 +123,14 @@ fun MainGraph() {
                     ShowDetailsScreen(
                         showId = key.showId,
                         navigateBack = { topLevelBackStack.removeLast() },
-                        navigateToMoviePlayer = {
-                            topLevelBackStack.add(MainGraphData.Player(key.showId))
+                        navigateToMoviePlayer = { showId, startSeason, startEpisode ->
+                            topLevelBackStack.add(
+                                MainGraphData.Player(
+                                    showId,
+                                    startSeason = startSeason,
+                                    startEpisode = startEpisode,
+                                )
+                            )
                         },
                         navigateToEpisodes = { showId ->
                             topLevelBackStack.add(MainGraphData.Episodes(showId))

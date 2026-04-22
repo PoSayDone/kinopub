@@ -55,6 +55,7 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesScreenView
 import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.core.model.ShowProgress
+import io.github.posaydone.filmix.core.model.findEpisodeProgress
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 
@@ -173,9 +174,10 @@ private fun EpisodesContent(
                     items = currentSeason.episodes,
                     key = { episode -> "${currentSeason.season}_${episode.episode}" },
                 ) { episode ->
-                    val progressItem = showProgress.find { p ->
-                        p.season == currentSeason.season && p.episode == episode.episode
-                    }
+                    val progressItem = showProgress.findEpisodeProgress(
+                        season = currentSeason.season,
+                        episode = episode.episode,
+                    )
                     EpisodeCard(
                         episode = episode,
                         seasonNumber = currentSeason.season,
