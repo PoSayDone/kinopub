@@ -7,7 +7,7 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.posaydone.filmix.core.model.AuthEvent
 import io.github.posaydone.filmix.core.model.SessionManager
@@ -25,7 +25,7 @@ fun RootGraph(
 
     val startDestination =
         if (sessionManager.isLoggedIn()) MainGraphData.MainGraph else MainGraphData.Auth
-    val backStack = rememberNavBackStack<MainGraphData>(startDestination)
+    val backStack = rememberNavBackStack(startDestination)
 
     LaunchedEffect(key1 = true) {
         authEventFlow.collectLatest { event ->
@@ -40,7 +40,8 @@ fun RootGraph(
 
     NavDisplay(
         backStack = backStack, onBack = { backStack.removeLastOrNull() }, entryDecorators = listOf(
-            rememberSavedStateNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator()
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
         ), entryProvider = entryProvider {
             entry<MainGraphData.Auth> {
                 AuthScreen(navigateToHome = {

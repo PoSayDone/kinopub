@@ -47,6 +47,7 @@ data class Episode(
 data class Translation(
     val translation: String,
     val files: List<File>,
+    val audioIndex: Int = 0,
 ) {
     override fun toString(): String = translation
 }
@@ -62,6 +63,7 @@ data class VideoWithQualities(
     val updated: Int,
     val uk: Boolean,
     val type: String,
+    val audioIndex: Int = 0,
 ) {
     override fun toString(): String = voiceover
 }
@@ -75,7 +77,8 @@ data class File(
 }
 
 enum class FilmixCategory(val value: Int) {
-    MOVIE(0), SERIES(7), CARTOON(14), CARTOON_SERIES(93);
+    MOVIE(0), SERIES(7), CARTOON(14), CARTOON_SERIES(93),
+    CONCERT(3), FILM_3D(6), DOCUMENTARY_MOVIE(11), DOCUMENTARY_SERIES(12), TV_SHOW(13);
 
     override fun toString(): String = value.toString()
 }

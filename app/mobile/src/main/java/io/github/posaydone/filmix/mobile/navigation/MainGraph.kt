@@ -25,8 +25,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
-import androidx.navigation3.scene.rememberSceneSetupNavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
@@ -45,8 +44,6 @@ import io.github.posaydone.filmix.shared.graphData.MainGraphData
 import io.github.posaydone.filmix.shared.graphData.NavBarGraphData
 import io.github.posaydone.filmix.shared.graphData.navBarScreenItems
 import io.github.posaydone.filmix.shared.util.TopLevelBackStack
-import androidx.compose.ui.platform.LocalContext
-import io.github.posaydone.filmix.core.common.R
 
 fun getIcon(iconName: String): ImageVector {
     return when (iconName) {
@@ -55,16 +52,6 @@ fun getIcon(iconName: String): ImageVector {
         "Favorite" -> Icons.Default.Favorite
         "Profile" -> Icons.Default.Person
         else -> Icons.Default.Error
-    }
-}
-
-fun getLocalizedTitle(context: android.content.Context, item: io.github.posaydone.filmix.shared.graphData.NavBarGraphData): String {
-    return when (item) {
-        io.github.posaydone.filmix.shared.graphData.NavBarGraphData.Home -> context.getString(R.string.home)
-        io.github.posaydone.filmix.shared.graphData.NavBarGraphData.Explore -> context.getString(R.string.explore)
-        io.github.posaydone.filmix.shared.graphData.NavBarGraphData.Favorite -> context.getString(R.string.favorite_nav)
-        io.github.posaydone.filmix.shared.graphData.NavBarGraphData.ProfileGraph -> context.getString(R.string.profile)
-        else -> item.title // fallback to original title
     }
 }
 
@@ -88,8 +75,7 @@ fun MainGraph() {
             backStack = topLevelBackStack.backStack,
             onBack = { topLevelBackStack.removeLast() },
             entryDecorators = listOf(
-                rememberSceneSetupNavEntryDecorator(),
-                rememberSavedStateNavEntryDecorator(),
+                rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
             ),
             entryProvider = entryProvider {

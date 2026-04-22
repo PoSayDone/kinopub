@@ -16,6 +16,7 @@ class SettingsManager @Inject constructor(
     companion object {
         private const val VIDEO_QUALITY_KEY = "video_quality"
         private const val DEFAULT_VIDEO_QUALITY = "auto"
+        private const val VOICE_TRACK_KEY_PREFIX = "voice_track_"
     }
 
     fun getVideoQuality(): String {
@@ -24,5 +25,13 @@ class SettingsManager @Inject constructor(
 
     fun setVideoQuality(quality: String) {
         prefs.edit().putString(VIDEO_QUALITY_KEY, quality).apply()
+    }
+
+    fun saveVoiceTrack(showId: Int, voiceTrack: String) {
+        prefs.edit().putString("$VOICE_TRACK_KEY_PREFIX$showId", voiceTrack).apply()
+    }
+
+    fun getSavedVoiceTrack(showId: Int): String? {
+        return prefs.getString("$VOICE_TRACK_KEY_PREFIX$showId", null)
     }
 }

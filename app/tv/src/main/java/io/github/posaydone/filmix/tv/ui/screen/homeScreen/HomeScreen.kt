@@ -101,10 +101,15 @@ fun HomeScreen(
                     .fillMaxSize()
                     .animateContentSize(),
                 lastSeenShows = s.lastSeenShows,
-                viewingShows = s.viewingShows,
                 popularMovies = s.popularMovies,
+                newMovies = s.newMovies,
                 popularSeries = s.popularSeries,
-                popularCartoons = s.popularCartoons,
+                newSeries = s.newSeries,
+                newConcerts = s.newConcerts,
+                new3d = s.new3d,
+                newDocumentaryFilms = s.newDocumentaryFilms,
+                newDocumentarySeries = s.newDocumentarySeries,
+                newTvShows = s.newTvShows,
                 immersiveState = immersiveContentState,
                 onImmersiveShowFocused = viewModel::onImmersiveShowFocused,
                 navigateToShowDetails = navigateToShowDetails,
@@ -119,10 +124,15 @@ fun HomeScreen(
 private fun Body(
     modifier: Modifier = Modifier,
     lastSeenShows: ShowList,
-    viewingShows: ShowList,
     popularMovies: ShowList,
+    newMovies: ShowList,
     popularSeries: ShowList,
-    popularCartoons: ShowList,
+    newSeries: ShowList,
+    newConcerts: ShowList,
+    new3d: ShowList,
+    newDocumentaryFilms: ShowList,
+    newDocumentarySeries: ShowList,
+    newTvShows: ShowList,
     immersiveState: ImmersiveContentUiState,
     onImmersiveShowFocused: (Show) -> Unit,
     navigateToShowDetails: (showId: Int) -> Unit,
@@ -225,25 +235,7 @@ private fun Body(
                         lazyColumn.saveFocusedChild()
                         navigateToShowDetails(show.id)
                     },
-                    onShowFocused = {
-                        onImmersiveShowFocused(it)
-                    }
-                )
-            }
-
-            item(contentType = "ViewingRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = viewingShows,
-                    title = stringResource(R.string.watching_now),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = {
-                        onImmersiveShowFocused(it)
-                    }
+                    onShowFocused = { onImmersiveShowFocused(it) }
                 )
             }
 
@@ -257,9 +249,21 @@ private fun Body(
                         lazyColumn.saveFocusedChild()
                         navigateToShowDetails(show.id)
                     },
-                    onShowFocused = {
-                        onImmersiveShowFocused(it)
-                    }
+                    onShowFocused = { onImmersiveShowFocused(it) }
+                )
+            }
+
+            item(contentType = "NewMoviesRow") {
+                ShowsRow(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    showItemTitle = false,
+                    showList = newMovies,
+                    title = stringResource(R.string.new_movies),
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = { onImmersiveShowFocused(it) }
                 )
             }
 
@@ -273,25 +277,91 @@ private fun Body(
                         lazyColumn.saveFocusedChild()
                         navigateToShowDetails(show.id)
                     },
-                    onShowFocused = {
-                        onImmersiveShowFocused(it)
-                    }
+                    onShowFocused = { onImmersiveShowFocused(it) }
                 )
             }
 
-            item(contentType = "PopularCartoonsRow") {
+            item(contentType = "NewSeriesRow") {
                 ShowsRow(
                     modifier = Modifier.padding(bottom = 16.dp),
                     showItemTitle = false,
-                    showList = popularCartoons,
-                    title = stringResource(R.string.popular_cartoons),
+                    showList = newSeries,
+                    title = stringResource(R.string.new_series),
                     onShowSelected = { show ->
                         lazyColumn.saveFocusedChild()
                         navigateToShowDetails(show.id)
                     },
-                    onShowFocused = {
-                        onImmersiveShowFocused(it)
-                    }
+                    onShowFocused = { onImmersiveShowFocused(it) }
+                )
+            }
+
+            item(contentType = "NewConcertsRow") {
+                ShowsRow(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    showItemTitle = false,
+                    showList = newConcerts,
+                    title = stringResource(R.string.new_concerts),
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = { onImmersiveShowFocused(it) }
+                )
+            }
+
+            item(contentType = "New3dRow") {
+                ShowsRow(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    showItemTitle = false,
+                    showList = new3d,
+                    title = stringResource(R.string.new_3d),
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = { onImmersiveShowFocused(it) }
+                )
+            }
+
+            item(contentType = "NewDocumentaryFilmsRow") {
+                ShowsRow(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    showItemTitle = false,
+                    showList = newDocumentaryFilms,
+                    title = stringResource(R.string.new_documentary_films),
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = { onImmersiveShowFocused(it) }
+                )
+            }
+
+            item(contentType = "NewDocumentarySeriesRow") {
+                ShowsRow(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    showItemTitle = false,
+                    showList = newDocumentarySeries,
+                    title = stringResource(R.string.new_documentary_series),
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = { onImmersiveShowFocused(it) }
+                )
+            }
+
+            item(contentType = "NewTvShowsRow") {
+                ShowsRow(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    showItemTitle = false,
+                    showList = newTvShows,
+                    title = stringResource(R.string.new_tv_shows),
+                    onShowSelected = { show ->
+                        lazyColumn.saveFocusedChild()
+                        navigateToShowDetails(show.id)
+                    },
+                    onShowFocused = { onImmersiveShowFocused(it) }
                 )
             }
         }

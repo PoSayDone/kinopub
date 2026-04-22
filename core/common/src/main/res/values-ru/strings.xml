@@ -25,6 +25,11 @@
     <string name="duration">Длительность</string>
     <string name="movie_duration">%1$s мин.</string>
     <string name="sign_in">Войти</string>
+    <string name="device_sign_in_title">Активируйте устройство</string>
+    <string name="device_sign_in_description">Запросите код активации, откройте ссылку на другом устройстве и подтвердите этот код там.</string>
+    <string name="device_sign_in_waiting">Ожидание подтверждения. После активации экран продолжит работу автоматически.</string>
+    <string name="device_sign_in_start">Получить код активации</string>
+    <string name="device_sign_in_refresh">Запросить новый код</string>
     
     <plurals name="hours_plural" tools:ignore="MissingQuantity">
         <item quantity="other">%d ч</item>

@@ -91,7 +91,9 @@ fun ProfileScreen(
                 onLogout = { viewModel.logout() },
                 currentVideoQuality = videoQuality,
                 currentStreamType = state.currentStreamType,
+                streamTypes = state.streamTypes,
                 currentServerLocation = state.currentServerLocation,
+                serverLocations = state.serverLocations,
                 modifier = Modifier.fillMaxSize(),
                 onVideoQualityChange = { viewModel.updateDefaultVideoQuality(it) },
                 onStreamTypeChange = { viewModel.updateStreamType(it) },
@@ -109,14 +111,14 @@ fun ProfileScreenContent(
     onLogout: () -> Unit,
     currentVideoQuality: String,
     currentStreamType: String,
+    streamTypes: Map<String, String>,
     currentServerLocation: String,
+    serverLocations: Map<String, String>,
     onVideoQualityChange: (quality: String) -> Unit,
     onStreamTypeChange: (newStreamType: String) -> Unit,
     onServerLocationChange: (newServerLocation: String) -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
-    val streamTypes = ProfileScreenViewModel.streamTypes
-    val serverLocations = ProfileScreenViewModel.serverLocations
 
     var showVideoQualityDialog by remember { mutableStateOf(false) }
     var showStreamTypeDialog by remember { mutableStateOf(false) }
@@ -202,8 +204,13 @@ fun ProfileScreenContent(
                 SettingsGroup(modifier = Modifier.focusRequester(firstItem), title = stringResource(R.string.account)) {
                     SettingItem(
                         title = stringResource(R.string.username), currentValue = userProfile.login, onClick = {})
-                    SettingItem(
-                        title = stringResource(R.string.email), currentValue = userProfile.email, onClick = {})
+                    if (userProfile.email.isNotBlank()) {
+                        SettingItem(
+                            title = stringResource(R.string.email),
+                            currentValue = userProfile.email,
+                            onClick = {}
+                        )
+                    }
                     SettingItem(
                         title = stringResource(R.string.subscription), currentValue = proStatus, onClick = {})
                 }

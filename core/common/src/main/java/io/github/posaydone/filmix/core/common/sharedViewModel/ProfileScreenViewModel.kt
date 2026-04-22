@@ -20,8 +20,9 @@ sealed interface ProfileScreenUiState {
     data class Error(val message: String, val onRetry: () -> Unit) : ProfileScreenUiState
     data class Success(
         val currentStreamType: String,
-        val allowedStreamTypes: List<String>,
+        val streamTypes: Map<String, String>,
         val currentServerLocation: String,
+        val serverLocations: Map<String, String>,
         val userProfile: UserProfileInfo,
     ) : ProfileScreenUiState
 }
@@ -49,15 +50,16 @@ class ProfileScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Load stream type and user profile (for server info) concurrently
                 val streamTypeResponse = repository.getStreamType()
+                val serverLocationResponse = repository.getServerLocation()
                 val userProfile = repository.getUserProfile()
 
                 _uiState.value = ProfileScreenUiState.Success(
                     currentStreamType = streamTypeResponse.streamType,
-                    allowedStreamTypes = streamTypeResponse.allowedTypes,
-                    currentServerLocation = userProfile.server ?: "AUTO",
-                    userProfile = userProfile
+                    streamTypes = streamTypeResponse.labels,
+                    currentServerLocation = serverLocationResponse.serverLocation,
+                    serverLocations = serverLocationResponse.labels,
+                    userProfile = userProfile,
                 )
 
                 _videoQuality.value = settingsManager.getVideoQuality()
@@ -121,20 +123,11 @@ class ProfileScreenViewModel @Inject constructor(
     }
 
     companion object {
-        val serverLocations = mapOf(
-            "AUTO" to "Auto",
-            "VSSP" to "Russia (Saint-Petersburg)",
-            "VRNL" to "Netherlands",
-            "VSFR" to "France",
-            "VSFI" to "Finland"
-        )
-
         val videoQualities = mapOf(
-            "Auto" to "Auto", "High" to "High", "Medium" to "Medium", "Low" to "Low"
-        )
-
-        val streamTypes = mapOf(
-            "auto" to "Auto", "hls" to "HLS", "mp4" to "MP4"
+            "auto" to "Auto",
+            "high" to "High",
+            "medium" to "Medium",
+            "low" to "Low"
         )
     }
 }

@@ -99,10 +99,15 @@ fun HomeScreen(
                         .padding(paddingValues),
                     featuredShow = s.featuredShow,
                     lastSeenShows = s.lastSeenShows,
-                    viewingShows = s.viewingShows,
                     popularMovies = s.popularMovies,
+                    newMovies = s.newMovies,
                     popularSeries = s.popularSeries,
-                    popularCartoons = s.popularCartoons,
+                    newSeries = s.newSeries,
+                    newConcerts = s.newConcerts,
+                    new3d = s.new3d,
+                    newDocumentaryFilms = s.newDocumentaryFilms,
+                    newDocumentarySeries = s.newDocumentarySeries,
+                    newTvShows = s.newTvShows,
                     navigateToMoviePlayer = navigateToMoviePlayer,
                     navigateToShowDetails = navigateToShowDetails,
                     reload = { viewModel.retry() })
@@ -117,10 +122,15 @@ private fun Body(
     modifier: Modifier = Modifier,
     featuredShow: io.github.posaydone.filmix.core.model.FullShow,
     lastSeenShows: ShowList,
-    viewingShows: ShowList,
     popularMovies: ShowList,
+    newMovies: ShowList,
     popularSeries: ShowList,
-    popularCartoons: ShowList,
+    newSeries: ShowList,
+    newConcerts: ShowList,
+    new3d: ShowList,
+    newDocumentaryFilms: ShowList,
+    newDocumentarySeries: ShowList,
+    newTvShows: ShowList,
     navigateToMoviePlayer: (showId: Int) -> Unit,
     navigateToShowDetails: (Int) -> Unit,
     reload: () -> Unit,
@@ -151,33 +161,43 @@ private fun Body(
             ShowsRow(
                 showList = lastSeenShows,
                 title = stringResource(R.string.continue_watching),
-                onShowClick = { show ->
-                    navigateToShowDetails(show.id)
-                })
-            ShowsRow(
-                showList = viewingShows,
-                title = stringResource(R.string.watching_now),
-                onShowClick = { show ->
-                    navigateToShowDetails(show.id)
-                })
+                onShowClick = { show -> navigateToShowDetails(show.id) })
             ShowsRow(
                 showList = popularMovies,
                 title = stringResource(R.string.popular_movies),
-                onShowClick = { show ->
-                    navigateToShowDetails(show.id)
-                })
+                onShowClick = { show -> navigateToShowDetails(show.id) })
+            ShowsRow(
+                showList = newMovies,
+                title = stringResource(R.string.new_movies),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
             ShowsRow(
                 showList = popularSeries,
                 title = stringResource(R.string.popular_series),
-                onShowClick = { show ->
-                    navigateToShowDetails(show.id)
-                })
+                onShowClick = { show -> navigateToShowDetails(show.id) })
             ShowsRow(
-                showList = popularCartoons,
-                title = stringResource(R.string.popular_cartoons),
-                onShowClick = { show ->
-                    navigateToShowDetails(show.id)
-                })
+                showList = newSeries,
+                title = stringResource(R.string.new_series),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
+            ShowsRow(
+                showList = newConcerts,
+                title = stringResource(R.string.new_concerts),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
+            ShowsRow(
+                showList = new3d,
+                title = stringResource(R.string.new_3d),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
+            ShowsRow(
+                showList = newDocumentaryFilms,
+                title = stringResource(R.string.new_documentary_films),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
+            ShowsRow(
+                showList = newDocumentarySeries,
+                title = stringResource(R.string.new_documentary_series),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
+            ShowsRow(
+                showList = newTvShows,
+                title = stringResource(R.string.new_tv_shows),
+                onShowClick = { show -> navigateToShowDetails(show.id) })
         }
     }
 }

@@ -4,15 +4,14 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.posaydone.filmix.core.network.BuildConfig
 import io.github.posaydone.filmix.core.network.Constants
+import io.github.posaydone.filmix.core.network.KinoPubAuthConfig
 import io.github.posaydone.filmix.core.network.interceptor.AuthInterceptor
-import io.github.posaydone.filmix.core.network.interceptor.FingerprintHeaderInterceptor
+import io.github.posaydone.filmix.core.network.interceptor.RetryInterceptor
 import io.github.posaydone.filmix.core.network.interceptor.TokenAuthenticator
 import io.github.posaydone.filmix.core.network.service.AuthService
-import io.github.posaydone.filmix.core.network.service.FanartApiService
-import io.github.posaydone.filmix.core.network.service.FilmixApiService
-import io.github.posaydone.filmix.core.network.service.KinopoiskService
-import io.github.posaydone.filmix.core.network.service.TmdbApiService
+import io.github.posaydone.filmix.core.network.service.KinoPubApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -24,66 +23,46 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal object NetworkModule {
     @Provides
+    @Singleton
+    fun provideKinoPubAuthConfig(): KinoPubAuthConfig {
+        return KinoPubAuthConfig(
+            clientId = BuildConfig.KINOPUB_CLIENT_ID,
+            clientSecret = BuildConfig.KINOPUB_CLIENT_SECRET,
+        )
+    }
+
+    @Provides
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        retryInterceptor: RetryInterceptor,
         tokenAuthenticator: TokenAuthenticator,
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-            .addInterceptor(authInterceptor).authenticator(tokenAuthenticator).build()
+            .addInterceptor(authInterceptor).addInterceptor(retryInterceptor)
+            .authenticator(tokenAuthenticator).build()
 
     }
 
     @Provides
     @Singleton
     fun provideAuthService(
-        fingerprintHeaderInterceptor: FingerprintHeaderInterceptor,
     ): AuthService {
-        return Retrofit.Builder().baseUrl(Constants.BASE_URL)
+        return Retrofit.Builder().baseUrl(Constants.KINOPUB_API_URL)
             .addConverterFactory(GsonConverterFactory.create()).client(
                 OkHttpClient.Builder()
                     .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-                    .addInterceptor(fingerprintHeaderInterceptor).build()
+                    .build()
             ).build().create(AuthService::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideKinopoiskService(
+    fun provideKinoPubApiService(
         okHttpClient: OkHttpClient,
-    ): KinopoiskService {
-        return Retrofit.Builder().baseUrl(Constants.KINOPOISK_API_URL)
+    ): KinoPubApiService {
+        return Retrofit.Builder().baseUrl(Constants.KINOPUB_API_URL)
             .addConverterFactory(GsonConverterFactory.create()).client(okHttpClient).build()
-            .create(KinopoiskService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideFilmixApiService(
-        okHttpClient: OkHttpClient,
-    ): FilmixApiService {
-        return Retrofit.Builder().baseUrl(Constants.FILMIX_API_URL)
-            .addConverterFactory(GsonConverterFactory.create()).client(okHttpClient).build()
-            .create(FilmixApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideTmdbApiService(
-        okHttpClient: OkHttpClient,
-    ): TmdbApiService {
-        return Retrofit.Builder().baseUrl(Constants.TMDB_API_URL)
-            .addConverterFactory(GsonConverterFactory.create()).client(okHttpClient).build()
-            .create(TmdbApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideFanartApiService(
-        okHttpClient: OkHttpClient,
-    ): FanartApiService {
-        return Retrofit.Builder().baseUrl(Constants.FANART_API_URL)
-            .addConverterFactory(GsonConverterFactory.create()).client(okHttpClient).build()
-            .create(FanartApiService::class.java)
+            .create(KinoPubApiService::class.java)
     }
 }

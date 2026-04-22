@@ -5,7 +5,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenViewModel
 import io.github.posaydone.filmix.mobile.ui.screen.profileScreen.ProfileScreen
@@ -18,13 +18,14 @@ import io.github.posaydone.filmix.shared.graphData.ProfileGraphData
 fun ProfileGraph(
     viewModel: ProfileScreenViewModel = hiltViewModel(),
 ) {
-    val backStack = rememberNavBackStack<ProfileGraphData>(ProfileGraphData.Profile)
+    val backStack = rememberNavBackStack(ProfileGraphData.Profile)
 
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeAt(backStack.lastIndex) },
         entryDecorators = listOf(
-            rememberSavedStateNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator()
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
             entry<ProfileGraphData.Profile> {

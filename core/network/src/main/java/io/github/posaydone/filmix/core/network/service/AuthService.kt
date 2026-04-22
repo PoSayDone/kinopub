@@ -2,20 +2,46 @@ package io.github.posaydone.filmix.core.network.service
 
 import io.github.posaydone.filmix.core.model.AuthRequestBody
 import io.github.posaydone.filmix.core.model.AuthResponse
-import io.github.posaydone.filmix.core.model.MessageResponse
-import io.github.posaydone.filmix.core.model.RefreshRequestBody
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceCodeResponse
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubStatusResponse
 import retrofit2.Response
-import retrofit2.http.Body
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface AuthService {
-    @POST("auth/sign-in")
-    suspend fun login(@Body body: AuthRequestBody): AuthResponse
+    @POST("oauth2/device")
+    suspend fun requestDeviceCode(
+        @Query("grant_type") grantType: String = "device_code",
+        @Query("client_id") clientId: String,
+        @Query("client_secret") clientSecret: String,
+    ): Response<KinoPubDeviceCodeResponse>
 
-    @POST("auth/logout")
-    suspend fun logout(): Response<MessageResponse>
+    @POST("oauth2/device")
+    suspend fun pollDeviceCode(
+        @Query("grant_type") grantType: String = "device_token",
+        @Query("code") code: String,
+        @Query("client_id") clientId: String,
+        @Query("client_secret") clientSecret: String,
+    ): Response<AuthResponse>
 
-    @POST("auth/refresh")
-    suspend fun refresh(@Body refreshToken: RefreshRequestBody): Response<AuthResponse>
-    
+    @POST("oauth2/device")
+    suspend fun refresh(
+        @Query("grant_type") grantType: String = "refresh_token",
+        @Query("refresh_token") refreshToken: String,
+        @Query("client_id") clientId: String,
+        @Query("client_secret") clientSecret: String,
+    ): Response<AuthResponse>
+
+    @POST("v1/device/unlink")
+    suspend fun logout(): Response<KinoPubStatusResponse>
+
+    @POST("v1/device/notify")
+    @FormUrlEncoded
+    suspend fun notifyDevice(
+        @Field("title") title: String,
+        @Field("hardware") hardware: String,
+        @Field("software") software: String,
+    ): Response<KinoPubStatusResponse>
 }

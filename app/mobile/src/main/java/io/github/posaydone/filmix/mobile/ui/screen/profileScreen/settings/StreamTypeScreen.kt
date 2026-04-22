@@ -39,11 +39,10 @@ fun StreamTypeScreen(
             is ProfileScreenUiState.Success -> {
                 SettingScreenContent(
                     paddingValues = paddingValues,
-                    values = ProfileScreenViewModel.streamTypes,
+                    values = state.streamTypes,
                     currentValue = state.currentStreamType,
                     updateValue = { value -> viewModel.updateStreamType(value) })
             }
         }
     }
 }
-

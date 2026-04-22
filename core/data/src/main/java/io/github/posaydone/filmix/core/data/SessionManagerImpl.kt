@@ -42,7 +42,7 @@ class SessionManagerImpl @Inject constructor(@ApplicationContext context: Contex
         Log.d(TAG, "saveAccessToken: ${expiration}, $fallbackExpiration")
         prefs.edit() {
             putString(USER_TOKEN, token)
-            putLong(USER_TOKEN_EXPIRES_IN, fallbackExpiration)
+            putLong(USER_TOKEN_EXPIRES_IN, expiration)
         }
     }
 

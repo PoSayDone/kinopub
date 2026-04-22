@@ -81,7 +81,9 @@ fun ProfileScreen(
                     navigateToVideoStreamTypeScreen = navigateToVideoStreamTypeScreen,
                     currentVideoQuality = videoQuality,
                     currentStreamType = state.currentStreamType,
+                    streamTypes = state.streamTypes,
                     currentServerLocation = state.currentServerLocation,
+                    serverLocations = state.serverLocations,
                 )
             }
         }
@@ -99,11 +101,11 @@ fun ProfileScreenContent(
     navigateToServerLocationScreen: () -> Unit,
     currentVideoQuality: String,
     currentStreamType: String,
+    streamTypes: Map<String, String>,
     currentServerLocation: String,
+    serverLocations: Map<String, String>,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
-    val streamTypes = ProfileScreenViewModel.streamTypes
-    val serverLocations = ProfileScreenViewModel.serverLocations
 
     val proStatus = if (userProfile.isProPlus) {
         "Pro+ (Days left: ${userProfile.proDaysLeft})"
@@ -137,8 +139,13 @@ fun ProfileScreenContent(
         ) {
             SettingItemLink(
                 title = stringResource(R.string.username), currentValue = userProfile.login, onClick = {})
-            SettingItemLink(
-                title = stringResource(R.string.email), currentValue = userProfile.email, onClick = {})
+            if (userProfile.email.isNotBlank()) {
+                SettingItemLink(
+                    title = stringResource(R.string.email),
+                    currentValue = userProfile.email,
+                    onClick = {}
+                )
+            }
             SettingItemLink(
                 title = stringResource(R.string.subscription), currentValue = proStatus, onClick = {})
         }

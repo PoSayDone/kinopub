@@ -20,6 +20,11 @@
 
     <!-- Error messages -->
     <string name="sign_in">Sign in</string>
+    <string name="device_sign_in_title">Activate your device</string>
+    <string name="device_sign_in_description">Request an activation code, open the link on another device, and confirm the code there.</string>
+    <string name="device_sign_in_waiting">Waiting for confirmation. This screen will continue automatically after activation.</string>
+    <string name="device_sign_in_start">Get activation code</string>
+    <string name="device_sign_in_refresh">Request new code</string>
     <string name="search">Search</string>
     <string name="retry_error">Oops, failed to load the movies, try again</string>
     <string name="retry">Retry</string>
@@ -30,6 +35,13 @@
     <string name="popular_movies">Popular movies</string>
     <string name="popular_series">Popular series</string>
     <string name="popular_cartoons">Popular cartoons</string>
+    <string name="new_movies">New movies</string>
+    <string name="new_series">New series</string>
+    <string name="new_concerts">New concerts</string>
+    <string name="new_3d">New 3D</string>
+    <string name="new_documentary_films">New documentary films</string>
+    <string name="new_documentary_series">New documentary series</string>
+    <string name="new_tv_shows">New TV shows</string>
     <string name="mpaa_rating">MPAA Rating</string>
     <string name="duration">Duration</string>
     <string name="movie_duration">%1$s min.</string>

@@ -26,8 +26,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
-import androidx.navigation3.scene.rememberSceneSetupNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
@@ -50,6 +48,7 @@ import io.github.posaydone.filmix.tv.ui.screen.playerScreen.PlayerScreen
 import io.github.posaydone.filmix.tv.ui.screen.showDetailsScreen.ShowDetailsScreen
 import io.github.posaydone.filmix.tv.ui.screen.showsGridScreen.ShowsGridScreen
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import io.github.posaydone.filmix.core.common.R
 
 fun getIcon(iconName: String): ImageVector {
@@ -128,8 +127,7 @@ fun MainGraph() {
             backStack = topLevelBackStack.backStack,
             onBack = { topLevelBackStack.removeLast() },
             entryDecorators = listOf(
-                rememberSceneSetupNavEntryDecorator(),
-                rememberSavedStateNavEntryDecorator(),
+                rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
             ),
             entryProvider = entryProvider {

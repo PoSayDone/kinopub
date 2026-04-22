@@ -3,6 +3,7 @@ package io.github.posaydone.filmix.core.data
 import io.github.posaydone.filmix.core.data.di.ApplicationScope
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.PageWithShows
+import io.github.posaydone.filmix.core.model.ServerLocationResponse
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImages
@@ -81,6 +82,27 @@ class FilmixRepository @Inject constructor(
         emit(list)
     }
 
+    suspend fun getFreshPage(
+        limit: Int = 48,
+        page: Int? = null,
+        section: FilmixCategory = FilmixCategory.MOVIE,
+    ): PageWithShows<Show> {
+        return filmixRemoteDataSource.fetchFreshPage(
+            limit = limit, page = page, section = section
+        )
+    }
+
+    fun getFreshList(
+        limit: Int = 48,
+        page: Int? = null,
+        section: FilmixCategory = FilmixCategory.MOVIE,
+    ): Flow<ShowList> = flow {
+        val list = getFreshPage(
+            limit = limit, page = page, section = section
+        ).items
+        emit(list)
+    }
+
     suspend fun getHistoryPageFull(
         limit: Int = 10,
         page: Int? = null,
@@ -139,11 +161,15 @@ class FilmixRepository @Inject constructor(
 
     fun addShowProgress(movieId: Int, showProgressItem: ShowProgressItem) {
         externalScope.launch {
-            filmixRemoteDataSource.addShowProgress(movieId, showProgressItem)
+            try {
+                filmixRemoteDataSource.addShowProgress(movieId, showProgressItem)
+            } catch (e: Exception) {
+                // Log the exception or handle it as needed, but don't crash the app
+                e.printStackTrace() // In production, you might want to use a proper logging framework
+            }
         }
     }
 
-    // Получение ссылки на видео для выбранного сезона, серии и озвучки
     suspend fun getShowResource(movieId: Int): ShowResourceResponse {
         return filmixRemoteDataSource.fetchShowResource(movieId)
     }
@@ -173,6 +199,10 @@ class FilmixRepository @Inject constructor(
 
     suspend fun getStreamType(): StreamTypeResponse {
         return filmixRemoteDataSource.fetchStreamType()
+    }
+
+    suspend fun getServerLocation(): ServerLocationResponse {
+        return filmixRemoteDataSource.fetchServerLocation()
     }
 
     suspend fun updateStreamType(streamType: String): Boolean {

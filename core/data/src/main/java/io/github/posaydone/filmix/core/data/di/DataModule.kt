@@ -8,12 +8,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.posaydone.filmix.core.data.AuthRepository
 import io.github.posaydone.filmix.core.data.FilmixRepository
-import io.github.posaydone.filmix.core.data.KinopoiskRepository
 import io.github.posaydone.filmix.core.data.SessionManagerImpl
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.network.dataSource.AuthRemoteDataSource
 import io.github.posaydone.filmix.core.network.dataSource.FilmixRemoteDataSource
-import io.github.posaydone.filmix.core.network.dataSource.KinopoiskRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,14 +28,6 @@ object DataModule {
         @ApplicationScope externalScope: CoroutineScope
     ): FilmixRepository {
         return FilmixRepository(dataSource, externalScope)
-    }
-
-    @Provides
-    @Singleton
-    fun provideKinopoiskRepository(
-        dataSource: KinopoiskRemoteDataSource,
-    ): KinopoiskRepository {
-        return KinopoiskRepository(dataSource)
     }
 
     @Provides

@@ -104,8 +104,9 @@ class ShowsGridScreenViewModel @Inject constructor(
 
                 hasReachedEnd = newShows.isEmpty()
 
+                val mergedShows = (currentState.shows + newShows).distinctBy { it.id }
                 _uiState.value = currentState.copy(
-                    shows = currentState.shows + newShows,
+                    shows = mergedShows,
                     hasNextPage = !hasReachedEnd
                 )
                 val newSize = (_uiState.value as ShowsGridUiState.Success).shows.size

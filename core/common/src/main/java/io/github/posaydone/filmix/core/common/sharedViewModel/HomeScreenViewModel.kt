@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.data.FilmixRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
-import io.github.posaydone.filmix.core.data.TmdbRepository
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.SessionManager
@@ -33,8 +32,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-private const val TAG = "HomeScreenViewModel"
-
 @Immutable
 sealed class HomeScreenUiState {
     data object Loading : HomeScreenUiState()
@@ -48,10 +45,15 @@ sealed class HomeScreenUiState {
         val sessionManager: SessionManager,
         val featuredShow: FullShow,
         val lastSeenShows: ShowList,
-        val viewingShows: ShowList,
         val popularMovies: ShowList,
+        val newMovies: ShowList,
         val popularSeries: ShowList,
-        val popularCartoons: ShowList,
+        val newSeries: ShowList,
+        val newConcerts: ShowList,
+        val new3d: ShowList,
+        val newDocumentaryFilms: ShowList,
+        val newDocumentarySeries: ShowList,
+        val newTvShows: ShowList,
         val getShowImages: suspend (showId: Int) -> ShowImages,
     ) : HomeScreenUiState()
 }
@@ -69,7 +71,6 @@ sealed interface ImmersiveContentUiState {
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val filmixRepository: FilmixRepository,
-    private val tmdbRepository: TmdbRepository,
     private val movieRepository: MovieRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
@@ -79,39 +80,83 @@ class HomeScreenViewModel @Inject constructor(
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
         combine(
             filmixRepository.getHistoryList(20).mapToResult(),
-            filmixRepository.getViewingList(20).mapToResult(),
             filmixRepository.getPopularList(20, section = FilmixCategory.MOVIE).mapToResult(),
+            filmixRepository.getFreshList(20, section = FilmixCategory.MOVIE).mapToResult(),
             filmixRepository.getPopularList(20, section = FilmixCategory.SERIES).mapToResult(),
-            filmixRepository.getPopularList(20, section = FilmixCategory.CARTOON).mapToResult(),
-        ) { lastSeenResult, viewingResult, popularMoviesResult, popularSeriesResult, popularCartoonsResult ->
+            filmixRepository.getFreshList(20, section = FilmixCategory.SERIES).mapToResult(),
+            filmixRepository.getFreshList(20, section = FilmixCategory.CONCERT).mapToResult(),
+            filmixRepository.getFreshList(20, section = FilmixCategory.FILM_3D).mapToResult(),
+            filmixRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_MOVIE).mapToResult(),
+            filmixRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_SERIES).mapToResult(),
+            filmixRepository.getFreshList(20, section = FilmixCategory.TV_SHOW).mapToResult(),
+        ) { results ->
+            @Suppress("UNCHECKED_CAST")
+            val lastSeenResult = results[0] as Result<ShowList>
+            val popularMoviesResult = results[1] as Result<ShowList>
+            val newMoviesResult = results[2] as Result<ShowList>
+            val popularSeriesResult = results[3] as Result<ShowList>
+            val newSeriesResult = results[4] as Result<ShowList>
+            val newConcertsResult = results[5] as Result<ShowList>
+            val new3dResult = results[6] as Result<ShowList>
+            val newDocumentaryFilmsResult = results[7] as Result<ShowList>
+            val newDocumentarySeriesResult = results[8] as Result<ShowList>
+            val newTvShowsResult = results[9] as Result<ShowList>
 
-            val results = listOf(
+            val allResults = listOf(
                 lastSeenResult,
-                viewingResult,
                 popularMoviesResult,
+                newMoviesResult,
                 popularSeriesResult,
-                popularCartoonsResult
+                newSeriesResult,
+                newConcertsResult,
+                new3dResult,
+                newDocumentaryFilmsResult,
+                newDocumentarySeriesResult,
+                newTvShowsResult,
             )
 
-            val error = results.firstOrNull { it.isFailure }
+            val error = allResults.firstOrNull { it.isFailure }
             if (error != null) {
                 HomeScreenUiState.Error(
                     sessionManager = sessionManager,
                     message = error.exceptionOrNull()?.message ?: "Unknown error",
                     onRetry = { retry() })
             } else {
-                var show = lastSeenResult.getOrThrow().first()
+                val lastSeenShows = lastSeenResult.getOrThrow()
+                val popularMovies = popularMoviesResult.getOrThrow()
+                val newMovies = newMoviesResult.getOrThrow()
+                val popularSeries = popularSeriesResult.getOrThrow()
+                val newSeries = newSeriesResult.getOrThrow()
+                val newConcerts = newConcertsResult.getOrThrow()
+                val new3d = new3dResult.getOrThrow()
+                val newDocumentaryFilms = newDocumentaryFilmsResult.getOrThrow()
+                val newDocumentarySeries = newDocumentarySeriesResult.getOrThrow()
+                val newTvShows = newTvShowsResult.getOrThrow()
 
-                val fullShow = movieRepository.getFullMovieByFilmixId(show.id)
+                val featuredShowId = listOf(
+                    lastSeenShows,
+                    popularMovies,
+                    newMovies,
+                    popularSeries,
+                    newSeries,
+                ).firstNotNullOfOrNull { it.firstOrNull()?.id }
+                    ?: throw IllegalStateException("No content available for the home screen.")
+
+                val fullShow = movieRepository.getFullMovieByFilmixId(featuredShowId)
 
                 HomeScreenUiState.Done(
                     sessionManager = sessionManager,
                     featuredShow = fullShow,
-                    lastSeenShows = lastSeenResult.getOrThrow(),
-                    viewingShows = viewingResult.getOrThrow(),
-                    popularMovies = popularMoviesResult.getOrThrow(),
-                    popularSeries = popularSeriesResult.getOrThrow(),
-                    popularCartoons = popularCartoonsResult.getOrThrow(),
+                    lastSeenShows = lastSeenShows,
+                    popularMovies = popularMovies,
+                    newMovies = newMovies,
+                    popularSeries = popularSeries,
+                    newSeries = newSeries,
+                    newConcerts = newConcerts,
+                    new3d = new3d,
+                    newDocumentaryFilms = newDocumentaryFilms,
+                    newDocumentarySeries = newDocumentarySeries,
+                    newTvShows = newTvShows,
                     getShowImages = { filmixRepository.getShowImages(it) })
             }
         }
@@ -127,16 +172,13 @@ class HomeScreenViewModel @Inject constructor(
         _immersiveContentState.asStateFlow()
 
     private val kinopoiskCache = mutableMapOf<Int, ImmersiveContentUiState.Content>()
-    private val cancelledRequests = mutableSetOf<Int>()  // Track cancelled requests
+    private val cancelledRequests = mutableSetOf<Int>()
     private var fetchJob: Job? = null
 
     fun onImmersiveShowFocused(show: Show) {
         fetchJob?.cancel()
 
-        // Check if previous request for this show was cancelled
         val wasCancelled = show.id in cancelledRequests
-        
-        // If it was cancelled, remove it from cache to force a new request
         if (wasCancelled) {
             cancelledRequests.remove(show.id)
             kinopoiskCache.remove(show.id)
@@ -150,24 +192,17 @@ class HomeScreenViewModel @Inject constructor(
         fetchJob = viewModelScope.launch {
             _immersiveContentState.value = ImmersiveContentUiState.Loading
             try {
-                // Use MovieRepository to get full show information
                 val fullShow = withContext(Dispatchers.IO) {
                     movieRepository.getFullMovieByFilmixId(show.id)
                 }
-                
-                val content = ImmersiveContentUiState.Content(
-                    fullShow = fullShow
-                )
 
+                val content = ImmersiveContentUiState.Content(fullShow = fullShow)
                 kinopoiskCache[show.id] = content
                 _immersiveContentState.value = content
 
             } catch (e: CancellationException) {
-                // Mark this request as cancelled so it will be retried
                 cancelledRequests.add(show.id)
-                // Don't update UI state when request is cancelled
             } catch (e: Exception) {
-                // Only show error if this isn't a cancellation 
                 _immersiveContentState.value = ImmersiveContentUiState.Error
             }
         }
@@ -184,8 +219,5 @@ class HomeScreenViewModel @Inject constructor(
     }
 }
 
-/**
- * Extension function to map a Flow to a Result.
- */
 private fun <T> Flow<T>.mapToResult(): Flow<Result<T>> =
     this.map { Result.success(it) }.catch { emit(Result.failure(it)) }

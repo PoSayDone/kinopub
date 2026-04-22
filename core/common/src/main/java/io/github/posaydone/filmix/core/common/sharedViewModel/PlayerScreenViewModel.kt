@@ -16,6 +16,8 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -27,6 +29,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.common.services.PlaybackService
 import io.github.posaydone.filmix.core.data.FilmixRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
+import io.github.posaydone.filmix.core.data.SettingsManager
 import io.github.posaydone.filmix.core.model.Episode
 import io.github.posaydone.filmix.core.model.File
 import io.github.posaydone.filmix.core.model.FullShow
@@ -78,6 +81,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     val sessionManager: SessionManager,
     private val repository: FilmixRepository,
     private val movieRepository: MovieRepository,
+    private val settingsManager: SettingsManager,
     context: Application,
 ) : ViewModel() {
     @AssistedFactory
@@ -205,7 +209,6 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _playerState.update { it.copy(isPlaying = isPlaying) }
-                        // Save progress when player is paused
                         if (!isPlaying) {
                             saveProgress()
                         }
@@ -217,6 +220,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
                         _playerState.update { it.copy(isLoading = isLoading) }
                     }
 
+                    override fun onTracksChanged(tracks: Tracks) {
+                        Log.d(TAG, "onTracksChanged: groups=${tracks.groups.size}")
+                        // Apply audio selection using ExoPlayer's real track groups via custom command
+                        applyAudioSelection(tracks)
+                    }
                 })
 
                 _playerState.update { it.copy(isLoading = true) }
@@ -304,38 +312,35 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 setDefaultMovieProgress()
             }
         }
-        movie.get(0).let {
-            _selectedMovieTranslation.value = it
-            selectedMovieTranslation.value?.files?.get(0).let {
-                _selectedQuality.value = it
-            }
-        }
     }
 
     private fun restoreMovieSavedProgress(savedMovie: ShowProgressItem) {
-        val translation = moviePieces.value?.find { it.voiceover == savedMovie.voiceover }
+        val savedVoiceover = savedMovie.voiceover.ifBlank { settingsManager.getSavedVoiceTrack(showId) }
+        val translation = moviePieces.value?.find { it.voiceover == savedVoiceover }
+            ?: moviePieces.value?.getOrNull(0)
         _selectedMovieTranslation.value = translation
 
         val file = translation?.files?.find {
             it.quality == savedMovie.quality || it.quality == 1080
         } ?: translation?.files?.getOrNull(0)
         _selectedQuality.value = file
-        file?.url?.let {
-            _videoUrl.value = it
-        }
+        file?.url?.let { _videoUrl.value = it }
         playVideo(savedMovie.time)
     }
 
     private fun setDefaultMovieProgress() {
-        val defaultTranslation = moviePieces.value?.getOrNull(0)
+        val savedVoiceover = settingsManager.getSavedVoiceTrack(showId)
+        val defaultTranslation = if (savedVoiceover != null) {
+            moviePieces.value?.find { it.voiceover == savedVoiceover }
+                ?: moviePieces.value?.getOrNull(0)
+        } else {
+            moviePieces.value?.getOrNull(0)
+        }
         _selectedMovieTranslation.value = defaultTranslation
 
         val defaultFile = defaultTranslation?.files?.getOrNull(0)
         _selectedQuality.value = defaultFile
-
-        defaultFile?.url?.let {
-            _videoUrl.value = it
-        }
+        defaultFile?.url?.let { _videoUrl.value = it }
         playVideo()
     }
 
@@ -358,9 +363,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
         val episode = season?.episodes?.find { it.episode == savedSeries.episode }
         _selectedEpisode.value = episode
 
+        val savedVoiceover = savedSeries.voiceover.ifBlank { settingsManager.getSavedVoiceTrack(showId) }
         val translation = episode?.translations?.find {
-            it.translation.equals(savedSeries.voiceover, ignoreCase = true)
-        }
+            it.translation.equals(savedVoiceover, ignoreCase = true)
+        } ?: episode?.translations?.getOrNull(0)
         _selectedTranslation.value = translation
 
         val file = translation?.files?.find {
@@ -381,7 +387,13 @@ class PlayerScreenViewModel @AssistedInject constructor(
         val defaultEpisode = defaultSeason?.episodes?.getOrNull(0)
         _selectedEpisode.value = defaultEpisode
 
-        val defaultTranslation = defaultEpisode?.translations?.getOrNull(0)
+        val savedVoiceover = settingsManager.getSavedVoiceTrack(showId)
+        val defaultTranslation = if (savedVoiceover != null) {
+            defaultEpisode?.translations?.find { it.translation.equals(savedVoiceover, ignoreCase = true) }
+                ?: defaultEpisode?.translations?.getOrNull(0)
+        } else {
+            defaultEpisode?.translations?.getOrNull(0)
+        }
         _selectedTranslation.value = defaultTranslation
 
         val defaultFile = defaultTranslation?.files?.getOrNull(0)
@@ -427,8 +439,138 @@ class PlayerScreenViewModel @AssistedInject constructor(
         playVideo()
     }
 
-    // Function to set the selected translation
+    private data class SelectedAudioOption(
+        val label: String,
+        val audioIndex: Int,
+    )
+
+    private fun currentSelectedAudioOption(): SelectedAudioOption? {
+        return if (contentType.value == ShowType.MOVIE) {
+            _selectedMovieTranslation.value?.let {
+                SelectedAudioOption(it.voiceover, it.audioIndex)
+            }
+        } else {
+            _selectedTranslation.value?.let {
+                SelectedAudioOption(it.translation, it.audioIndex)
+            }
+        }
+    }
+
+    private fun applyAudioSelection(tracks: Tracks): Boolean {
+        val controller = playerController.value ?: run {
+            Log.w(TAG, "applyAudio: controller is null")
+            return false
+        }
+        if (!controller.isCommandAvailable(Player.COMMAND_SET_TRACK_SELECTION_PARAMETERS)) {
+            Log.w(TAG, "applyAudio: track selection command is unavailable")
+            return false
+        }
+        val selectedAudio = currentSelectedAudioOption() ?: run {
+            Log.w(TAG, "applyAudio: no selected audio option")
+            return false
+        }
+        Log.d(TAG, "applyAudio: contentType=${contentType.value} label=${selectedAudio.label} audioIndex=${selectedAudio.audioIndex}")
+        if (selectedAudio.audioIndex <= 0) {
+            Log.w(TAG, "applyAudio: audioIndex <= 0, skipping")
+            return false
+        }
+
+        val audioGroups = tracks.groups.filter {
+            it.type == C.TRACK_TYPE_AUDIO && it.isSupported(true)
+        }
+
+        if (audioGroups.isEmpty()) {
+            Log.w(TAG, "applyAudio: no supported audio groups in controller tracks")
+            return false
+        }
+
+        logAudioGroups(audioGroups)
+
+        // Resolve an override for each audio group (HLS4 has one group per quality level).
+        // Applying overrides to all groups ensures the correct track is selected regardless
+        // of which quality variant ExoPlayer switches to during adaptive streaming.
+        val overrides = audioGroups.mapNotNull { group ->
+            resolveAudioOverrideForGroup(group, selectedAudio)
+        }
+
+        if (overrides.isEmpty()) {
+            Log.w(TAG, "applyAudio: unable to resolve override for label=${selectedAudio.label} audioIndex=${selectedAudio.audioIndex}")
+            return false
+        }
+
+        val paramsBuilder = controller.trackSelectionParameters
+            .buildUpon()
+            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+        overrides.forEach { override ->
+            paramsBuilder.addOverride(override)
+            Log.d(TAG, "applyAudio: adding override groupId=${override.mediaTrackGroup.id} tracks=${override.trackIndices}")
+        }
+        controller.setTrackSelectionParameters(paramsBuilder.build())
+        return true
+    }
+
+    private fun resolveAudioOverrideForGroup(
+        group: Tracks.Group,
+        selectedAudio: SelectedAudioOption,
+    ): TrackSelectionOverride? {
+        val requestedTrackIndex = selectedAudio.audioIndex - 1
+
+        // 1. Try to match by track label/language within this group
+        for (trackIndex in 0 until group.length) {
+            if (!group.isTrackSupported(trackIndex, true)) continue
+            val format = group.getTrackFormat(trackIndex)
+            if (matchesSelectedAudio(format.label, format.language, selectedAudio.label)) {
+                Log.d(TAG, "resolveAudioOverride: label match in group=${group.mediaTrackGroup.id} track=$trackIndex")
+                return TrackSelectionOverride(group.mediaTrackGroup, trackIndex)
+            }
+        }
+
+        // 2. Fall back to audioIndex - 1 if it is a valid track index in this group
+        if (requestedTrackIndex in 0 until group.length) {
+            Log.d(TAG, "resolveAudioOverride: index fallback in group=${group.mediaTrackGroup.id} track=$requestedTrackIndex")
+            return TrackSelectionOverride(group.mediaTrackGroup, requestedTrackIndex)
+        }
+
+        return null
+    }
+
+    private fun matchesSelectedAudio(
+        trackLabel: String?,
+        trackLanguage: String?,
+        selectedLabel: String,
+    ): Boolean {
+        val normalizedSelectedLabel = selectedLabel.normalizeAudioLabel()
+        if (normalizedSelectedLabel.isEmpty()) return false
+
+        return listOfNotNull(trackLabel, trackLanguage)
+            .map { it.normalizeAudioLabel() }
+            .any { candidate ->
+                candidate == normalizedSelectedLabel ||
+                    candidate.contains(normalizedSelectedLabel) ||
+                    normalizedSelectedLabel.contains(candidate)
+            }
+    }
+
+    private fun String.normalizeAudioLabel(): String {
+        return lowercase()
+            .replace(Regex("[^\\p{L}\\p{Nd}]+"), " ")
+            .trim()
+    }
+
+    private fun logAudioGroups(audioGroups: List<Tracks.Group>) {
+        audioGroups.forEachIndexed { groupIndex, group ->
+            for (trackIndex in 0 until group.length) {
+                val format = group.getTrackFormat(trackIndex)
+                Log.d(
+                    TAG,
+                    "audioGroup[$groupIndex] track[$trackIndex] label=${format.label} language=${format.language} selected=${group.isTrackSelected(trackIndex)} supported=${group.isTrackSupported(trackIndex, true)}"
+                )
+            }
+        }
+    }
+
     fun setTranslation(translation: Translation) {
+        Log.d(TAG, "setTranslation: ${translation.translation} audioIndex=${translation.audioIndex}")
         playerController.value?.let { player ->
             val currentTime = player.currentPosition / 1000
             val oldQuality = selectedQuality.value?.quality
@@ -436,26 +578,39 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
             val oldQualityInNewTranslation = translation.files.find { it.quality == oldQuality }
             _selectedQuality.value = oldQualityInNewTranslation ?: translation.files.firstOrNull()
-
             _videoUrl.value = _selectedQuality.value?.url
-            playVideo(currentTime)
+
+            settingsManager.saveVoiceTrack(showId, translation.translation)
+
+            val applied = applyAudioSelection(player.currentTracks)
+            Log.d(TAG, "setTranslation: applyAudioSelection returned $applied")
+            if (!applied) {
+                Log.d(TAG, "setTranslation: falling back to playVideo(currentTime=$currentTime)")
+                playVideo(currentTime)
+            }
             saveProgress()
         }
     }
 
     fun setMovieTranslation(movieTranslation: VideoWithQualities) {
+        Log.d(TAG, "setMovieTranslation: ${movieTranslation.voiceover} audioIndex=${movieTranslation.audioIndex}")
         playerController.value?.let { player ->
             val currentTime = player.currentPosition / 1000
             val oldQuality = selectedQuality.value?.quality
             _selectedMovieTranslation.value = movieTranslation
 
-            val oldQualityInNewTranslation =
-                movieTranslation.files.find { it.quality == oldQuality }
-            _selectedQuality.value =
-                oldQualityInNewTranslation ?: movieTranslation.files.firstOrNull()
-
+            val oldQualityInNewTranslation = movieTranslation.files.find { it.quality == oldQuality }
+            _selectedQuality.value = oldQualityInNewTranslation ?: movieTranslation.files.firstOrNull()
             _videoUrl.value = _selectedQuality.value?.url
-            playVideo(currentTime)
+
+            settingsManager.saveVoiceTrack(showId, movieTranslation.voiceover)
+
+            val applied = applyAudioSelection(player.currentTracks)
+            Log.d(TAG, "setMovieTranslation: applyAudioSelection returned $applied")
+            if (!applied) {
+                Log.d(TAG, "setMovieTranslation: falling back to playVideo(currentTime=$currentTime)")
+                playVideo(currentTime)
+            }
             saveProgress()
         }
     }
@@ -475,12 +630,11 @@ class PlayerScreenViewModel @AssistedInject constructor(
     fun playVideo(time: Long = 0) {
         val url = selectedQuality.value?.url ?: return
         Log.d("video", url)
-        val mediaItem = MediaItem.fromUri(Uri.parse(url))
-
         val controller = playerController.value ?: return
 
-        controller.setMediaItem(mediaItem)
+        controller.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
         controller.prepare()
+        controller.play()
 
         if (time > 0) {
             controller.addListener(object : Player.Listener {
@@ -506,35 +660,30 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
                 if (contentType.value == ShowType.MOVIE) {
                     if (movieTranslation != null && qualityFile != null) {
+                        settingsManager.saveVoiceTrack(showId, movieTranslation.voiceover)
                         viewModelScope.launch {
-                            val savedSeriesProgress = ShowProgressItem(
-                                0,
-                                0,
-                                movieTranslation.voiceover,
-                                time,
-                                qualityFile.quality,
-                            )
-                            repository.addShowProgress(showId, savedSeriesProgress)
+                            repository.addShowProgress(showId, ShowProgressItem(
+                                0, 0, movieTranslation.voiceover, time, qualityFile.quality,
+                            ))
                         }
                     }
                 } else {
                     if (season != null && episode != null && translation != null && qualityFile != null) {
+                        settingsManager.saveVoiceTrack(showId, translation.translation)
                         viewModelScope.launch {
-                            val savedSeriesProgress = ShowProgressItem(
-                                season.season,
-                                episode.episode,
-                                translation.translation,
-                                time,
-                                qualityFile.quality,
-                            )
-                            repository.addShowProgress(showId, savedSeriesProgress)
+                            repository.addShowProgress(showId, ShowProgressItem(
+                                season = season.season,
+                                episode = episode.episode,
+                                voiceover = translation.translation,
+                                time = time,
+                                quality = qualityFile.quality,
+                            ))
                         }
                     }
                 }
             }
         } catch (e: Exception) {
             Log.e("PlayerScreenViewModel", "Error saving progress: ${e.message}", e)
-            // Continue execution despite the error - don't crash the app
         }
     }
 

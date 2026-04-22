@@ -2,8 +2,8 @@ package io.github.posaydone.filmix.core.network.interceptor
 
 import android.util.Log
 import io.github.posaydone.filmix.core.model.AuthEvent
-import io.github.posaydone.filmix.core.model.RefreshRequestBody
 import io.github.posaydone.filmix.core.model.SessionManager
+import io.github.posaydone.filmix.core.network.KinoPubAuthConfig
 import io.github.posaydone.filmix.core.network.service.AuthService
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
@@ -18,6 +18,7 @@ private const val TAG = "TokenAuthenticator"
 class TokenAuthenticator @Inject constructor(
     private val sessionManager: SessionManager,
     private val authService: AuthService,
+    private val authConfig: KinoPubAuthConfig,
     private val authEventChannel: MutableSharedFlow<AuthEvent>,
 ) : Authenticator {
 
@@ -51,14 +52,19 @@ class TokenAuthenticator @Inject constructor(
             return try {
                 Log.d(TAG, "This thread is performing the refresh.")
                 val refreshResponse = runBlocking {
-                    authService.refresh(RefreshRequestBody(latestRefreshToken))
+                    authConfig.requireConfigured()
+                    authService.refresh(
+                        refreshToken = latestRefreshToken,
+                        clientId = authConfig.clientId,
+                        clientSecret = authConfig.clientSecret,
+                    )
                 }
 
                 if (refreshResponse.isSuccessful && refreshResponse.body() != null) {
                     val newTokens = refreshResponse.body()!!
                     sessionManager.saveAccessToken(
                         newTokens.access_token,
-                        System.currentTimeMillis() + (10 * 60 * 1000)
+                        System.currentTimeMillis() + (newTokens.expires_in * 1000)
                     )
                     sessionManager.saveRefreshToken(newTokens.refresh_token)
                     Log.i(TAG, "Token refresh successful.")

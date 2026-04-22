@@ -39,11 +39,10 @@ fun ServerLocationScreen(
             is ProfileScreenUiState.Success -> {
                 SettingScreenContent(
                     paddingValues = paddingValues,
-                    values = ProfileScreenViewModel.serverLocations,
+                    values = state.serverLocations,
                     currentValue = state.currentServerLocation,
                     updateValue = { value -> viewModel.updateServerLocation(value) })
             }
         }
     }
 }
-
