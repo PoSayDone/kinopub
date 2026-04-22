@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
@@ -72,7 +73,11 @@ sealed class VideoPlayerScreenUiState {
     data class Done(val showDetails: FullShow) : VideoPlayerScreenUiState()
 }
 
-data class PlayerScreenNavKey(val showId: Int)
+data class PlayerScreenNavKey(
+    val showId: Int,
+    val startSeason: Int = -1,
+    val startEpisode: Int = -1,
+)
 
 @androidx.media3.common.util.UnstableApi
 @HiltViewModel(assistedFactory = PlayerScreenViewModel.Factory::class)
@@ -347,12 +352,40 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private fun restoreSeriesProgress() {
         Log.d(TAG, "restoreSeriesProgress: restoring series")
         viewModelScope.launch {
-            if (savedProgress.isNotEmpty()) {
+            val requestedSeason = navKey.startSeason
+            val requestedEpisode = navKey.startEpisode
+            if (requestedSeason != -1 && requestedEpisode != -1) {
+                setSpecificSeriesProgress(requestedSeason, requestedEpisode)
+            } else if (savedProgress.isNotEmpty()) {
                 restoreSeriesSavedProgress(savedProgress.first())
             } else {
                 setDefaultSeriesProgress()
             }
         }
+    }
+
+    private fun setSpecificSeriesProgress(seasonNumber: Int, episodeNumber: Int) {
+        val season = seasons.value?.find { it.season == seasonNumber }
+            ?: seasons.value?.getOrNull(0)
+        _selectedSeason.value = season
+
+        val episode = season?.episodes?.find { it.episode == episodeNumber }
+            ?: season?.episodes?.getOrNull(0)
+        _selectedEpisode.value = episode
+
+        val savedVoiceover = settingsManager.getSavedVoiceTrack(showId)
+        val translation = if (savedVoiceover != null) {
+            episode?.translations?.find { it.translation.equals(savedVoiceover, ignoreCase = true) }
+                ?: episode?.translations?.getOrNull(0)
+        } else {
+            episode?.translations?.getOrNull(0)
+        }
+        _selectedTranslation.value = translation
+
+        val file = translation?.files?.getOrNull(0)
+        _selectedQuality.value = file
+        file?.url?.let { _videoUrl.value = it }
+        playVideo(0)
     }
 
     private fun restoreSeriesSavedProgress(savedSeries: ShowProgressItem) {
@@ -632,7 +665,31 @@ class PlayerScreenViewModel @AssistedInject constructor(
         Log.d("video", url)
         val controller = playerController.value ?: return
 
-        controller.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
+        val showTitle = _details.value?.title ?: ""
+        val displayTitle = when (_contentType.value) {
+            ShowType.SERIES -> {
+                val season = _selectedSeason.value?.season
+                val episode = _selectedEpisode.value?.episode
+                if (season != null && episode != null) {
+                    "$showTitle — С$season Э$episode"
+                } else {
+                    showTitle
+                }
+            }
+            else -> showTitle
+        }
+
+        val mediaItem = MediaItem.Builder()
+            .setUri(Uri.parse(url))
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setDisplayTitle(displayTitle)
+                    .setTitle(displayTitle)
+                    .build()
+            )
+            .build()
+
+        controller.setMediaItem(mediaItem)
         controller.prepare()
         controller.play()
 

@@ -12,7 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import io.github.posaydone.filmix.core.model.FullShow
 
 @Composable
@@ -27,20 +27,34 @@ fun PlayerMediaTitle(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        AsyncImage(
-            model = showDetails.logoUrl,
-            contentDescription = showDetails.title,
-            modifier = Modifier.width(300.dp),
-            contentScale = ContentScale.Fit,
-        )
+        if (!showDetails.logoUrl.isNullOrBlank()) {
+            SubcomposeAsyncImage(
+                model = showDetails.logoUrl,
+                contentDescription = showDetails.title,
+                modifier = Modifier.width(300.dp),
+                contentScale = ContentScale.Fit,
+                error = {
+                    Text(
+                        text = showDetails.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                    )
+                },
+            )
+        } else {
+            Text(
+                text = showDetails.title,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+            )
+        }
 
-        // Season and episode information
         if (currentSeason != null && currentEpisode != null) {
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "$currentSeason • $currentEpisode",
                 style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1
+                maxLines = 1,
             )
         }
     }

@@ -12,7 +12,11 @@ sealed class MainGraphData : NavKey {
     data object MainGraph : MainGraphData()
 
     @Serializable
-    data class Player(val showId: Int) : MainGraphData()
+    data class Player(
+        val showId: Int,
+        val startSeason: Int = -1,
+        val startEpisode: Int = -1,
+    ) : MainGraphData()
 
     @Serializable
     data class ShowDetails(val showId: Int) : MainGraphData()
@@ -22,4 +26,7 @@ sealed class MainGraphData : NavKey {
 
     @Serializable
     data class ShowsGrid(val queryType: String) : MainGraphData()
+
+    @Serializable
+    data class Episodes(val showId: Int) : MainGraphData()
 }

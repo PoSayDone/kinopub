@@ -32,6 +32,7 @@ internal object NetworkModule {
     }
 
     @Provides
+    @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
         retryInterceptor: RetryInterceptor,

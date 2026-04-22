@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BookmarkAdd
 import androidx.compose.material.icons.rounded.BookmarkRemove
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,6 +71,7 @@ fun ShowDetailsScreen(
     modifier: Modifier = Modifier,
     showId: Int,
     navigateToMoviePlayer: (showId: Int) -> Unit,
+    navigateToEpisodes: (showId: Int) -> Unit = {},
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,9 +93,10 @@ fun ShowDetailsScreen(
                 showImages = s.showImages,
                 showTrailers = s.showTrailers,
                 toggleFavorites = s.toggleFavorites,
-                goToMoviePlayer = {
-                    navigateToMoviePlayer(showId)
-                },
+                goToMoviePlayer = { navigateToMoviePlayer(showId) },
+                goToEpisodes = if (s.fullShow.isSeries) {
+                    { navigateToEpisodes(showId) }
+                } else null,
                 modifier = Modifier
                     .fillMaxSize()
                     .animateContentSize()
@@ -112,6 +115,7 @@ private fun Details(
     showTrailers: ShowTrailers?,
     toggleFavorites: () -> Unit,
     goToMoviePlayer: () -> Unit,
+    goToEpisodes: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
@@ -179,6 +183,7 @@ private fun Details(
                         }
                     },
                     goToMoviePlayer = goToMoviePlayer,
+                    goToEpisodes = goToEpisodes,
                     toggleFavorites = toggleFavorites,
                     isFavorite = showDetails.isFavorite == true
                 )
@@ -323,6 +328,7 @@ fun InfoItemPreview() {
 private fun ShowDetailsButtons(
     modifier: Modifier = Modifier,
     goToMoviePlayer: () -> Unit,
+    goToEpisodes: (() -> Unit)? = null,
     toggleFavorites: () -> Unit,
     isFavorite: Boolean,
 ) {
@@ -346,6 +352,24 @@ private fun ShowDetailsButtons(
                 text = stringResource(R.string.playString),
                 style = MaterialTheme.typography.titleMedium
             )
+        }
+
+        if (goToEpisodes != null) {
+            LargeButton(
+                onClick = goToEpisodes,
+                style = LargeButtonStyle.OUTLINED,
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Rounded.ViewList,
+                    contentDescription = null
+                )
+                Spacer(Modifier.size(12.dp))
+                Text(
+                    text = stringResource(R.string.episodesString),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
 
         LargeButton(

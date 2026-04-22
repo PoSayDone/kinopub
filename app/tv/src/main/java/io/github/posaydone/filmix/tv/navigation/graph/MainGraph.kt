@@ -35,9 +35,12 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
+import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesNavKey
+import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
 import io.github.posaydone.filmix.shared.graphData.MainGraphData
+import io.github.posaydone.filmix.tv.ui.screen.episodesScreen.EpisodesScreen
 import io.github.posaydone.filmix.shared.graphData.NavBarGraphData
 import io.github.posaydone.filmix.shared.graphData.navBarScreenItems
 import io.github.posaydone.filmix.shared.util.TopLevelBackStack
@@ -176,9 +179,30 @@ fun MainGraph() {
                                 factory.create(ShowDetailsNavKey(showId = key.showId))
                             })
                     ShowDetailsScreen(
-                        showId = key.showId, navigateToMoviePlayer = {
+                        showId = key.showId,
+                        navigateToMoviePlayer = {
                             topLevelBackStack.add(MainGraphData.Player(key.showId))
-                        }, viewModel = viewModel
+                        },
+                        navigateToEpisodes = { showId ->
+                            topLevelBackStack.add(MainGraphData.Episodes(showId))
+                        },
+                        viewModel = viewModel,
+                    )
+                }
+                entry<MainGraphData.Episodes> { key ->
+                    val viewModel =
+                        hiltViewModel<EpisodesScreenViewModel, EpisodesScreenViewModel.Factory>(
+                            creationCallback = { factory ->
+                                factory.create(EpisodesNavKey(showId = key.showId))
+                            })
+                    EpisodesScreen(
+                        showId = key.showId,
+                        navigateToPlayer = { showId, season, episode ->
+                            topLevelBackStack.add(
+                                MainGraphData.Player(showId, startSeason = season, startEpisode = episode)
+                            )
+                        },
+                        viewModel = viewModel,
                     )
                 }
                 entry<MainGraphData.ShowsGrid> {
@@ -197,7 +221,13 @@ fun MainGraph() {
                     val viewModel =
                         hiltViewModel<PlayerScreenViewModel, PlayerScreenViewModel.Factory>(
                             creationCallback = { factory ->
-                                factory.create(PlayerScreenNavKey(showId = key.showId))
+                                factory.create(
+                                    PlayerScreenNavKey(
+                                        showId = key.showId,
+                                        startSeason = key.startSeason,
+                                        startEpisode = key.startEpisode,
+                                    )
+                                )
                             })
                     PlayerScreen(viewModel = viewModel)
                 }

@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import io.github.posaydone.filmix.core.model.FullShow
 
 @Composable
@@ -33,7 +33,7 @@ fun PlayerMediaTitle(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
-    
+
     CompositionLocalProvider(LocalContentColor provides Color.White) {
         Row(
             modifier = modifier.fillMaxWidth(),
@@ -43,31 +43,48 @@ fun PlayerMediaTitle(
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.Start
-            ) {
+            ) {}
 
-            }
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                AsyncImage(
-                    model = showDetails.logoUrl,
-                    contentDescription = showDetails.title,
-                    modifier = Modifier.sizeIn(
-                        maxWidth = screenWidth * 0.2f, maxHeight = screenHeight * 0.08f
+                if (!showDetails.logoUrl.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = showDetails.logoUrl,
+                        contentDescription = showDetails.title,
+                        modifier = Modifier.sizeIn(
+                            maxWidth = screenWidth * 0.2f, maxHeight = screenHeight * 0.08f
+                        ),
+                        error = {
+                            Text(
+                                text = showDetails.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                color = Color.White,
+                            )
+                        },
                     )
-                )
+                } else {
+                    Text(
+                        text = showDetails.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        color = Color.White,
+                    )
+                }
 
                 if (currentSeason != null && currentEpisode != null) {
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = "$currentSeason • $currentEpisode",
                         style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 1
+                        maxLines = 1,
                     )
                 }
             }
+
             Column(
                 modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End
             ) {

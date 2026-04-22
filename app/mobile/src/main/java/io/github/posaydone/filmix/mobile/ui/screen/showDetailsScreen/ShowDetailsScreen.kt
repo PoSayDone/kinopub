@@ -33,6 +33,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.BookmarkAdd
 import androidx.compose.material.icons.rounded.BookmarkRemove
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -93,6 +94,7 @@ fun ShowDetailsScreen(
     showId: Int,
     navigateToMoviePlayer: (showId: Int) -> Unit,
     navigateBack: () -> Unit,
+    navigateToEpisodes: (showId: Int) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
@@ -122,6 +124,9 @@ fun ShowDetailsScreen(
                     showTrailers = s.showTrailers,
                     toggleFavorites = s.toggleFavorites,
                     navigateToMoviePlayer = { navigateToMoviePlayer(showId) },
+                    navigateToEpisodes = if (s.fullShow.isSeries) {
+                        { navigateToEpisodes(showId) }
+                    } else null,
                     navigateBack = navigateBack,
                     modifier = modifier
                         .fillMaxSize()
@@ -143,6 +148,7 @@ private fun Details(
     toggleFavorites: () -> Unit,
     navigateToMoviePlayer: () -> Unit,
     navigateBack: () -> Unit,
+    navigateToEpisodes: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
@@ -194,7 +200,8 @@ private fun Details(
                     ageRating = fullShow.ageRating.takeIf { it > 0 },
                     isFavorite = showDetails.isFavorite,
                     onPlayClick = navigateToMoviePlayer,
-                    onToggleFavoritesClick = toggleFavorites
+                    onToggleFavoritesClick = toggleFavorites,
+                    onEpisodesClick = navigateToEpisodes,
                 )
 
                 Column(
@@ -242,6 +249,7 @@ fun ShowBannerContent(
     onPlayClick: () -> Unit,
     isFavorite: Boolean? = null,
     onToggleFavoritesClick: (() -> Unit)? = null,
+    onEpisodesClick: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
@@ -272,7 +280,8 @@ fun ShowBannerContent(
             ActionButtons(
                 navigateToMoviePlayer = onPlayClick,
                 toggleFavorites = onToggleFavoritesClick,
-                isFavorite = isFavorite
+                isFavorite = isFavorite,
+                navigateToEpisodes = onEpisodesClick,
             )
         }
     }
@@ -434,6 +443,7 @@ fun ActionButtons(
     toggleFavorites: (() -> Unit)? = null,
     isFavorite: Boolean? = null,
     playButtonText: String = stringResource(R.string.playString),
+    navigateToEpisodes: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -448,6 +458,20 @@ fun ActionButtons(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = playButtonText)
+        }
+        if (navigateToEpisodes != null) {
+            LargeButton(
+                style = LargeButtonStyle.OUTLINED,
+                onClick = navigateToEpisodes,
+            ) {
+                Icon(
+                    contentDescription = stringResource(R.string.episodesString),
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Rounded.ViewList,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.episodesString))
+            }
         }
         if (toggleFavorites != null && isFavorite != null) LargeButton(
             style = LargeButtonStyle.OUTLINED,
