@@ -17,12 +17,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -188,11 +190,14 @@ private fun Body(
     showImmersiveDetails: Boolean,
     navigateToShowDetails: (showId: Int) -> Unit,
 ) {
-    var pendingShow by remember { mutableStateOf<Show?>(null) }
-    var focusedShow by remember { mutableStateOf<Show?>(null) }
-    LaunchedEffect(pendingShow) {
-        delay(300L)
-        focusedShow = pendingShow
+    val scope = rememberCoroutineScope()
+    val debounceJob = remember { arrayOfNulls<Job>(1) }
+    var focusedShow by remember {
+        mutableStateOf(
+            lastSeenShows.firstOrNull()
+                ?: popularMovies.firstOrNull()
+                ?: newMovies.firstOrNull()
+        )
     }
     val lazyColumnState = rememberLazyListState()
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
@@ -221,9 +226,7 @@ private fun Body(
         }
     }
 
-    val shouldShowImmersiveBackground = showImmersiveBackground && focusedShow != null
-    val shouldShowImmersiveDetails = showImmersiveDetails && focusedShow != null
-    val hasImmersiveArea = shouldShowImmersiveBackground || shouldShowImmersiveDetails
+    val hasImmersiveArea = showImmersiveBackground || showImmersiveDetails
     val rowsModifier = Modifier
         .focusRequester(lazyColumn)
         .focusRestorer(firstItem)
@@ -270,7 +273,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -284,7 +293,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -298,7 +313,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -312,7 +333,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -326,7 +353,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -340,7 +373,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -354,7 +393,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -368,7 +413,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -382,7 +433,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
 
@@ -396,7 +453,13 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { pendingShow = it }
+                        onShowFocused = { show ->
+                            debounceJob[0]?.cancel()
+                            debounceJob[0] = scope.launch {
+                                delay(300L)
+                                focusedShow = show
+                            }
+                        }
                     )
                 }
             }
