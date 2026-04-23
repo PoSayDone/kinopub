@@ -25,7 +25,13 @@ sealed class MainGraphData : NavKey {
     data class SearchResults(val query: String) : MainGraphData()
 
     @Serializable
-    data class ShowsGrid(val queryType: String) : MainGraphData()
+    data class ShowsGrid(
+        val queryType: String,
+        val title: String = "",
+        val contentType: String? = null,
+        val sort: String = "views",
+        val period: String = "month",
+    ) : MainGraphData()
 
     @Serializable
     data class Episodes(val showId: Int) : MainGraphData()

@@ -18,8 +18,8 @@ sealed interface FavoritesScreenUiState {
     data object Loading : FavoritesScreenUiState
     data class Error(val message: String, val onRetry: () -> Unit) : FavoritesScreenUiState
     data class Done(
-        val favoritesList: ShowList,
-        val historyList: ShowList
+        val watchingList: ShowList,
+        val historyList: ShowList,
     ) : FavoritesScreenUiState
 }
 
@@ -32,22 +32,22 @@ class FavoritesScreenViewModel @Inject constructor(
     val uiState: StateFlow<FavoritesScreenUiState> = _uiState
 
     init {
-        loadFavoritesAndHistory()
+        load()
     }
 
-    private fun loadFavoritesAndHistory() {
+    private fun load() {
         _uiState.value = FavoritesScreenUiState.Loading
-
         viewModelScope.launch {
             combine(
-                repository.getFavoritesList(), repository.getHistoryList()
-            ) { favorites, history ->
-                FavoritesScreenUiState.Done(
-                    favoritesList = favorites, historyList = history
-                )
+                repository.getViewingList(limit = 20),
+                repository.getHistoryList(limit = 20),
+            ) { watching, history ->
+                FavoritesScreenUiState.Done(watchingList = watching, historyList = history)
             }.catch { e ->
                 _uiState.value = FavoritesScreenUiState.Error(
-                    message = e.message ?: "Unknown error", onRetry = { loadFavoritesAndHistory() })
+                    message = e.message ?: "Unknown error",
+                    onRetry = ::load,
+                )
             }.collect { state ->
                 _uiState.value = state
             }

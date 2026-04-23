@@ -60,8 +60,8 @@ fun FavoritesScreen(
                     modifier = Modifier.padding(paddingValues),
                     navigateToShowDetails = navigateToShowDetails,
                     navigateToShowsGrid = navigateToShowsGrid,
-                    favoritesList = s.favoritesList,
-                    historyList = s.historyList
+                    watchingList = s.watchingList,
+                    historyList = s.historyList,
                 )
             }
         }
@@ -73,7 +73,7 @@ fun FavoritesScreenContent(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToShowsGrid: (queryType: String) -> Unit,
-    favoritesList: List<io.github.posaydone.filmix.core.model.Show>,
+    watchingList: List<io.github.posaydone.filmix.core.model.Show>,
     historyList: List<io.github.posaydone.filmix.core.model.Show>,
 ) {
     Column(
@@ -83,14 +83,14 @@ fun FavoritesScreenContent(
         verticalArrangement = Arrangement.Center
     ) {
         ShowsRow(
-            title = stringResource(R.string.favorites),
+            title = "Я смотрю",
             modifier = Modifier.fillMaxWidth(),
-            showList = favoritesList,
+            showList = watchingList,
             onShowClick = { show ->
                 navigateToShowDetails(show.id)
             },
             onViewAll = {
-                navigateToShowsGrid("FAVORITES")
+                navigateToShowsGrid("WATCHING")
             })
 
         ShowsRow(

@@ -48,7 +48,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
+import io.github.posaydone.filmix.shared.graphData.MainGraphData
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
 import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.Show
@@ -82,6 +84,7 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 fun HomeScreen(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (Int) -> Unit,
+    navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,32 +92,25 @@ fun HomeScreen(
     val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
 
     when (val s = uiState) {
-        is HomeScreenUiState.Loading -> {
-            Loading(modifier = Modifier.fillMaxSize())
-        }
-
-        is HomeScreenUiState.Error -> {
-            Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
-        }
-
-        is HomeScreenUiState.Done -> {
-            Body(
-                modifier = Modifier.fillMaxSize(),
-                lastSeenShows = s.lastSeenShows,
-                popularMovies = s.popularMovies,
-                newMovies = s.newMovies,
-                popularSeries = s.popularSeries,
-                newSeries = s.newSeries,
-                newConcerts = s.newConcerts,
-                new3d = s.new3d,
-                newDocumentaryFilms = s.newDocumentaryFilms,
-                newDocumentarySeries = s.newDocumentarySeries,
-                newTvShows = s.newTvShows,
-                showImmersiveBackground = showImmersiveBackground,
-                showImmersiveDetails = showImmersiveDetails,
-                navigateToShowDetails = navigateToShowDetails,
-            )
-        }
+        is HomeScreenUiState.Loading -> Loading(modifier = Modifier.fillMaxSize())
+        is HomeScreenUiState.Error -> Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
+        is HomeScreenUiState.Done -> Body(
+            modifier = Modifier.fillMaxSize(),
+            lastSeenShows = s.lastSeenShows,
+            popularMovies = s.popularMovies,
+            newMovies = s.newMovies,
+            popularSeries = s.popularSeries,
+            newSeries = s.newSeries,
+            newConcerts = s.newConcerts,
+            new3d = s.new3d,
+            newDocumentaryFilms = s.newDocumentaryFilms,
+            newDocumentarySeries = s.newDocumentarySeries,
+            newTvShows = s.newTvShows,
+            showImmersiveBackground = showImmersiveBackground,
+            showImmersiveDetails = showImmersiveDetails,
+            navigateToShowDetails = navigateToShowDetails,
+            navigateToShowsGrid = navigateToShowsGrid,
+        )
     }
 }
 
@@ -189,6 +185,7 @@ private fun Body(
     showImmersiveBackground: Boolean,
     showImmersiveDetails: Boolean,
     navigateToShowDetails: (showId: Int) -> Unit,
+    navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val debounceJob = remember { arrayOfNulls<Job>(1) }
@@ -275,11 +272,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.HISTORY.name, "История просмотра"))
+                        },
                     )
                 }
 
@@ -295,11 +292,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные фильмы", "movie", "views", "month"))
+                        },
                     )
                 }
 
@@ -315,11 +312,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые фильмы", "movie", "added", "all"))
+                        },
                     )
                 }
 
@@ -335,11 +332,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные сериалы", "serial", "views", "month"))
+                        },
                     )
                 }
 
@@ -355,11 +352,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые сериалы", "serial", "added", "all"))
+                        },
                     )
                 }
 
@@ -375,11 +372,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Концерты", "concert", "added", "all"))
+                        },
                     )
                 }
 
@@ -395,11 +392,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "3D фильмы", "3d", "added", "all"))
+                        },
                     )
                 }
 
@@ -415,11 +412,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные фильмы", "documovie", "added", "all"))
+                        },
                     )
                 }
 
@@ -435,11 +432,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные сериалы", "docuserial", "added", "all"))
+                        },
                     )
                 }
 
@@ -455,11 +452,11 @@ private fun Body(
                         },
                         onShowFocused = { show ->
                             debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch {
-                                delay(300L)
-                                focusedShow = show
-                            }
-                        }
+                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+                        },
+                        onViewAll = {
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "ТВ Шоу", "tvshow", "added", "all"))
+                        },
                     )
                 }
             }

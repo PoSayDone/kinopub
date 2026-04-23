@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridScreenViewModel
@@ -41,13 +40,19 @@ import io.github.posaydone.filmix.mobile.ui.common.ShowCard
 @Composable
 fun ShowsGridScreen(
     navigateToShowDetails: (showId: Int) -> Unit,
-    viewModel: ShowsGridScreenViewModel = hiltViewModel(),
+    viewModel: ShowsGridScreenViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val currentQueryType by viewModel.currentQueryType.collectAsStateWithLifecycle()
+    val queryType by viewModel.queryType.collectAsStateWithLifecycle()
 
-    val title =
-        if (currentQueryType == ShowsGridQueryType.FAVORITES) "Favorite Shows" else "History"
+    val title = viewModel.screenTitle.ifBlank {
+        when (queryType) {
+            ShowsGridQueryType.FAVORITES -> "Избранное"
+            ShowsGridQueryType.HISTORY -> "История"
+            ShowsGridQueryType.WATCHING -> "Я смотрю"
+            ShowsGridQueryType.CATALOG -> ""
+        }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(title) }) },

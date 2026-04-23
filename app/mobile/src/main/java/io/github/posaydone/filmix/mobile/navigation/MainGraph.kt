@@ -35,6 +35,9 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridNavKey
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridScreenViewModel
 import io.github.posaydone.filmix.mobile.ui.screen.episodesScreen.EpisodesScreen
 import io.github.posaydone.filmix.mobile.ui.screen.exploreScreen.ExploreScreen
 import io.github.posaydone.filmix.mobile.ui.screen.favoritesScreen.FavoritesScreen
@@ -161,17 +164,27 @@ fun MainGraph() {
                         viewModel = viewModel,
                     )
                 }
-                entry<MainGraphData.ShowsGrid> {
-                    ShowsGridScreen(
-                        navigateToShowDetails = { showId ->
-                            topLevelBackStack.add(
-                                MainGraphData.ShowDetails(
-                                    showId
+                entry<MainGraphData.ShowsGrid> { key ->
+                    val viewModel = hiltViewModel<ShowsGridScreenViewModel, ShowsGridScreenViewModel.Factory>(
+                        creationCallback = { factory ->
+                            factory.create(
+                                ShowsGridNavKey(
+                                    queryType = runCatching { ShowsGridQueryType.valueOf(key.queryType) }
+                                        .getOrDefault(ShowsGridQueryType.HISTORY),
+                                    title = key.title,
+                                    contentType = key.contentType,
+                                    sort = key.sort,
+                                    period = key.period,
                                 )
                             )
+                        }
+                    )
+                    ShowsGridScreen(
+                        navigateToShowDetails = { showId ->
+                            topLevelBackStack.add(MainGraphData.ShowDetails(showId))
                         },
-
-                        )
+                        viewModel = viewModel,
+                    )
                 }
                 entry<MainGraphData.SearchResults> { key ->
                     val viewModel =

@@ -38,6 +38,7 @@ interface KinoPubApiService {
         @Query("page") page: Int? = null,
         @Query("perpage") perPage: Int? = null,
         @Query("sort") sort: String? = null,
+        @Query("period") period: String? = null,
     ): KinoPubItemsResponse
 
     @GET("v1/items/fresh")
@@ -86,10 +87,14 @@ interface KinoPubApiService {
     ): KinoPubWatchingInfoResponse
 
     @GET("v1/watching/movies")
-    suspend fun listWatchingMovies(): KinoPubWatchingMoviesResponse
+    suspend fun listWatchingMovies(
+        @Query("subscribed") subscribed: Int? = null,
+    ): KinoPubWatchingMoviesResponse
 
     @GET("v1/watching/serials")
-    suspend fun listWatchingSerials(): KinoPubWatchingSerialsResponse
+    suspend fun listWatchingSerials(
+        @Query("subscribed") subscribed: Int? = null,
+    ): KinoPubWatchingSerialsResponse
 
     @GET("v1/watching/marktime")
     suspend fun markWatchingTime(

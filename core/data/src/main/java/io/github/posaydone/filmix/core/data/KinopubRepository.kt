@@ -56,6 +56,34 @@ class KinopubRepository @Inject constructor(
         )
     }
 
+    fun getCatalogList(
+        contentType: String?,
+        sort: String,
+        period: String? = null,
+        limit: Int = 20,
+        page: Int? = null,
+    ): Flow<ShowList> = flow {
+        emit(kinopubRemoteDataSource.fetchCatalogPage(
+            contentType = contentType, sort = sort, period = period,
+            limit = limit, page = page,
+        ).items)
+    }
+
+    suspend fun getCatalogPage(
+        contentType: String?,
+        sort: String,
+        period: String? = null,
+        limit: Int = 48,
+        page: Int? = null,
+    ): PageWithShows<Show> = kinopubRemoteDataSource.fetchCatalogPage(
+        contentType = contentType, sort = sort, period = period,
+        limit = limit, page = page,
+    )
+
+    suspend fun getWatchingMovies(): List<Show> = kinopubRemoteDataSource.fetchWatchingMovies()
+
+    suspend fun getWatchingSerials(): List<Show> = kinopubRemoteDataSource.fetchWatchingSerials()
+
     fun getViewingList(limit: Int = 48, page: Int = 1): Flow<ShowList> = flow {
         val list = getViewingPage(
             page = page, limit = limit

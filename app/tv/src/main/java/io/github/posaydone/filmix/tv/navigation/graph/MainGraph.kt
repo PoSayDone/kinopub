@@ -34,12 +34,15 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
-import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenNavKey
-import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.EpisodesScreenViewModel
+import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenNavKey
+import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsNavKey
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridNavKey
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridScreenViewModel
 import io.github.posaydone.filmix.shared.graphData.MainGraphData
 import io.github.posaydone.filmix.tv.ui.screen.episodesScreen.EpisodesScreen
 import io.github.posaydone.filmix.shared.graphData.NavBarGraphData
@@ -140,12 +143,12 @@ fun MainGraph() {
                 entry<NavBarGraphData.Home> {
                     HomeScreen(
                         navigateToShowDetails = { showId ->
-                            topLevelBackStack.add(
-                                MainGraphData.ShowDetails(
-                                    showId
-                                )
-                            )
-                        })
+                            topLevelBackStack.add(MainGraphData.ShowDetails(showId))
+                        },
+                        navigateToShowsGrid = { grid ->
+                            topLevelBackStack.add(grid)
+                        },
+                    )
                 }
                 entry<NavBarGraphData.Explore> {
                     ExploreScreen(
@@ -158,19 +161,19 @@ fun MainGraph() {
                         })
                 }
                 entry<NavBarGraphData.Favorite> {
-                    FavoritesScreen(navigateToShowDetails = { showId ->
-                        topLevelBackStack.add(
-                            MainGraphData.ShowDetails(
-                                showId
-                            )
-                        )
-                    }, navigateToShowsGrid = { queryType ->
-                        topLevelBackStack.add(
-                            MainGraphData.ShowsGrid(
-                                queryType
-                            )
-                        )
-                    })
+                    FavoritesScreen(
+                        navigateToShowDetails = { showId ->
+                            topLevelBackStack.add(MainGraphData.ShowDetails(showId))
+                        },
+                        navigateToShowsGrid = { queryType ->
+                            val title = when (queryType) {
+                                "WATCHING" -> "Я смотрю"
+                                "HISTORY" -> "История просмотра"
+                                else -> ""
+                            }
+                            topLevelBackStack.add(MainGraphData.ShowsGrid(queryType, title))
+                        },
+                    )
                 }
                 entry<NavBarGraphData.ProfileGraph> {
                     ProfileGraph()
@@ -214,17 +217,27 @@ fun MainGraph() {
                         viewModel = viewModel,
                     )
                 }
-                entry<MainGraphData.ShowsGrid> {
-                    ShowsGridScreen(
-                        navigateToShowDetails = { showId ->
-                            topLevelBackStack.add(
-                                MainGraphData.ShowDetails(
-                                    showId
+                entry<MainGraphData.ShowsGrid> { key ->
+                    val viewModel = hiltViewModel<ShowsGridScreenViewModel, ShowsGridScreenViewModel.Factory>(
+                        creationCallback = { factory ->
+                            factory.create(
+                                ShowsGridNavKey(
+                                    queryType = runCatching { ShowsGridQueryType.valueOf(key.queryType) }
+                                        .getOrDefault(ShowsGridQueryType.HISTORY),
+                                    title = key.title,
+                                    contentType = key.contentType,
+                                    sort = key.sort,
+                                    period = key.period,
                                 )
                             )
+                        }
+                    )
+                    ShowsGridScreen(
+                        navigateToShowDetails = { showId ->
+                            topLevelBackStack.add(MainGraphData.ShowDetails(showId))
                         },
-
-                        )
+                        viewModel = viewModel,
+                    )
                 }
                 entry<MainGraphData.Player> { key ->
                     val viewModel =

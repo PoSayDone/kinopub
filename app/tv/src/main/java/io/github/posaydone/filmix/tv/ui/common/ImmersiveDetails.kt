@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontWeight.Companion
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,7 +75,7 @@ fun ImmersiveDetails(
             } else {
                 Text(
                     text = primaryTitle,
-                    style = MaterialTheme.typography.displaySmall,
+                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Medium),
                 )
             }
             if (originalTitle != null) {

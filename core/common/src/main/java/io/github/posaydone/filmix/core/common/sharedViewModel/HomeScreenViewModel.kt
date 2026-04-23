@@ -7,7 +7,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.data.SettingsManager
-import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.model.ShowImages
@@ -71,15 +70,15 @@ class HomeScreenViewModel @Inject constructor(
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
         combine(
             kinopubRepository.getHistoryList(20).mapToResult(),
-            kinopubRepository.getPopularList(20, section = FilmixCategory.MOVIE).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.MOVIE).mapToResult(),
-            kinopubRepository.getPopularList(20, section = FilmixCategory.SERIES).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.SERIES).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.CONCERT).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.FILM_3D).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_MOVIE).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_SERIES).mapToResult(),
-            kinopubRepository.getFreshList(20, section = FilmixCategory.TV_SHOW).mapToResult(),
+            kinopubRepository.getCatalogList("movie", "views", "month", 20).mapToResult(),
+            kinopubRepository.getCatalogList("movie", "added", limit = 20).mapToResult(),
+            kinopubRepository.getCatalogList("serial", "views", "month", 20).mapToResult(),
+            kinopubRepository.getCatalogList("serial", "added", limit = 20).mapToResult(),
+            kinopubRepository.getCatalogList("concert", "added", limit = 20).mapToResult(),
+            kinopubRepository.getCatalogList("3d", "added", limit = 20).mapToResult(),
+            kinopubRepository.getCatalogList("documovie", "added", limit = 20).mapToResult(),
+            kinopubRepository.getCatalogList("docuserial", "added", limit = 20).mapToResult(),
+            kinopubRepository.getCatalogList("tvshow", "added", limit = 20).mapToResult(),
         ) { results ->
             @Suppress("UNCHECKED_CAST")
             val lastSeenResult = results[0] as Result<ShowList>

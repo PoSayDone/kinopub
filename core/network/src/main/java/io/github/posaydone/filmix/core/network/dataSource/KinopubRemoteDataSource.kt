@@ -65,12 +65,35 @@ class KinopubRemoteDataSource @Inject constructor(
         return response.toPage(page, limit) { it.toShow() }
     }
 
+    suspend fun fetchCatalogPage(
+        contentType: String?,
+        sort: String,
+        period: String?,
+        limit: Int = 48,
+        page: Int? = null,
+    ): PageWithShows<Show> {
+        val response = kinoPubApiService.listItems(
+            type = contentType,
+            page = page,
+            perPage = limit,
+            sort = sort,
+            period = period?.takeIf { it.isNotEmpty() && it != "all" },
+        )
+        return response.toPage(page, limit) { it.toShow() }
+    }
+
     suspend fun fetchViewingPage(limit: Int = 48, page: Int = 1): PageWithShows<Show> {
-        val movieItems = kinoPubApiService.listWatchingMovies().items.map { it.toShow() }
-        val serialItems = kinoPubApiService.listWatchingSerials().items.map { it.toShow() }
+        val movieItems = kinoPubApiService.listWatchingMovies(subscribed = 1).items.map { it.toShow() }
+        val serialItems = kinoPubApiService.listWatchingSerials(subscribed = 1).items.map { it.toShow() }
         val combined = (movieItems + serialItems).distinctBy(Show::id)
         return combined.toPage(page = page, limit = limit)
     }
+
+    suspend fun fetchWatchingMovies(): List<Show> =
+        kinoPubApiService.listWatchingMovies(subscribed = 1).items.map { it.toShow() }
+
+    suspend fun fetchWatchingSerials(): List<Show> =
+        kinoPubApiService.listWatchingSerials(subscribed = 1).items.map { it.toShow() }
 
     suspend fun fetchPopularPage(
         limit: Int = 48,

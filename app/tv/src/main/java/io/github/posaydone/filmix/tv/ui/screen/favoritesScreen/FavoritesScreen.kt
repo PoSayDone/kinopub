@@ -1,6 +1,5 @@
 package io.github.posaydone.filmix.tv.ui.screen.favoritesScreen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,14 +10,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.FavoritesScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.FavoritesScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
@@ -27,8 +27,6 @@ import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.common.ShowsRow
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
-import androidx.compose.ui.res.stringResource
-import io.github.posaydone.filmix.core.common.R
 
 @Composable
 fun FavoritesScreen(
@@ -39,38 +37,27 @@ fun FavoritesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     when (val s = uiState) {
-        is FavoritesScreenUiState.Loading -> {
-            Loading(modifier = Modifier.fillMaxSize())
-        }
-
-        is FavoritesScreenUiState.Error -> {
-            Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
-        }
-
-        is FavoritesScreenUiState.Done -> {
-            FavoritesScreenContent(
-                navigateToShowDetails = navigateToShowDetails,
-                navigateToShowsGrid = navigateToShowsGrid,
-                favoritesList = s.favoritesList,
-                historyList = s.historyList
-            )
-        }
+        is FavoritesScreenUiState.Loading -> Loading(modifier = Modifier.fillMaxSize())
+        is FavoritesScreenUiState.Error -> Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
+        is FavoritesScreenUiState.Done -> FavoritesScreenContent(
+            navigateToShowDetails = navigateToShowDetails,
+            navigateToShowsGrid = navigateToShowsGrid,
+            watchingList = s.watchingList,
+            historyList = s.historyList,
+        )
     }
 }
 
 @Composable
-fun FavoritesScreenContent(
+private fun FavoritesScreenContent(
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToShowsGrid: (queryType: String) -> Unit,
-    favoritesList: ShowList,
+    watchingList: ShowList,
     historyList: ShowList,
 ) {
     val childPadding = rememberChildPadding()
     val lazyListState = rememberLazyListState()
-
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
-
-    val TAG = "FAVORITE"
 
     LazyColumn(
         state = lazyListState,
@@ -78,45 +65,47 @@ fun FavoritesScreenContent(
             .fillMaxSize()
             .focusRequester(lazyColumn)
             .focusRestorer(firstItem),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
             Text(
                 modifier = Modifier.padding(
-                    top = 24.dp + childPadding.top, bottom = 24.dp, start = childPadding.start
+                    top = 24.dp + childPadding.top,
+                    bottom = 24.dp,
+                    start = childPadding.start,
                 ),
-                text = stringResource(R.string.favorites),
+                text = "Я смотрю",
                 style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
         item {
             ShowsRow(
-                title = stringResource(R.string.favorites),
+                title = "Я смотрю",
                 modifier = Modifier.focusRequester(firstItem),
-                showList = favoritesList,
+                showList = watchingList,
                 onShowSelected = { show ->
                     lazyColumn.saveFocusedChild()
                     navigateToShowDetails(show.id)
                 },
                 onViewAll = {
-                    navigateToShowsGrid(
-                        ShowsGridQueryType.FAVORITES.name
-                    )
-                })
+                    navigateToShowsGrid(ShowsGridQueryType.WATCHING.name)
+                },
+            )
         }
         item {
             ShowsRow(
-                title = stringResource(R.string.history), modifier = Modifier.padding(
-                    bottom = childPadding.bottom
-                ), showList = historyList, onShowSelected = { show ->
+                title = stringResource(R.string.history),
+                modifier = Modifier.padding(bottom = childPadding.bottom),
+                showList = historyList,
+                onShowSelected = { show ->
                     lazyColumn.saveFocusedChild()
                     navigateToShowDetails(show.id)
-                }, onViewAll = {
-                    navigateToShowsGrid(
-                        ShowsGridQueryType.HISTORY.name
-                    )
-                })
+                },
+                onViewAll = {
+                    navigateToShowsGrid(ShowsGridQueryType.HISTORY.name)
+                },
+            )
         }
     }
 }
