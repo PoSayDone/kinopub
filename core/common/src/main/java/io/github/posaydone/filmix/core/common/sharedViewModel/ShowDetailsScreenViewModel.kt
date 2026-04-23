@@ -6,11 +6,10 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.SessionManager
-import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowTrailers
@@ -46,7 +45,7 @@ data class ShowDetailsNavKey(val showId: Int)
 @HiltViewModel(assistedFactory = ShowDetailsScreenViewModel.Factory::class)
 class ShowDetailsScreenViewModel @AssistedInject constructor(
     @Assisted val navKey: ShowDetailsNavKey,
-    private val filmixRepository: FilmixRepository,
+    private val kinopubRepository: KinopubRepository,
     private val movieRepository: MovieRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
@@ -62,11 +61,11 @@ class ShowDetailsScreenViewModel @AssistedInject constructor(
             flow {
                 try {
                     val showId = navKey.showId
-                    val showDetails = filmixRepository.getShowDetails(showId) // Need this for toggleFavorites
+                    val showDetails = kinopubRepository.getShowDetails(showId) // Need this for toggleFavorites
                     val fullShow = movieRepository.getFullMovieByFilmixId(showId)
-                    val images = filmixRepository.getShowImages(showId)
-                    val trailers = filmixRepository.getShowTrailers(showId)
-                    val history = filmixRepository.getShowProgress(showId)
+                    val images = kinopubRepository.getShowImages(showId)
+                    val trailers = kinopubRepository.getShowTrailers(showId)
+                    val history = kinopubRepository.getShowProgress(showId)
 
                     emit(
                         ShowDetailsScreenUiState.Done(
@@ -107,7 +106,7 @@ class ShowDetailsScreenViewModel @AssistedInject constructor(
                 val newFavoriteState = !(currentShowDetails.isFavorite ?: false)
 
                 val success = withContext(Dispatchers.IO) {
-                    filmixRepository.toggleFavorite(
+                    kinopubRepository.toggleFavorite(
                         showId = currentShowDetails.id, isFavorite = newFavoriteState
                     )
                 }

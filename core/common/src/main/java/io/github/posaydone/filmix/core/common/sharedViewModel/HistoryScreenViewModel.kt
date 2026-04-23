@@ -3,7 +3,7 @@ package io.github.posaydone.filmix.core.common.sharedViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.model.ShowDetails
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +24,7 @@ sealed class HistoryScreenUiState {
 }
 
 @HiltViewModel
-class HistoryScreenViewModel @Inject constructor(private val repository: FilmixRepository) :
+class HistoryScreenViewModel @Inject constructor(private val repository: KinopubRepository) :
     ViewModel() {
     private val retryChannel = Channel<Unit>()
 

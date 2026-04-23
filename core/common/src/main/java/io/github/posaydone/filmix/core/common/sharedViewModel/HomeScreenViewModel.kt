@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.FullShow
@@ -70,7 +70,7 @@ sealed interface ImmersiveContentUiState {
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val filmixRepository: FilmixRepository,
+    private val kinopubRepository: KinopubRepository,
     private val movieRepository: MovieRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
@@ -79,16 +79,16 @@ class HomeScreenViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
         combine(
-            filmixRepository.getHistoryList(20).mapToResult(),
-            filmixRepository.getPopularList(20, section = FilmixCategory.MOVIE).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.MOVIE).mapToResult(),
-            filmixRepository.getPopularList(20, section = FilmixCategory.SERIES).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.SERIES).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.CONCERT).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.FILM_3D).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_MOVIE).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_SERIES).mapToResult(),
-            filmixRepository.getFreshList(20, section = FilmixCategory.TV_SHOW).mapToResult(),
+            kinopubRepository.getHistoryList(20).mapToResult(),
+            kinopubRepository.getPopularList(20, section = FilmixCategory.MOVIE).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.MOVIE).mapToResult(),
+            kinopubRepository.getPopularList(20, section = FilmixCategory.SERIES).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.SERIES).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.CONCERT).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.FILM_3D).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_MOVIE).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.DOCUMENTARY_SERIES).mapToResult(),
+            kinopubRepository.getFreshList(20, section = FilmixCategory.TV_SHOW).mapToResult(),
         ) { results ->
             @Suppress("UNCHECKED_CAST")
             val lastSeenResult = results[0] as Result<ShowList>
@@ -144,7 +144,7 @@ class HomeScreenViewModel @Inject constructor(
 
                 val fullShow = movieRepository.getFullMovieByFilmixId(featuredShowId)
                 val featuredShowProgress = runCatching {
-                    filmixRepository.getShowProgress(featuredShowId)
+                    kinopubRepository.getShowProgress(featuredShowId)
                 }.getOrDefault(emptyList())
 
                 HomeScreenUiState.Done(
@@ -161,7 +161,7 @@ class HomeScreenViewModel @Inject constructor(
                     newDocumentaryFilms = newDocumentaryFilms,
                     newDocumentarySeries = newDocumentarySeries,
                     newTvShows = newTvShows,
-                    getShowImages = { filmixRepository.getShowImages(it) })
+                    getShowImages = { kinopubRepository.getShowImages(it) })
             }
         }
     }.stateIn(
@@ -181,15 +181,16 @@ class HomeScreenViewModel @Inject constructor(
     fun onImmersiveShowFocused(show: Show) {
         fetchJob?.cancel()
 
-        if (kinopoiskCache.containsKey(show.id)) {
-            _immersiveContentState.value = kinopoiskCache[show.id]!!
-            return
-        }
-
-        // Do NOT change state immediately: the previous content keeps showing during navigation.
-        // Only update after the debounce so fast D-pad movement produces no visual changes.
+        // Always debounce — even cached results. The coroutine cancels on the next D-pad
+        // press so rapid navigation never triggers any state change.
         fetchJob = viewModelScope.launch {
-            delay(400L)
+            delay(200L)
+
+            if (kinopoiskCache.containsKey(show.id)) {
+                _immersiveContentState.value = kinopoiskCache[show.id]!!
+                return@launch
+            }
+
             try {
                 val fullShow = withContext(Dispatchers.IO) {
                     movieRepository.getFullMovieByFilmixId(show.id)

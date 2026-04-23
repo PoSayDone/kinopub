@@ -27,7 +27,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.common.services.PlaybackService
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.data.SettingsManager
 import io.github.posaydone.filmix.core.model.Episode
@@ -86,7 +86,7 @@ data class PlayerScreenNavKey(
 class PlayerScreenViewModel @AssistedInject constructor(
     @Assisted val navKey: PlayerScreenNavKey,
     val sessionManager: SessionManager,
-    private val repository: FilmixRepository,
+    private val repository: KinopubRepository,
     private val movieRepository: MovieRepository,
     private val settingsManager: SettingsManager,
     context: Application,
@@ -596,6 +596,21 @@ class PlayerScreenViewModel @AssistedInject constructor(
         return isHls4AudioTrackSelectionEnabled.value
     }
 
+    private fun isHlsStream(): Boolean {
+        return currentStreamType.value?.contains("hls", ignoreCase = true) == true
+    }
+
+    private fun applyVideoQualitySelection(qualityHeight: Int) {
+        val controller = playerController.value ?: return
+        val maxHeight = if (qualityHeight > 0) qualityHeight else Int.MAX_VALUE
+        val params = controller.trackSelectionParameters
+            .buildUpon()
+            .setMaxVideoSize(Int.MAX_VALUE, maxHeight)
+            .build()
+        controller.setTrackSelectionParameters(params)
+        Log.d(TAG, "applyVideoQualitySelection: qualityHeight=$qualityHeight maxHeight=$maxHeight")
+    }
+
     private fun applyAudioSelection(tracks: Tracks): Boolean {
         if (!canChangeAudioTrack()) {
             Log.d(
@@ -830,15 +845,19 @@ class PlayerScreenViewModel @AssistedInject constructor(
     // Function to set the selected quality
     fun setQuality(qualityFile: File) {
         playerController.value?.let { player ->
-            val currentTime = player.currentPosition / 1000
             _selectedQuality.value = qualityFile
-            _videoUrl.value = selectedQuality.value?.url
+            _videoUrl.value = qualityFile.url
             Log.d(
                 TAG,
-                "setQuality: newQuality=${qualityFile.quality} currentTime=$currentTime url=${qualityFile.url}"
+                "setQuality: newQuality=${qualityFile.quality} url=${qualityFile.url} isHls=${isHlsStream()}"
             )
             logSelectionSnapshot("setQuality")
-            playVideo(currentTime)
+            if (isHlsStream()) {
+                applyVideoQualitySelection(qualityFile.quality)
+            } else {
+                val currentTime = player.currentPosition / 1000
+                playVideo(currentTime)
+            }
             saveProgress()
         }
     }
@@ -894,6 +913,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
         controller.setMediaItem(mediaItem)
         controller.prepare()
         controller.play()
+
+        if (isHlsStream()) {
+            applyVideoQualitySelection(_selectedQuality.value?.quality ?: 0)
+        }
 
         if (time > 0) {
             controller.addListener(object : Player.Listener {

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.model.ShowList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +25,7 @@ sealed interface FavoritesScreenUiState {
 
 @HiltViewModel
 class FavoritesScreenViewModel @Inject constructor(
-    private val repository: FilmixRepository,
+    private val repository: KinopubRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<FavoritesScreenUiState>(FavoritesScreenUiState.Loading)

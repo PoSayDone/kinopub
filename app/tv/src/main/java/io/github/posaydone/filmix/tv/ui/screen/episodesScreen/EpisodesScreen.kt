@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,11 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -180,10 +185,9 @@ private fun SeasonRow(
                     season = season.season,
                     episode = episode.episode,
                 )
-                val isWatched = (progressItem?.time ?: 0L) > 0
                 EpisodeCard(
                     episode = episode,
-                    isWatched = isWatched,
+                    watchedSeconds = progressItem?.time ?: 0L,
                     onClick = {
                         lazyRow.saveFocusedChild()
                         onEpisodeClick(season.season, episode.episode)
@@ -198,10 +202,13 @@ private fun SeasonRow(
 @Composable
 private fun EpisodeCard(
     episode: Episode,
-    isWatched: Boolean,
+    watchedSeconds: Long,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isWatched = watchedSeconds > 0
+    val hasSignificantProgress = watchedSeconds > 60
+
     ShowCard(
         onClick = onClick,
         modifier = Modifier
@@ -238,13 +245,25 @@ private fun EpisodeCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = episode.episode.toString(),
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                ),
-            )
+            if (episode.thumbnail != null) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .crossfade(true)
+                        .data(episode.thumbnail)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Text(
+                    text = episode.episode.toString(),
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    ),
+                )
+            }
 
             if (isWatched) {
                 Icon(
@@ -256,6 +275,24 @@ private fun EpisodeCard(
                         .padding(8.dp)
                         .size(20.dp),
                 )
+            }
+
+            if (hasSignificantProgress) {
+                val progress = (watchedSeconds % 3600).toFloat() / 3600f
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .height(3.dp)
+                            .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
             }
         }
     }

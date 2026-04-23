@@ -7,7 +7,7 @@ import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
-    private val filmixRepository: FilmixRepository,
+    private val kinopubRepository: KinopubRepository,
 ) {
     private val cacheMutex = Mutex()
     private val fullShowCache = mutableMapOf<Int, FullShow>()
@@ -15,8 +15,8 @@ class MovieRepository @Inject constructor(
     suspend fun getFullMovieByFilmixId(filmixId: Int): FullShow = cacheMutex.withLock {
         fullShowCache[filmixId]?.let { return it }
 
-        val showDetails = filmixRepository.getShowDetails(filmixId)
-        val showImages = runCatching { filmixRepository.getShowImages(filmixId) }.getOrNull()
+        val showDetails = kinopubRepository.getShowDetails(filmixId)
+        val showImages = runCatching { kinopubRepository.getShowImages(filmixId) }.getOrNull()
         val fullShow = showDetails.toFullShow(
             backdropUrl = showImages?.frames?.firstOrNull()?.url
                 ?: showImages?.posters?.firstOrNull()?.url

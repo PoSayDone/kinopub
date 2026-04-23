@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.SettingsManager
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.model.UserProfileInfo
@@ -28,7 +28,7 @@ sealed interface ProfileScreenUiState {
 
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
-    private val repository: FilmixRepository,
+    private val repository: KinopubRepository,
     private val sessionManager: SessionManager,
     private val settingsManager: SettingsManager,
 ) : ViewModel() {

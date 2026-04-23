@@ -6,7 +6,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.Season
@@ -35,7 +35,7 @@ sealed class EpisodesScreenUiState {
 @HiltViewModel(assistedFactory = EpisodesScreenViewModel.Factory::class)
 class EpisodesScreenViewModel @AssistedInject constructor(
     @Assisted val navKey: EpisodesNavKey,
-    private val filmixRepository: FilmixRepository,
+    private val kinopubRepository: KinopubRepository,
     private val movieRepository: MovieRepository,
 ) : ViewModel() {
 
@@ -52,8 +52,8 @@ class EpisodesScreenViewModel @AssistedInject constructor(
                 try {
                     val showId = navKey.showId
                     val fullShow = movieRepository.getFullMovieByFilmixId(showId)
-                    val resource = filmixRepository.getShowResource(showId)
-                    val progress = filmixRepository.getShowProgress(showId)
+                    val resource = kinopubRepository.getShowResource(showId)
+                    val progress = kinopubRepository.getShowProgress(showId)
 
                     val seasons = when (resource) {
                         is ShowResourceResponse.SeriesResourceResponse -> resource.series.seasons

@@ -43,7 +43,7 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
-class FilmixRemoteDataSource @Inject constructor(
+class KinopubRemoteDataSource @Inject constructor(
     private val kinoPubApiService: KinoPubApiService,
 ) {
     private var favoritesFolderId: Int? = null
@@ -819,6 +819,7 @@ class FilmixRemoteDataSource @Inject constructor(
                         title = media.title.orEmpty(),
                         released = "",
                         translations = translations.toMutableList(),
+                        thumbnail = media.thumbnail,
                     )
                 }
             }.toMutableList()

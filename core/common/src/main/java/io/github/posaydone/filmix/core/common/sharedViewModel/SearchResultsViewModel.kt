@@ -1,26 +1,23 @@
 package io.github.posaydone.filmix.core.common.sharedViewModel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.FilmixRepository
+import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.model.Show
-import io.github.posaydone.filmix.core.model.ShowResourceResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class SearchResultsNavKey(val query: String)
 
 @HiltViewModel(assistedFactory = SearchResultsViewModel.Factory::class)
 class SearchResultsViewModel @AssistedInject constructor(
     @Assisted val navKey: SearchResultsNavKey,
-    repository: FilmixRepository,
+    repository: KinopubRepository,
 ) : ViewModel() {
    
     @AssistedFactory

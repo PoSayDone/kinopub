@@ -19,14 +19,19 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -134,19 +139,48 @@ private fun Body(
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
 
     val immersiveHeightFraction = remember(screenHeightDp) {
-        val spacerHeight = screenHeightDp - 324  
-        val clipDp = spacerHeight + 56          
+        val spacerHeight = screenHeightDp - 324
+        val clipDp = spacerHeight + 56
         (clipDp.toFloat() / screenHeightDp).coerceIn(0.5f, 0.85f)
+    }
+
+    // Rows are clipped to render only below the immersive zone.
+    val rowsClipShape = remember(immersiveHeightFraction) {
+        object : Shape {
+            override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
+                Outline.Rectangle(
+                    Rect(0f, size.height * immersiveHeightFraction, size.width, size.height)
+                )
+        }
     }
 
     val content = immersiveState as? ImmersiveContentUiState.Content
 
     Box(modifier = modifier) {
+        if (content != null) {
+            ImmersiveBackground(imageUrl = content.fullShow.backdropUrl)
+            Box(Modifier.fillMaxSize().gradientOverlay(MaterialTheme.colorScheme.surface))
+            Box(
+                Modifier.fillMaxSize().background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            (immersiveHeightFraction * 0.55f) to Color.Transparent,
+                            (immersiveHeightFraction * 0.85f) to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+                            immersiveHeightFraction to MaterialTheme.colorScheme.surface,
+                        )
+                    )
+                )
+            )
+        }
+
+        // z=2 — Rows. Clipped so content only renders below the immersive zone;
+        // the backdrop is always visible above the clip line.
         CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
             LazyColumn(
                 modifier = Modifier
                     .focusRequester(lazyColumn)
-                    .focusRestorer(firstItem),
+                    .focusRestorer(firstItem)
+                    .clip(rowsClipShape),
                 state = lazyColumnState,
                 contentPadding = PaddingValues(bottom = 108.dp),
             ) {
@@ -297,33 +331,7 @@ private fun Body(
             }
         }
 
-        // z=2 — immersive zone, clipped to the top portion of the screen.
-        // Always renders (solid surface when no backdrop loaded) so card rows are never
-        // visible in this area. Backdrop fades in via Crossfade once Content arrives.
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxSize(immersiveHeightFraction)
-                .clipToBounds()
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            ImmersiveBackground(imageUrl = content?.fullShow?.backdropUrl)
-
-            // Bottom-edge fade: backdrop blends into surface color over the lower 45% of the zone.
-            Box(
-                Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0.55f to Color.Transparent,
-                            0.82f to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
-                            1.0f to MaterialTheme.colorScheme.surface,
-                        )
-                    )
-                )
-            )
-            Box(Modifier.fillMaxSize().gradientOverlay(MaterialTheme.colorScheme.surface))
-        }
-
+        // Shadow band at the clip boundary — dims the top of the visible row area.
         Box(
             Modifier
                 .fillMaxSize()
@@ -331,16 +339,15 @@ private fun Body(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
                             0f to Color.Transparent,
-                            (immersiveHeightFraction - 0.03f) to Color.Transparent,
-                            immersiveHeightFraction to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
-                            (immersiveHeightFraction + 0.13f) to Color.Transparent,
+                            (immersiveHeightFraction + 0.001f) to MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                            (immersiveHeightFraction + 0.08f) to Color.Transparent,
                             1f to Color.Transparent,
                         )
                     )
                 )
         )
 
-        // z=3 — title / metadata, only shown once full Content is available.
+        // z=3 — title / metadata, always on top of both backdrop and rows.
         if (content != null) {
             ImmersiveDetails(
                 modifier = Modifier

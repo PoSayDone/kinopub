@@ -15,15 +15,15 @@ import io.github.posaydone.filmix.core.model.ShowTrailers
 import io.github.posaydone.filmix.core.model.StreamTypeResponse
 import io.github.posaydone.filmix.core.model.UserProfileInfo
 import io.github.posaydone.filmix.core.model.SessionManager
-import io.github.posaydone.filmix.core.network.dataSource.FilmixRemoteDataSource
+import io.github.posaydone.filmix.core.network.dataSource.KinopubRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class FilmixRepository @Inject constructor(
-    private val filmixRemoteDataSource: FilmixRemoteDataSource,
+class KinopubRepository @Inject constructor(
+    private val kinopubRemoteDataSource: KinopubRemoteDataSource,
     private val sessionManager: SessionManager,
     @ApplicationScope private val externalScope: CoroutineScope
 ) {
@@ -33,7 +33,7 @@ class FilmixRepository @Inject constructor(
         category: String = "s0",
         genre: String? = null,
     ): PageWithShows<Show> {
-        return filmixRemoteDataSource.fetchPage(
+        return kinopubRemoteDataSource.fetchPage(
             category = category, page = page, limit = limit, genre = genre
         )
     }
@@ -51,7 +51,7 @@ class FilmixRepository @Inject constructor(
     }
 
     suspend fun getViewingPage(limit: Int = 48, page: Int = 1): PageWithShows<Show> {
-        return filmixRemoteDataSource.fetchViewingPage(
+        return kinopubRemoteDataSource.fetchViewingPage(
             page = page, limit = limit
         )
     }
@@ -68,7 +68,7 @@ class FilmixRepository @Inject constructor(
         page: Int? = null,
         section: FilmixCategory = FilmixCategory.MOVIE,
     ): PageWithShows<Show> {
-        return filmixRemoteDataSource.fetchPopularPage(
+        return kinopubRemoteDataSource.fetchPopularPage(
             limit = limit, page = page, section = section
         )
     }
@@ -89,7 +89,7 @@ class FilmixRepository @Inject constructor(
         page: Int? = null,
         section: FilmixCategory = FilmixCategory.MOVIE,
     ): PageWithShows<Show> {
-        return filmixRemoteDataSource.fetchFreshPage(
+        return kinopubRemoteDataSource.fetchFreshPage(
             limit = limit, page = page, section = section
         )
     }
@@ -109,7 +109,7 @@ class FilmixRepository @Inject constructor(
         limit: Int = 10,
         page: Int? = null,
     ): PageWithShows<ShowDetails> {
-        return filmixRemoteDataSource.fetchHistoryPageFull(
+        return kinopubRemoteDataSource.fetchHistoryPageFull(
             limit = limit,
             page = page,
         )
@@ -127,7 +127,7 @@ class FilmixRepository @Inject constructor(
     }
 
     suspend fun getHistoryPage(limit: Int = 10, page: Int = 1): PageWithShows<Show> {
-        return filmixRemoteDataSource.fetchHistoryPage(
+        return kinopubRemoteDataSource.fetchHistoryPage(
             limit = limit, page = page
         )
     }
@@ -141,30 +141,30 @@ class FilmixRepository @Inject constructor(
 
     // Поиск фильмов по запросу
     suspend fun getShowsListWithQuery(query: String, limit: Int = 48): List<Show> {
-        return filmixRemoteDataSource.fetchShowsListWithQuery(query, limit)
+        return kinopubRemoteDataSource.fetchShowsListWithQuery(query, limit)
     }
 
     // Получение деталей фильма, включая сезоны, серии и озвучки
     suspend fun getShowDetails(movieId: Int): ShowDetails {
-        return filmixRemoteDataSource.fetchShowDetails(movieId)
+        return kinopubRemoteDataSource.fetchShowDetails(movieId)
     }
 
     suspend fun getShowImages(movieId: Int): ShowImages {
-        return filmixRemoteDataSource.fetchShowImages(movieId)
+        return kinopubRemoteDataSource.fetchShowImages(movieId)
     }
 
     suspend fun getShowTrailers(movieId: Int): ShowTrailers {
-        return filmixRemoteDataSource.fetchShowTrailers(movieId)
+        return kinopubRemoteDataSource.fetchShowTrailers(movieId)
     }
 
     suspend fun getShowProgress(movieId: Int): ShowProgress {
-        return filmixRemoteDataSource.fetchShowProgress(movieId)
+        return kinopubRemoteDataSource.fetchShowProgress(movieId)
     }
 
     fun addShowProgress(movieId: Int, showProgressItem: ShowProgressItem) {
         externalScope.launch {
             try {
-                filmixRemoteDataSource.addShowProgress(movieId, showProgressItem)
+                kinopubRemoteDataSource.addShowProgress(movieId, showProgressItem)
             } catch (e: Exception) {
                 // Log the exception or handle it as needed, but don't crash the app
                 e.printStackTrace() // In production, you might want to use a proper logging framework
@@ -173,14 +173,14 @@ class FilmixRepository @Inject constructor(
     }
 
     suspend fun getShowResource(movieId: Int): ShowResourceResponse {
-        return filmixRemoteDataSource.fetchShowResource(movieId)
+        return kinopubRemoteDataSource.fetchShowResource(movieId)
     }
 
     suspend fun getFavoritesPage(
         limit: Int = 48,
         page: Int? = null,
     ): PageWithShows<Show> {
-        return filmixRemoteDataSource.fetchFavoritesPage(
+        return kinopubRemoteDataSource.fetchFavoritesPage(
             page = page, limit = limit
         )
     }
@@ -196,40 +196,40 @@ class FilmixRepository @Inject constructor(
     }
 
     suspend fun getUserProfile(): UserProfileInfo {
-        val profile = filmixRemoteDataSource.fetchUserProfile()
+        val profile = kinopubRemoteDataSource.fetchUserProfile()
         sessionManager.saveUsername(profile.login)
         return profile
     }
 
     suspend fun getStreamType(): StreamTypeResponse {
-        return filmixRemoteDataSource.fetchStreamType()
+        return kinopubRemoteDataSource.fetchStreamType()
     }
 
     suspend fun getServerLocation(): ServerLocationResponse {
-        return filmixRemoteDataSource.fetchServerLocation()
+        return kinopubRemoteDataSource.fetchServerLocation()
     }
 
     suspend fun updateStreamType(streamType: String): Boolean {
-        return filmixRemoteDataSource.updateStreamType(streamType)
+        return kinopubRemoteDataSource.updateStreamType(streamType)
     }
 
     suspend fun updateServerLocation(serverLocation: String): Boolean {
-        return filmixRemoteDataSource.updateServerLocation(serverLocation)
+        return kinopubRemoteDataSource.updateServerLocation(serverLocation)
     }
 
     suspend fun notifyDevice() {
-        filmixRemoteDataSource.notifyDevice()
+        kinopubRemoteDataSource.notifyDevice()
     }
 
     suspend fun logout() {
-        filmixRemoteDataSource.logout()
+        kinopubRemoteDataSource.logout()
     }
 
     suspend fun toggleFavorite(showId: Int, isFavorite: Boolean): Boolean {
         return if (isFavorite) {
-            filmixRemoteDataSource.addToFavorites(showId)
+            kinopubRemoteDataSource.addToFavorites(showId)
         } else {
-            filmixRemoteDataSource.removeFromFavorites(showId)
+            kinopubRemoteDataSource.removeFromFavorites(showId)
         }
     }
 }

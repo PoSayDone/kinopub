@@ -40,6 +40,7 @@ data class Episode(
     val title: String,
     val released: String,
     val translations: MutableList<Translation>,
+    val thumbnail: String? = null,
 ) {
     override fun toString(): String = "Серия ${episode}"
 }

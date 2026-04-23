@@ -65,8 +65,8 @@ fun ImmersiveDetails(
                 AsyncImage(
                     model = ImageRequest.Builder(context).data(logoUrl).build(),
                     contentDescription = primaryTitle,
-                    contentScale = ContentScale.Companion.Fit,
-                    modifier = Modifier.Companion.sizeIn(
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.sizeIn(
                         maxWidth = screenWidth * 0.4f, maxHeight = screenHeight * 0.16f
                     )
                 )
@@ -97,12 +97,12 @@ fun ImmersiveDetails(
 
         if (!description.isNullOrBlank()) {
             Text(
-                modifier = Modifier.Companion.sizeIn(
+                modifier = Modifier.sizeIn(
                     maxWidth = 400.dp
                 ), text = description,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     letterSpacing = 0.sp, lineHeight = 20.sp
-                ), maxLines = 3, overflow = TextOverflow.Companion.Ellipsis
+                ), maxLines = 3, overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -138,8 +138,8 @@ private fun MetadataRow(
     }
 
     Row(
-        modifier = Modifier.Companion.fillMaxWidth(),
-        verticalAlignment = Alignment.Companion.CenterVertically
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         metadataParts.forEachIndexed { index, part ->
             Text(
@@ -150,7 +150,7 @@ private fun MetadataRow(
             if (index < metadataParts.lastIndex) {
                 Text(
                     text = "•",
-                    modifier = Modifier.Companion.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
             }
