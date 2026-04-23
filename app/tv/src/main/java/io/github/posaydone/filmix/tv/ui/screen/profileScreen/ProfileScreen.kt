@@ -75,6 +75,9 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val videoQuality by viewModel.videoQuality.collectAsStateWithLifecycle()
+    val homeImmersiveBackgroundEnabled by viewModel.homeImmersiveBackgroundEnabled.collectAsStateWithLifecycle()
+    val homeImmersiveGradientEnabled by viewModel.homeImmersiveGradientEnabled.collectAsStateWithLifecycle()
+    val homeImmersiveDetailsEnabled by viewModel.homeImmersiveDetailsEnabled.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
         is ProfileScreenUiState.Loading -> {
@@ -94,10 +97,20 @@ fun ProfileScreen(
                 streamTypes = state.streamTypes,
                 currentServerLocation = state.currentServerLocation,
                 serverLocations = state.serverLocations,
+                homeImmersiveBackgroundEnabled = homeImmersiveBackgroundEnabled,
+                homeImmersiveGradientEnabled = homeImmersiveGradientEnabled,
+                homeImmersiveDetailsEnabled = homeImmersiveDetailsEnabled,
                 modifier = Modifier.fillMaxSize(),
                 onVideoQualityChange = { viewModel.updateDefaultVideoQuality(it) },
                 onStreamTypeChange = { viewModel.updateStreamType(it) },
                 onServerLocationChange = { viewModel.updateServerLocation(it) },
+                onHomeImmersiveBackgroundChange = {
+                    viewModel.updateHomeImmersiveBackgroundEnabled(it)
+                },
+                onHomeImmersiveGradientChange = {
+                    viewModel.updateHomeImmersiveGradientEnabled(it)
+                },
+                onHomeImmersiveDetailsChange = { viewModel.updateHomeImmersiveDetailsEnabled(it) },
             )
         }
     }
@@ -114,9 +127,15 @@ fun ProfileScreenContent(
     streamTypes: Map<String, String>,
     currentServerLocation: String,
     serverLocations: Map<String, String>,
+    homeImmersiveBackgroundEnabled: Boolean,
+    homeImmersiveGradientEnabled: Boolean,
+    homeImmersiveDetailsEnabled: Boolean,
     onVideoQualityChange: (quality: String) -> Unit,
     onStreamTypeChange: (newStreamType: String) -> Unit,
     onServerLocationChange: (newServerLocation: String) -> Unit,
+    onHomeImmersiveBackgroundChange: (Boolean) -> Unit,
+    onHomeImmersiveGradientChange: (Boolean) -> Unit,
+    onHomeImmersiveDetailsChange: (Boolean) -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
 
@@ -235,6 +254,47 @@ fun ProfileScreenContent(
                 }
             }
 
+            item {
+                SettingsGroup(title = stringResource(R.string.home_screen_settings)) {
+                    SettingItem(
+                        title = stringResource(R.string.home_screen_immersive_background),
+                        currentValue = if (homeImmersiveBackgroundEnabled) {
+                            stringResource(R.string.enabled)
+                        } else {
+                            stringResource(R.string.disabled)
+                        },
+                        onClick = {
+                            onHomeImmersiveBackgroundChange(!homeImmersiveBackgroundEnabled)
+                        },
+                        showArrow = false,
+                    )
+                    SettingItem(
+                        title = stringResource(R.string.home_screen_immersive_gradient),
+                        currentValue = if (homeImmersiveGradientEnabled) {
+                            stringResource(R.string.enabled)
+                        } else {
+                            stringResource(R.string.disabled)
+                        },
+                        onClick = {
+                            onHomeImmersiveGradientChange(!homeImmersiveGradientEnabled)
+                        },
+                        showArrow = false,
+                    )
+                    SettingItem(
+                        title = stringResource(R.string.home_screen_immersive_details),
+                        currentValue = if (homeImmersiveDetailsEnabled) {
+                            stringResource(R.string.enabled)
+                        } else {
+                            stringResource(R.string.disabled)
+                        },
+                        onClick = {
+                            onHomeImmersiveDetailsChange(!homeImmersiveDetailsEnabled)
+                        },
+                        showArrow = false,
+                    )
+                }
+            }
+
 
             item {
                 LargeButton(
@@ -273,6 +333,7 @@ fun SettingItem(
     title: String,
     currentValue: String,
     onClick: () -> Unit,
+    showArrow: Boolean = true,
 ) {
     with(LocalDensity.current) {
         val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -315,11 +376,13 @@ fun SettingItem(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                        contentDescription = "Open settings",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (showArrow) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = stringResource(R.string.open_settings),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

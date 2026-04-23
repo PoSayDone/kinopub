@@ -36,8 +36,13 @@ class ProfileScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ProfileScreenUiState>(ProfileScreenUiState.Loading)
     val uiState: StateFlow<ProfileScreenUiState> = _uiState
 
-    private val _videoQuality = MutableStateFlow(settingsManager.getVideoQuality())
-    val videoQuality: StateFlow<String> = _videoQuality
+    val videoQuality: StateFlow<String> = settingsManager.videoQuality
+    val homeImmersiveBackgroundEnabled: StateFlow<Boolean> =
+        settingsManager.homeImmersiveBackgroundEnabled
+    val homeImmersiveGradientEnabled: StateFlow<Boolean> =
+        settingsManager.homeImmersiveGradientEnabled
+    val homeImmersiveDetailsEnabled: StateFlow<Boolean> =
+        settingsManager.homeImmersiveDetailsEnabled
 
     init {
         loadSettings()
@@ -59,8 +64,6 @@ class ProfileScreenViewModel @Inject constructor(
                     serverLocations = serverLocationResponse.labels,
                     userProfile = userProfile,
                 )
-
-                _videoQuality.value = settingsManager.getVideoQuality()
             } catch (e: Exception) {
                 _uiState.value = ProfileScreenUiState.Error(
                     message = e.message ?: "Unknown error", onRetry = { loadSettings() })
@@ -114,8 +117,19 @@ class ProfileScreenViewModel @Inject constructor(
     }
 
     fun updateDefaultVideoQuality(quality: String) {
-        _videoQuality.value = quality
         settingsManager.setVideoQuality(quality)
+    }
+
+    fun updateHomeImmersiveBackgroundEnabled(enabled: Boolean) {
+        settingsManager.setHomeImmersiveBackgroundEnabled(enabled)
+    }
+
+    fun updateHomeImmersiveGradientEnabled(enabled: Boolean) {
+        settingsManager.setHomeImmersiveGradientEnabled(enabled)
+    }
+
+    fun updateHomeImmersiveDetailsEnabled(enabled: Boolean) {
+        settingsManager.setHomeImmersiveDetailsEnabled(enabled)
     }
 
     companion object {

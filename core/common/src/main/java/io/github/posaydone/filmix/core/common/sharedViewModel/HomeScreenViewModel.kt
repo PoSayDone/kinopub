@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.data.KinopubRepository
 import io.github.posaydone.filmix.core.data.MovieRepository
+import io.github.posaydone.filmix.core.data.SettingsManager
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.SessionManager
@@ -73,8 +74,15 @@ class HomeScreenViewModel @Inject constructor(
     private val kinopubRepository: KinopubRepository,
     private val movieRepository: MovieRepository,
     private val sessionManager: SessionManager,
+    settingsManager: SettingsManager,
 ) : ViewModel() {
     private val retryChannel = Channel<Unit>()
+    val showImmersiveBackground: StateFlow<Boolean> =
+        settingsManager.homeImmersiveBackgroundEnabled
+    val showImmersiveGradient: StateFlow<Boolean> =
+        settingsManager.homeImmersiveGradientEnabled
+    val showImmersiveDetails: StateFlow<Boolean> =
+        settingsManager.homeImmersiveDetailsEnabled
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
@@ -184,7 +192,7 @@ class HomeScreenViewModel @Inject constructor(
         // Always debounce — even cached results. The coroutine cancels on the next D-pad
         // press so rapid navigation never triggers any state change.
         fetchJob = viewModelScope.launch {
-            delay(200L)
+            delay(300L)
 
             if (kinopoiskCache.containsKey(show.id)) {
                 _immersiveContentState.value = kinopoiskCache[show.id]!!

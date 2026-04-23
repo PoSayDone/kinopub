@@ -43,11 +43,17 @@
     <string name="video_quality">Качество видео</string>
     <string name="stream_type">Тип потока</string>
     <string name="server_location">Расположение сервера</string>
+    <string name="home_screen_settings">Главный экран</string>
+    <string name="home_screen_immersive_background">Immersive картинка</string>
+    <string name="home_screen_immersive_gradient">Immersive градиент</string>
+    <string name="home_screen_immersive_details">Immersive детали</string>
     <string name="account">Аккаунт</string>
     <string name="username">Имя пользователя</string>
     <string name="email">Email</string>
     <string name="subscription">Подписка</string>
     <string name="player">Плеер</string>
+    <string name="enabled">Включено</string>
+    <string name="disabled">Выключено</string>
     <string name="logout">Выйти</string>
     <string name="settings">Настройки</string>
     <string name="quality">Качество</string>

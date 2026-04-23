@@ -81,6 +81,9 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val immersiveContentState by viewModel.immersiveContentState.collectAsStateWithLifecycle()
+    val showImmersiveBackground by viewModel.showImmersiveBackground.collectAsStateWithLifecycle()
+    val showImmersiveGradient by viewModel.showImmersiveGradient.collectAsStateWithLifecycle()
+    val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
 
     when (val s = uiState) {
         is HomeScreenUiState.Loading -> {
@@ -105,6 +108,9 @@ fun HomeScreen(
                 newDocumentarySeries = s.newDocumentarySeries,
                 newTvShows = s.newTvShows,
                 immersiveState = immersiveContentState,
+                showImmersiveBackground = showImmersiveBackground,
+                showImmersiveGradient = showImmersiveGradient,
+                showImmersiveDetails = showImmersiveDetails,
                 onImmersiveShowFocused = viewModel::onImmersiveShowFocused,
                 navigateToShowDetails = navigateToShowDetails,
             )
@@ -127,6 +133,9 @@ private fun Body(
     newDocumentarySeries: ShowList,
     newTvShows: ShowList,
     immersiveState: ImmersiveContentUiState,
+    showImmersiveBackground: Boolean,
+    showImmersiveGradient: Boolean,
+    showImmersiveDetails: Boolean,
     onImmersiveShowFocused: (Show) -> Unit,
     navigateToShowDetails: (showId: Int) -> Unit,
 ) {
@@ -143,7 +152,6 @@ private fun Body(
         val clipDp = spacerHeight + 56
         (clipDp.toFloat() / screenHeightDp).coerceIn(0.5f, 0.85f)
     }
-
     // Rows are clipped to render only below the immersive zone.
     val rowsClipShape = remember(immersiveHeightFraction) {
         object : Shape {
@@ -155,10 +163,28 @@ private fun Body(
     }
 
     val content = immersiveState as? ImmersiveContentUiState.Content
+    val shouldShowImmersiveBackground = showImmersiveBackground && content != null
+    val shouldShowImmersiveGradient = showImmersiveGradient && content != null
+    val shouldShowImmersiveDetails = showImmersiveDetails && content != null
+    val hasImmersiveArea =
+        shouldShowImmersiveBackground || shouldShowImmersiveGradient || shouldShowImmersiveDetails
+    val rowsModifier = Modifier
+        .focusRequester(lazyColumn)
+        .focusRestorer(firstItem)
+        .let { baseModifier ->
+            if (hasImmersiveArea) {
+                baseModifier.clip(rowsClipShape)
+            } else {
+                baseModifier
+            }
+        }
 
     Box(modifier = modifier) {
-        if (content != null) {
+        if (shouldShowImmersiveBackground) {
             ImmersiveBackground(imageUrl = content.fullShow.backdropUrl)
+        }
+
+        if (shouldShowImmersiveGradient) {
             Box(Modifier.fillMaxSize().gradientOverlay(MaterialTheme.colorScheme.surface))
             Box(
                 Modifier.fillMaxSize().background(
@@ -173,19 +199,16 @@ private fun Body(
             )
         }
 
-        // z=2 — Rows. Clipped so content only renders below the immersive zone;
-        // the backdrop is always visible above the clip line.
         CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
             LazyColumn(
-                modifier = Modifier
-                    .focusRequester(lazyColumn)
-                    .focusRestorer(firstItem)
-                    .clip(rowsClipShape),
+                modifier = rowsModifier,
                 state = lazyColumnState,
                 contentPadding = PaddingValues(bottom = 108.dp),
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(backdropHeight - 246.dp))
+                if (hasImmersiveArea) {
+                    item {
+                        Spacer(modifier = Modifier.height((backdropHeight - 246.dp).coerceAtLeast(0.dp)))
+                    }
                 }
                 item(contentType = "LastSeenRow") {
                     ShowsRow(
@@ -331,24 +354,24 @@ private fun Body(
             }
         }
 
-        // Shadow band at the clip boundary — dims the top of the visible row area.
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to Color.Transparent,
-                            (immersiveHeightFraction + 0.001f) to MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                            (immersiveHeightFraction + 0.08f) to Color.Transparent,
-                            1f to Color.Transparent,
+        if (shouldShowImmersiveGradient) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0f to Color.Transparent,
+                                (immersiveHeightFraction + 0.001f) to MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                                (immersiveHeightFraction + 0.08f) to Color.Transparent,
+                                1f to Color.Transparent,
+                            )
                         )
                     )
-                )
-        )
+            )
+        }
 
-        // z=3 — title / metadata, always on top of both backdrop and rows.
-        if (content != null) {
+        if (shouldShowImmersiveDetails) {
             ImmersiveDetails(
                 modifier = Modifier
                     .padding(start = childPadding.start, top = childPadding.top + 24.dp)
@@ -375,7 +398,7 @@ private fun Body(
                 year = content.fullShow.year,
                 seriesLength = content.fullShow.seriesLength,
                 movieLength = content.fullShow.movieLength,
-                ageRating = content.fullShow.ageRating?.toString() ?: "",
+                ageRating = content.fullShow.ageRating.toString(),
             )
         }
     }

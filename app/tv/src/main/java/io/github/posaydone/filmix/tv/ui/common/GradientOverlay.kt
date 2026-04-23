@@ -7,19 +7,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 fun Modifier.gradientOverlay(gradientColor: Color): Modifier = drawWithCache {
-    val horizontalGradient = Brush.Companion.horizontalGradient(
+    val horizontalGradient = Brush.horizontalGradient(
         colors = listOf(
-            gradientColor, Color.Companion.Transparent
+            gradientColor, Color.Transparent
         ), startX = size.width.times(0.2f), endX = size.width.times(0.5f)
     )
-    val verticalGradient = Brush.Companion.verticalGradient(
+    val verticalGradient = Brush.verticalGradient(
         colors = listOf(
-            Color.Companion.Transparent, gradientColor
+            Color.Transparent, gradientColor
         ), endY = size.width.times(0.5f)
     )
-    val linearGradient = Brush.Companion.linearGradient(
+    val linearGradient = Brush.linearGradient(
         colors = listOf(
-            gradientColor, Color.Companion.Transparent
+            gradientColor, Color.Transparent
         ), start = Offset(
             size.width.times(0.2f), size.height.times(0.3f)
         ), end = Offset(
