@@ -26,7 +26,6 @@ import io.github.posaydone.filmix.core.model.UserProfileInfo
 import io.github.posaydone.filmix.core.model.VideoWithQualities
 import io.github.posaydone.filmix.core.model.sortedForResume
 import io.github.posaydone.filmix.core.model.Episode as AppEpisode
-import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubHistoryEntry
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubItem
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkItemsResponse
@@ -47,7 +46,6 @@ class KinopubRemoteDataSource @Inject constructor(
     private val kinoPubApiService: KinoPubApiService,
 ) {
     private var favoritesFolderId: Int? = null
-    private var contentTypesCache: List<KinoPubContentType>? = null
     private var streamingTypesCache: List<KinoPubStreamingType>? = null
     private var serverLocationsCache: List<KinoPubServerLocation>? = null
 
@@ -58,7 +56,7 @@ class KinopubRemoteDataSource @Inject constructor(
         genre: String? = null,
     ): PageWithShows<Show> {
         val response = kinoPubApiService.listItems(
-            type = resolveLegacyCategory(category),
+            type = categoryTypeFromString(category),
             genre = genre,
             page = page,
             perPage = limit,
@@ -80,7 +78,7 @@ class KinopubRemoteDataSource @Inject constructor(
         section: FilmixCategory = FilmixCategory.MOVIE,
     ): PageWithShows<Show> {
         val response = kinoPubApiService.getPopularItems(
-            type = resolveCategoryType(section),
+            type = categoryTypeForSection(section),
             page = page,
             perPage = limit,
         )
@@ -93,7 +91,7 @@ class KinopubRemoteDataSource @Inject constructor(
         section: FilmixCategory = FilmixCategory.MOVIE,
     ): PageWithShows<Show> {
         val response = kinoPubApiService.getFreshItems(
-            type = resolveCategoryType(section),
+            type = categoryTypeForSection(section),
             page = page,
             perPage = limit,
         )
@@ -329,92 +327,26 @@ class KinopubRemoteDataSource @Inject constructor(
         )
     }
 
-    private suspend fun resolveLegacyCategory(category: String): String? {
-        return when (category) {
-            FilmixCategory.MOVIE.toString() -> resolveCategoryType(FilmixCategory.MOVIE)
-            FilmixCategory.SERIES.toString() -> resolveCategoryType(FilmixCategory.SERIES)
-            FilmixCategory.CARTOON.toString() -> resolveCategoryType(FilmixCategory.CARTOON)
-            FilmixCategory.CARTOON_SERIES.toString() -> resolveCategoryType(FilmixCategory.CARTOON_SERIES)
-            else -> null
-        }
+    private fun categoryTypeFromString(category: String): String? = when (category) {
+        FilmixCategory.MOVIE.toString() -> "movie"
+        FilmixCategory.SERIES.toString() -> "serial"
+        FilmixCategory.CONCERT.toString() -> "concert"
+        FilmixCategory.FILM_3D.toString() -> "3d"
+        FilmixCategory.DOCUMENTARY_MOVIE.toString() -> "documovie"
+        FilmixCategory.DOCUMENTARY_SERIES.toString() -> "docuserial"
+        FilmixCategory.TV_SHOW.toString() -> "tvshow"
+        else -> null
     }
 
-    private suspend fun resolveCategoryType(section: FilmixCategory): String? {
-        return when (section) {
-            FilmixCategory.MOVIE -> resolveType(
-                candidates = listOf("movie", "documovie", "concert"),
-                fuzzyHints = listOf("movie", "film", "фильм"),
-                fallback = "movie",
-            )
-
-            FilmixCategory.SERIES -> resolveType(
-                candidates = listOf("serial", "docuserial"),
-                fuzzyHints = listOf("serial", "series", "сериал"),
-                fallback = "serial",
-            )
-
-            FilmixCategory.CARTOON,
-            FilmixCategory.CARTOON_SERIES,
-            -> resolveType(
-                candidates = listOf("cartoon", "anime", "tvshow"),
-                fuzzyHints = listOf("cartoon", "anime", "animation", "мульт", "аниме"),
-                fallback = "movie",
-            )
-
-            FilmixCategory.CONCERT -> resolveType(
-                candidates = listOf("concert"),
-                fuzzyHints = listOf("concert", "концерт"),
-                fallback = "concert",
-            )
-
-            FilmixCategory.FILM_3D -> resolveType(
-                candidates = listOf("3d"),
-                fuzzyHints = listOf("3d"),
-                fallback = "3d",
-            )
-
-            FilmixCategory.DOCUMENTARY_MOVIE -> resolveType(
-                candidates = listOf("documovie"),
-                fuzzyHints = listOf("documovie", "documentary", "документальный фильм"),
-                fallback = "documovie",
-            )
-
-            FilmixCategory.DOCUMENTARY_SERIES -> resolveType(
-                candidates = listOf("docuserial"),
-                fuzzyHints = listOf("docuserial", "documentary series", "документальный сериал"),
-                fallback = "docuserial",
-            )
-
-            FilmixCategory.TV_SHOW -> resolveType(
-                candidates = listOf("tvshow"),
-                fuzzyHints = listOf("tvshow", "tv show", "шоу"),
-                fallback = "tvshow",
-            )
-        }
-    }
-
-    private suspend fun resolveType(
-        candidates: List<String>,
-        fuzzyHints: List<String>,
-        fallback: String,
-    ): String {
-        val types = getContentTypes()
-        candidates.firstNotNullOfOrNull { candidate ->
-            types.firstOrNull { it.id.equals(candidate, ignoreCase = true) }?.id
-        }?.let { return it }
-
-        types.firstOrNull { type ->
-            val haystack = "${type.id} ${type.title}".lowercase(Locale.ROOT)
-            fuzzyHints.any { haystack.contains(it.lowercase(Locale.ROOT)) }
-        }?.id?.let { return it }
-
-        return fallback
-    }
-
-    private suspend fun getContentTypes(): List<KinoPubContentType> {
-        return contentTypesCache ?: kinoPubApiService.getContentTypes().items.also {
-            contentTypesCache = it
-        }
+    private fun categoryTypeForSection(section: FilmixCategory): String? = when (section) {
+        FilmixCategory.MOVIE -> "movie"
+        FilmixCategory.SERIES -> "serial"
+        FilmixCategory.CARTOON, FilmixCategory.CARTOON_SERIES -> null
+        FilmixCategory.CONCERT -> "concert"
+        FilmixCategory.FILM_3D -> "3d"
+        FilmixCategory.DOCUMENTARY_MOVIE -> "documovie"
+        FilmixCategory.DOCUMENTARY_SERIES -> "docuserial"
+        FilmixCategory.TV_SHOW -> "tvshow"
     }
 
     private suspend fun getStreamingTypes(): List<KinoPubStreamingType> {
@@ -632,12 +564,14 @@ class KinopubRemoteDataSource @Inject constructor(
     }
 
     private fun KinoPubItem.toShow(): Show {
+        val isSeries = isSeries()
         return Show(
             id = id,
             last_episode = maxEpisodeNumber(),
             last_season = maxSeasonNumber(),
             original_name = title,
             poster = bestPosterUrl(),
+            backdropUrl = posters?.wide ?: bestPosterUrl(),
             quality = qualityLabel(),
             status = toShowStatus(),
             title = title,
@@ -645,6 +579,16 @@ class KinopubRemoteDataSource @Inject constructor(
             votesPos = positiveVotes(),
             year = year ?: 0,
             url = "",
+            description = plot?.takeIf { it.isNotBlank() },
+            genres = genres.map { it.title },
+            countries = countries.map { it.title },
+            ratingKp = kinopoisk_rating?.takeIf { it > 0.0 },
+            ratingImdb = imdb_rating?.takeIf { it > 0.0 },
+            votesKp = kinopoisk_votes,
+            votesImdb = imdb_votes,
+            movieLength = if (!isSeries) durationMinutes() else null,
+            seriesLength = if (isSeries) maxEpisodeNumber() else null,
+            ageRating = 0,
         )
     }
 
@@ -710,12 +654,14 @@ class KinopubRemoteDataSource @Inject constructor(
     }
 
     private fun KinoPubWatchingListItem.toShow(): Show {
+        val posterUrl = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
         return Show(
             id = id,
             last_episode = null,
             last_season = null,
             original_name = title,
-            poster = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty(),
+            poster = posterUrl,
+            backdropUrl = posters?.wide ?: posterUrl,
             quality = "N/A",
             status = null,
             title = title,
@@ -727,12 +673,14 @@ class KinopubRemoteDataSource @Inject constructor(
     }
 
     private fun io.github.posaydone.filmix.core.model.kinopub.KinoPubWatchingSerialItem.toShow(): Show {
+        val posterUrl = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
         return Show(
             id = id,
             last_episode = new,
             last_season = null,
             original_name = title,
-            poster = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty(),
+            poster = posterUrl,
+            backdropUrl = posters?.wide ?: posterUrl,
             quality = "N/A",
             status = null,
             title = title,

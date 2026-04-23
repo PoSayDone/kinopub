@@ -2,6 +2,7 @@ package io.github.posaydone.filmix.tv.navigation.graph
 
 import android.annotation.SuppressLint
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,7 @@ import io.github.posaydone.filmix.tv.ui.screen.showDetailsScreen.ShowDetailsScre
 import io.github.posaydone.filmix.tv.ui.screen.showsGridScreen.ShowsGridScreen
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.tv.material3.MaterialTheme
 import io.github.posaydone.filmix.core.common.R
 
 fun getIcon(iconName: String): ImageVector {
@@ -93,6 +95,7 @@ fun MainGraph() {
                 LazyColumn(
                     userScrollEnabled = false,
                     modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(12.dp)
                         .fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(

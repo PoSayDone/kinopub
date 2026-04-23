@@ -10,21 +10,14 @@ import io.github.posaydone.filmix.core.data.SettingsManager
 import io.github.posaydone.filmix.core.model.FilmixCategory
 import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.SessionManager
-import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.ShowProgress
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -32,7 +25,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @Immutable
@@ -62,13 +54,6 @@ sealed class HomeScreenUiState {
     ) : HomeScreenUiState()
 }
 
-@Immutable
-sealed interface ImmersiveContentUiState {
-    data object Loading : ImmersiveContentUiState
-    data class Content(val fullShow: FullShow) : ImmersiveContentUiState
-    data object Error : ImmersiveContentUiState
-}
-
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val kinopubRepository: KinopubRepository,
@@ -79,8 +64,6 @@ class HomeScreenViewModel @Inject constructor(
     private val retryChannel = Channel<Unit>()
     val showImmersiveBackground: StateFlow<Boolean> =
         settingsManager.homeImmersiveBackgroundEnabled
-    val showImmersiveGradient: StateFlow<Boolean> =
-        settingsManager.homeImmersiveGradientEnabled
     val showImmersiveDetails: StateFlow<Boolean> =
         settingsManager.homeImmersiveDetailsEnabled
 
@@ -177,42 +160,6 @@ class HomeScreenViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = HomeScreenUiState.Loading
     )
-
-    private val _immersiveContentState =
-        MutableStateFlow<ImmersiveContentUiState>(ImmersiveContentUiState.Loading)
-    val immersiveContentState: StateFlow<ImmersiveContentUiState> =
-        _immersiveContentState.asStateFlow()
-
-    private val kinopoiskCache = mutableMapOf<Int, ImmersiveContentUiState.Content>()
-    private var fetchJob: Job? = null
-
-    fun onImmersiveShowFocused(show: Show) {
-        fetchJob?.cancel()
-
-        // Always debounce — even cached results. The coroutine cancels on the next D-pad
-        // press so rapid navigation never triggers any state change.
-        fetchJob = viewModelScope.launch {
-            delay(300L)
-
-            if (kinopoiskCache.containsKey(show.id)) {
-                _immersiveContentState.value = kinopoiskCache[show.id]!!
-                return@launch
-            }
-
-            try {
-                val fullShow = withContext(Dispatchers.IO) {
-                    movieRepository.getFullMovieByFilmixId(show.id)
-                }
-                val content = ImmersiveContentUiState.Content(fullShow = fullShow)
-                kinopoiskCache[show.id] = content
-                _immersiveContentState.value = content
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _immersiveContentState.value = ImmersiveContentUiState.Error
-            }
-        }
-    }
 
     init {
         retry()

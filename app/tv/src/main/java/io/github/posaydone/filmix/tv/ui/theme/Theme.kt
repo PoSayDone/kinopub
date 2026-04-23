@@ -64,7 +64,7 @@ private val darkScheme = darkColorScheme(
 )
 
 @Composable
-fun FilmixTheme(
+fun KinopubTheme(
     content: @Composable() () -> Unit,
 ) {
 

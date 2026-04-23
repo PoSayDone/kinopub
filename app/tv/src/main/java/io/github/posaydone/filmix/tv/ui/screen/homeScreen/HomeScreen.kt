@@ -1,7 +1,8 @@
 package io.github.posaydone.filmix.tv.ui.screen.homeScreen
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,8 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -27,35 +32,33 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.MaterialTheme
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
-import io.github.posaydone.filmix.core.common.sharedViewModel.ImmersiveContentUiState
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
 import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.ShowStatus
 import io.github.posaydone.filmix.core.model.Votes
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.common.ShowsRow
-import io.github.posaydone.filmix.tv.ui.common.gradientOverlay
+import io.github.posaydone.filmix.tv.ui.theme.KinopubTheme
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import io.github.posaydone.filmix.tv.ui.utils.Padding
 
@@ -80,9 +83,7 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val immersiveContentState by viewModel.immersiveContentState.collectAsStateWithLifecycle()
     val showImmersiveBackground by viewModel.showImmersiveBackground.collectAsStateWithLifecycle()
-    val showImmersiveGradient by viewModel.showImmersiveGradient.collectAsStateWithLifecycle()
     val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
 
     when (val s = uiState) {
@@ -107,16 +108,67 @@ fun HomeScreen(
                 newDocumentaryFilms = s.newDocumentaryFilms,
                 newDocumentarySeries = s.newDocumentarySeries,
                 newTvShows = s.newTvShows,
-                immersiveState = immersiveContentState,
                 showImmersiveBackground = showImmersiveBackground,
-                showImmersiveGradient = showImmersiveGradient,
                 showImmersiveDetails = showImmersiveDetails,
-                onImmersiveShowFocused = viewModel::onImmersiveShowFocused,
                 navigateToShowDetails = navigateToShowDetails,
             )
         }
     }
 }
+
+@Preview(widthDp = 1280, heightDp = 720)
+@Composable
+private fun HomeScreenPreview() {
+    val previewShowList = remember {
+        listOf(
+            previewShow(id = 1, title = "The Last Horizon", year = 2024),
+            previewShow(id = 2, title = "Northline", year = 2023),
+            previewShow(id = 3, title = "Static Echo", year = 2022),
+            previewShow(id = 4, title = "Glass Harbor", year = 2021),
+            previewShow(id = 5, title = "Satellite City", year = 2020),
+        )
+    }
+
+    KinopubTheme()
+    {
+        Body(
+            modifier = Modifier
+                .fillMaxSize(),
+            lastSeenShows = previewShowList,
+            popularMovies = previewShowList,
+            newMovies = previewShowList,
+            popularSeries = previewShowList,
+            newSeries = previewShowList,
+            newConcerts = previewShowList,
+            new3d = previewShowList,
+            newDocumentaryFilms = previewShowList,
+            newDocumentarySeries = previewShowList,
+            newTvShows = previewShowList,
+            showImmersiveBackground = true,
+            showImmersiveDetails = true,
+            navigateToShowDetails = {},
+        )
+    }
+}
+
+private fun previewShow(
+    id: Int,
+    title: String,
+    year: Int,
+) = Show(
+    id = id,
+    last_episode = null,
+    last_season = null,
+    original_name = title,
+    poster = "",
+    quality = "4K",
+    status = ShowStatus(status_text = "Released"),
+    title = title,
+    votesNeg = 24,
+    votesPos = 742,
+    year = year,
+    url = "",
+)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -132,13 +184,16 @@ private fun Body(
     newDocumentaryFilms: ShowList,
     newDocumentarySeries: ShowList,
     newTvShows: ShowList,
-    immersiveState: ImmersiveContentUiState,
     showImmersiveBackground: Boolean,
-    showImmersiveGradient: Boolean,
     showImmersiveDetails: Boolean,
-    onImmersiveShowFocused: (Show) -> Unit,
     navigateToShowDetails: (showId: Int) -> Unit,
 ) {
+    var pendingShow by remember { mutableStateOf<Show?>(null) }
+    var focusedShow by remember { mutableStateOf<Show?>(null) }
+    LaunchedEffect(pendingShow) {
+        delay(300L)
+        focusedShow = pendingShow
+    }
     val lazyColumnState = rememberLazyListState()
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
 
@@ -152,22 +207,23 @@ private fun Body(
         val clipDp = spacerHeight + 56
         (clipDp.toFloat() / screenHeightDp).coerceIn(0.5f, 0.85f)
     }
-    // Rows are clipped to render only below the immersive zone.
+    
     val rowsClipShape = remember(immersiveHeightFraction) {
         object : Shape {
-            override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
+            override fun createOutline(
+                size: Size,
+                layoutDirection: LayoutDirection,
+                density: Density
+            ) =
                 Outline.Rectangle(
                     Rect(0f, size.height * immersiveHeightFraction, size.width, size.height)
                 )
         }
     }
 
-    val content = immersiveState as? ImmersiveContentUiState.Content
-    val shouldShowImmersiveBackground = showImmersiveBackground && content != null
-    val shouldShowImmersiveGradient = showImmersiveGradient && content != null
-    val shouldShowImmersiveDetails = showImmersiveDetails && content != null
-    val hasImmersiveArea =
-        shouldShowImmersiveBackground || shouldShowImmersiveGradient || shouldShowImmersiveDetails
+    val shouldShowImmersiveBackground = showImmersiveBackground && focusedShow != null
+    val shouldShowImmersiveDetails = showImmersiveDetails && focusedShow != null
+    val hasImmersiveArea = shouldShowImmersiveBackground || shouldShowImmersiveDetails
     val rowsModifier = Modifier
         .focusRequester(lazyColumn)
         .focusRestorer(firstItem)
@@ -180,24 +236,16 @@ private fun Body(
         }
 
     Box(modifier = modifier) {
-        if (shouldShowImmersiveBackground) {
-            ImmersiveBackground(imageUrl = content.fullShow.backdropUrl)
+        Crossfade(
+            targetState = if (showImmersiveBackground) focusedShow?.backdropUrl else null,
+            animationSpec = tween(durationMillis = 600),
+            label = "ImmersiveBackground",
+        ) { backdropUrl ->
+            if (backdropUrl != null) {
+                ImmersiveBackground(imageUrl = backdropUrl)
+            }
         }
 
-        if (shouldShowImmersiveGradient) {
-            Box(Modifier.fillMaxSize().gradientOverlay(MaterialTheme.colorScheme.surface))
-            Box(
-                Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            (immersiveHeightFraction * 0.55f) to Color.Transparent,
-                            (immersiveHeightFraction * 0.85f) to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
-                            immersiveHeightFraction to MaterialTheme.colorScheme.surface,
-                        )
-                    )
-                )
-            )
-        }
 
         CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
             LazyColumn(
@@ -222,7 +270,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -236,7 +284,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -250,7 +298,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -264,7 +312,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -278,7 +326,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -292,7 +340,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -306,7 +354,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -320,7 +368,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -334,7 +382,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
 
@@ -348,58 +396,48 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { onImmersiveShowFocused(it) }
+                        onShowFocused = { pendingShow = it }
                     )
                 }
             }
         }
 
-        if (shouldShowImmersiveGradient) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0f to Color.Transparent,
-                                (immersiveHeightFraction + 0.001f) to MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                                (immersiveHeightFraction + 0.08f) to Color.Transparent,
-                                1f to Color.Transparent,
-                            )
-                        )
-                    )
-            )
-        }
 
-        if (shouldShowImmersiveDetails) {
-            ImmersiveDetails(
-                modifier = Modifier
-                    .padding(start = childPadding.start, top = childPadding.top + 24.dp)
-                    .fillMaxWidth(),
-                logoUrl = content.fullShow.logoUrl,
-                title = content.fullShow.title,
-                description = content.fullShow.description ?: content.fullShow.shortDescription,
-                rating = Rating(
-                    kp = content.fullShow.ratingKp ?: 0.0,
-                    imdb = content.fullShow.ratingImdb ?: 0.0,
-                    filmCritics = 0.0,
-                    russianFilmCritics = 0.0,
-                    await = 0.0,
-                ),
-                votes = Votes(
-                    kp = content.fullShow.votesKp ?: 0,
-                    imdb = content.fullShow.votesImdb ?: 0,
-                    filmCritics = 0,
-                    russianFilmCritics = 0,
-                    await = 0,
-                ),
-                genres = content.fullShow.genres.map { KinopoiskGenre(name = it) },
-                countries = content.fullShow.countries.map { KinopoiskCountry(name = it) },
-                year = content.fullShow.year,
-                seriesLength = content.fullShow.seriesLength,
-                movieLength = content.fullShow.movieLength,
-                ageRating = content.fullShow.ageRating.toString(),
-            )
+        Crossfade(
+            targetState = if (showImmersiveDetails) focusedShow else null,
+            animationSpec = tween(durationMillis = 400),
+            label = "ImmersiveDetails",
+        ) { show ->
+            if (show != null) {
+                ImmersiveDetails(
+                    modifier = Modifier
+                        .padding(start = childPadding.start, top = childPadding.top + 24.dp)
+                        .fillMaxWidth(),
+                    logoUrl = null,
+                    title = show.title,
+                    description = show.description,
+                    rating = Rating(
+                        kp = show.ratingKp ?: 0.0,
+                        imdb = show.ratingImdb ?: 0.0,
+                        filmCritics = 0.0,
+                        russianFilmCritics = 0.0,
+                        await = 0.0,
+                    ),
+                    votes = Votes(
+                        kp = show.votesKp ?: 0,
+                        imdb = show.votesImdb ?: 0,
+                        filmCritics = 0,
+                        russianFilmCritics = 0,
+                        await = 0,
+                    ),
+                    genres = show.genres.map { KinopoiskGenre(name = it) },
+                    countries = show.countries.map { KinopoiskCountry(name = it) },
+                    year = show.year,
+                    seriesLength = show.seriesLength,
+                    movieLength = show.movieLength,
+                    ageRating = show.ageRating.takeIf { it > 0 }?.toString() ?: "",
+                )
+            }
         }
     }
 }

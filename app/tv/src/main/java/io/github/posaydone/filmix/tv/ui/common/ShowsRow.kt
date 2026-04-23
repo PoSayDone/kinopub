@@ -2,10 +2,7 @@ package io.github.posaydone.filmix.tv.ui.common
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -17,7 +14,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -40,8 +36,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,13 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import io.github.posaydone.filmix.core.common.sharedViewModel.ImmersiveContentUiState
-import io.github.posaydone.filmix.core.model.KinopoiskCountry
-import io.github.posaydone.filmix.core.model.KinopoiskGenre
-import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
-import io.github.posaydone.filmix.core.model.Votes
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 
@@ -168,120 +157,6 @@ fun ShowsRow(
                     }
 
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun ImmersiveShowsRow(
-    showList: ShowList,
-    immersiveState: ImmersiveContentUiState,
-    onShowFocused: (Show) -> Unit,
-    modifier: Modifier = Modifier,
-    itemDirection: ItemDirection = ItemDirection.Vertical,
-    startPadding: Dp = rememberChildPadding().start,
-    endPadding: Dp = rememberChildPadding().end,
-    title: String? = null,
-    titleStyle: TextStyle = MaterialTheme.typography.headlineLarge.copy(
-        fontWeight = FontWeight.Normal, fontSize = 18.sp
-    ),
-    showItemTitle: Boolean = true,
-    showIndexOverImage: Boolean = false,
-    onShowSelected: (Show) -> Unit = {},
-    requestInitialFocus: Boolean = false,
-) {
-    var isListFocused by remember { mutableStateOf(false) }
-    var selectedShow by remember(showList) { mutableStateOf(showList.first()) }
-
-    val screenHeight = LocalWindowInfo.current.containerSize.height
-
-    Box(
-        modifier
-            .fillMaxSize()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(LocalConfiguration.current.run { screenHeightDp.dp } - 32.dp)) {
-            AnimatedVisibility(
-                visible = isListFocused, enter = fadeIn(), exit = fadeOut()
-            ) {
-                if (immersiveState is ImmersiveContentUiState.Content) {
-                    ImmersiveBackground(
-                        imageUrl = immersiveState.fullShow.backdropUrl
-                    )
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .gradientOverlay(MaterialTheme.colorScheme.surface)
-                    )
-
-                    val childPadding = rememberChildPadding()
-                    ImmersiveDetails(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = childPadding.start, top = childPadding.top + 24.dp)
-                            .fillMaxWidth(),
-                        logoUrl = immersiveState.fullShow.logoUrl,
-                        title = immersiveState.fullShow.title,
-                        description = immersiveState.fullShow.description
-                            ?: immersiveState.fullShow.shortDescription,
-                        rating = Rating(
-                            kp = immersiveState.fullShow.ratingKp ?: 0.0,
-                            imdb = immersiveState.fullShow.ratingImdb ?: 0.0,
-                            filmCritics = 0.0,
-                            russianFilmCritics = 0.0,
-                            await = 0.0
-                        ),
-                        votes = Votes(
-                            kp = immersiveState.fullShow.votesKp ?: 0,
-                            imdb = immersiveState.fullShow.votesImdb ?: 0,
-                            filmCritics = 0,
-                            russianFilmCritics = 0,
-                            await = 0
-                        ),
-                        genres = immersiveState.fullShow.genres.map {
-                            KinopoiskGenre(
-                                name = it
-                            )
-                        },
-                        countries = immersiveState.fullShow.countries.map {
-                            KinopoiskCountry(
-                                name = it
-                            )
-                        },
-                        year = immersiveState.fullShow.year,
-                        seriesLength = immersiveState.fullShow.seriesLength,
-                        movieLength = immersiveState.fullShow.movieLength,
-                        ageRating = immersiveState.fullShow.ageRating.toString()
-                    )
-                } else if (immersiveState is ImmersiveContentUiState.Loading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-                    ) {}
-                }
-            }
-
-            Box(
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .onFocusChanged { isListFocused = it.hasFocus }) {
-                ShowsRow(
-                    showList = showList,
-                    itemDirection = itemDirection,
-                    startPadding = startPadding,
-                    endPadding = endPadding,
-                    title = title,
-                    titleStyle = titleStyle,
-                    showItemTitle = showItemTitle,
-                    showIndexOverImage = showIndexOverImage,
-                    onShowSelected = onShowSelected,
-                    onShowFocused = { it ->
-                        onShowFocused(it)
-                    },
-                )
             }
         }
     }

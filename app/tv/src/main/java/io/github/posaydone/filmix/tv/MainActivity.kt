@@ -14,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.posaydone.filmix.core.model.AuthEvent
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.tv.navigation.graph.RootGraph
-import io.github.posaydone.filmix.tv.ui.theme.FilmixTheme
+import io.github.posaydone.filmix.tv.ui.theme.KinopubTheme
 import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Inject
 
@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FilmixTheme {
+            KinopubTheme {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
