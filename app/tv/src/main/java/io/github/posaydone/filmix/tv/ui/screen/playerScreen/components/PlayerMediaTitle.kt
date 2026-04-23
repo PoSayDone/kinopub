@@ -22,6 +22,10 @@ fun PlayerMediaTitle(
     currentEpisode: String?,
     modifier: Modifier = Modifier,
 ) {
+    val slashIndex = showDetails.title.indexOf('/')
+    val primaryTitle = if (slashIndex != -1) showDetails.title.substring(0, slashIndex).trim() else showDetails.title
+    val originalTitle = if (slashIndex != -1) showDetails.title.substring(slashIndex + 1).trim().takeIf { it.isNotEmpty() } else null
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -30,12 +34,12 @@ fun PlayerMediaTitle(
         if (!showDetails.logoUrl.isNullOrBlank()) {
             SubcomposeAsyncImage(
                 model = showDetails.logoUrl,
-                contentDescription = showDetails.title,
+                contentDescription = primaryTitle,
                 modifier = Modifier.width(300.dp),
                 contentScale = ContentScale.Fit,
                 error = {
                     Text(
-                        text = showDetails.title,
+                        text = primaryTitle,
                         style = MaterialTheme.typography.titleLarge,
                         maxLines = 1,
                     )
@@ -43,8 +47,16 @@ fun PlayerMediaTitle(
             )
         } else {
             Text(
-                text = showDetails.title,
+                text = primaryTitle,
                 style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+            )
+        }
+        if (originalTitle != null) {
+            Text(
+                text = originalTitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 1,
             )
         }

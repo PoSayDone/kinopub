@@ -378,7 +378,7 @@ private fun ShowsRowItemText(
             label = "",
         )
         Text(
-            text = show.title,
+            text = show.title.substringBefore('/').trim(),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.SemiBold
             ),

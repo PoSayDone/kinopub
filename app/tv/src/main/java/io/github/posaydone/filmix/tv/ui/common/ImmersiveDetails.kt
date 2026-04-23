@@ -52,23 +52,37 @@ fun ImmersiveDetails(
     val screenHeight = configuration.screenHeightDp.dp
     val context = LocalContext.current
 
+    val slashIndex = title.indexOf('/')
+    val primaryTitle = if (slashIndex != -1) title.substring(0, slashIndex).trim() else title
+    val originalTitle = if (slashIndex != -1) title.substring(slashIndex + 1).trim().takeIf { it.isNotEmpty() } else null
+
     Column(
         modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Logo or Title
-        if (!logoUrl.isNullOrEmpty()) {
-            AsyncImage(
-                model = ImageRequest.Builder(context).data(logoUrl).build(),
-                contentDescription = title,
-                contentScale = ContentScale.Companion.Fit,
-                modifier = Modifier.Companion.sizeIn(
-                    maxWidth = screenWidth * 0.4f, maxHeight = screenHeight * 0.16f
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!logoUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context).data(logoUrl).build(),
+                    contentDescription = primaryTitle,
+                    contentScale = ContentScale.Companion.Fit,
+                    modifier = Modifier.Companion.sizeIn(
+                        maxWidth = screenWidth * 0.4f, maxHeight = screenHeight * 0.16f
+                    )
                 )
-            )
-        } else {
-            Text(
-                text = title, style = MaterialTheme.typography.displaySmall
-            )
+            } else {
+                Text(
+                    text = primaryTitle,
+                    style = MaterialTheme.typography.displaySmall,
+                )
+            }
+            if (originalTitle != null) {
+                Text(
+                    text = originalTitle,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
         }
 
         MetadataRow(

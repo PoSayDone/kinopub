@@ -309,12 +309,13 @@ private fun Body(
         ) {
             ImmersiveBackground(imageUrl = content?.fullShow?.backdropUrl)
 
-            // Fade the bottom edge of the backdrop into the surface color.
+            // Bottom-edge fade: backdrop blends into surface color over the lower 45% of the zone.
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0.78f to Color.Transparent,
+                            0.55f to Color.Transparent,
+                            0.82f to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
                             1.0f to MaterialTheme.colorScheme.surface,
                         )
                     )
@@ -322,6 +323,22 @@ private fun Body(
             )
             Box(Modifier.fillMaxSize().gradientOverlay(MaterialTheme.colorScheme.surface))
         }
+
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Transparent,
+                            (immersiveHeightFraction - 0.03f) to Color.Transparent,
+                            immersiveHeightFraction to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+                            (immersiveHeightFraction + 0.13f) to Color.Transparent,
+                            1f to Color.Transparent,
+                        )
+                    )
+                )
+        )
 
         // z=3 — title / metadata, only shown once full Content is available.
         if (content != null) {
