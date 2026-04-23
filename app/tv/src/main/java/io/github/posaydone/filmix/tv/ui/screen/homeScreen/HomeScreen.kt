@@ -1,10 +1,7 @@
 package io.github.posaydone.filmix.tv.ui.screen.homeScreen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,19 +18,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -62,8 +55,6 @@ import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import io.github.posaydone.filmix.tv.ui.utils.Padding
 
 val ParentPadding = PaddingValues(vertical = 16.dp, horizontal = 12.dp)
-
-private val TAG = "HOME"
 
 @Composable
 fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.current): Padding {
@@ -97,9 +88,7 @@ fun HomeScreen(
 
         is HomeScreenUiState.Done -> {
             Body(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .animateContentSize(),
+                modifier = Modifier.fillMaxSize(),
                 lastSeenShows = s.lastSeenShows,
                 popularMovies = s.popularMovies,
                 newMovies = s.newMovies,
@@ -117,7 +106,6 @@ fun HomeScreen(
         }
     }
 }
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -140,230 +128,231 @@ private fun Body(
     val lazyColumnState = rememberLazyListState()
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
 
-    val backdropHeight = LocalConfiguration.current.run { screenHeightDp.dp } - 32.dp
+    val screenHeightDp = LocalConfiguration.current.screenHeightDp
+    val backdropHeight = screenHeightDp.dp - 32.dp
     val childPadding = rememberChildPadding()
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
 
-    AnimatedVisibility(
-        visible = true, enter = fadeIn(), exit = fadeOut()
-    ) {
-        if (immersiveState is ImmersiveContentUiState.Content) {
-            ImmersiveBackground(
-                imageUrl = immersiveState.fullShow.backdropUrl
-            )
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .gradientOverlay(MaterialTheme.colorScheme.surface)
-            )
-
-            ImmersiveDetails(
-                modifier = Modifier
-                    .padding(
-                        start = childPadding.start, top = childPadding.top + 24.dp
-                    )
-                    .fillMaxWidth(),
-                logoUrl = immersiveState.fullShow.logoUrl,
-                title = immersiveState.fullShow.title,
-                description = immersiveState.fullShow.description
-                    ?: immersiveState.fullShow.shortDescription,
-                rating = Rating(
-                    kp = immersiveState.fullShow.ratingKp ?: 0.0,
-                    imdb = immersiveState.fullShow.ratingImdb ?: 0.0,
-                    filmCritics = 0.0,
-                    russianFilmCritics = 0.0,
-                    await = 0.0
-                ),
-                votes = Votes(
-                    kp = immersiveState.fullShow.votesKp ?: 0,
-                    imdb = immersiveState.fullShow.votesImdb ?: 0,
-                    filmCritics = 0,
-                    russianFilmCritics = 0,
-                    await = 0
-                ),
-                genres = immersiveState.fullShow.genres.map {
-                    KinopoiskGenre(
-                        name = it
-                    )
-                },
-                countries = immersiveState.fullShow.countries.map {
-                    KinopoiskCountry(
-                        name = it
-                    )
-                },
-                year = immersiveState.fullShow.year,
-                seriesLength = immersiveState.fullShow.seriesLength,
-                movieLength = immersiveState.fullShow.movieLength,
-                ageRating = immersiveState.fullShow.ageRating.toString()
-            )
-        } else if (immersiveState is ImmersiveContentUiState.Loading) {
-            Box(
-                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-            ) {}
-        }
+    val immersiveHeightFraction = remember(screenHeightDp) {
+        val spacerHeight = screenHeightDp - 324  
+        val clipDp = spacerHeight + 56          
+        (clipDp.toFloat() / screenHeightDp).coerceIn(0.5f, 0.85f)
     }
 
-    CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
-        LazyColumn(
-            modifier = Modifier
-                .focusRequester(lazyColumn)
-                .focusRestorer(firstItem)
-                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                .drawWithContent {
-                    drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colorStops = arrayOf(0.48f to Color.Transparent, 0.5f to Color.Black),
-                        ), blendMode = BlendMode.DstIn
+    val content = immersiveState as? ImmersiveContentUiState.Content
+
+    Box(modifier = modifier) {
+        CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
+            LazyColumn(
+                modifier = Modifier
+                    .focusRequester(lazyColumn)
+                    .focusRestorer(firstItem),
+                state = lazyColumnState,
+                contentPadding = PaddingValues(bottom = 108.dp),
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(backdropHeight - 246.dp))
+                }
+                item(contentType = "LastSeenRow") {
+                    ShowsRow(
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .focusRequester(firstItem),
+                        showItemTitle = false,
+                        showList = lastSeenShows,
+                        title = stringResource(R.string.continue_watching),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
                     )
-                },
-            state = lazyColumnState,
-            contentPadding = PaddingValues(bottom = 108.dp),
+                }
+
+                item(contentType = "PopularMoviesRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = popularMovies,
+                        title = stringResource(R.string.popular_movies),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "NewMoviesRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = newMovies,
+                        title = stringResource(R.string.new_movies),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "PopularSeriesRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = popularSeries,
+                        title = stringResource(R.string.popular_series),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "NewSeriesRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = newSeries,
+                        title = stringResource(R.string.new_series),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "NewConcertsRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = newConcerts,
+                        title = stringResource(R.string.new_concerts),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "New3dRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = new3d,
+                        title = stringResource(R.string.new_3d),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "NewDocumentaryFilmsRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = newDocumentaryFilms,
+                        title = stringResource(R.string.new_documentary_films),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "NewDocumentarySeriesRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = newDocumentarySeries,
+                        title = stringResource(R.string.new_documentary_series),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+
+                item(contentType = "NewTvShowsRow") {
+                    ShowsRow(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        showItemTitle = false,
+                        showList = newTvShows,
+                        title = stringResource(R.string.new_tv_shows),
+                        onShowSelected = { show ->
+                            lazyColumn.saveFocusedChild()
+                            navigateToShowDetails(show.id)
+                        },
+                        onShowFocused = { onImmersiveShowFocused(it) }
+                    )
+                }
+            }
+        }
+
+        // z=2 — immersive zone, clipped to the top portion of the screen.
+        // Always renders (solid surface when no backdrop loaded) so card rows are never
+        // visible in this area. Backdrop fades in via Crossfade once Content arrives.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .fillMaxSize(immersiveHeightFraction)
+                .clipToBounds()
+                .background(MaterialTheme.colorScheme.surface)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(backdropHeight - 246.dp))
-            }
-            item(contentType = "LastSeenRow") {
-                ShowsRow(
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .focusRequester(firstItem),
-                    showItemTitle = false,
-                    showList = lastSeenShows,
-                    title = stringResource(R.string.continue_watching),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
+            ImmersiveBackground(imageUrl = content?.fullShow?.backdropUrl)
 
-            item(contentType = "PopularMoviesRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = popularMovies,
-                    title = stringResource(R.string.popular_movies),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
+            // Fade the bottom edge of the backdrop into the surface color.
+            Box(
+                Modifier.fillMaxSize().background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.78f to Color.Transparent,
+                            1.0f to MaterialTheme.colorScheme.surface,
+                        )
+                    )
                 )
-            }
+            )
+            Box(Modifier.fillMaxSize().gradientOverlay(MaterialTheme.colorScheme.surface))
+        }
 
-            item(contentType = "NewMoviesRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = newMovies,
-                    title = stringResource(R.string.new_movies),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "PopularSeriesRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = popularSeries,
-                    title = stringResource(R.string.popular_series),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "NewSeriesRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = newSeries,
-                    title = stringResource(R.string.new_series),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "NewConcertsRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = newConcerts,
-                    title = stringResource(R.string.new_concerts),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "New3dRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = new3d,
-                    title = stringResource(R.string.new_3d),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "NewDocumentaryFilmsRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = newDocumentaryFilms,
-                    title = stringResource(R.string.new_documentary_films),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "NewDocumentarySeriesRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = newDocumentarySeries,
-                    title = stringResource(R.string.new_documentary_series),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
-
-            item(contentType = "NewTvShowsRow") {
-                ShowsRow(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    showItemTitle = false,
-                    showList = newTvShows,
-                    title = stringResource(R.string.new_tv_shows),
-                    onShowSelected = { show ->
-                        lazyColumn.saveFocusedChild()
-                        navigateToShowDetails(show.id)
-                    },
-                    onShowFocused = { onImmersiveShowFocused(it) }
-                )
-            }
+        // z=3 — title / metadata, only shown once full Content is available.
+        if (content != null) {
+            ImmersiveDetails(
+                modifier = Modifier
+                    .padding(start = childPadding.start, top = childPadding.top + 24.dp)
+                    .fillMaxWidth(),
+                logoUrl = content.fullShow.logoUrl,
+                title = content.fullShow.title,
+                description = content.fullShow.description ?: content.fullShow.shortDescription,
+                rating = Rating(
+                    kp = content.fullShow.ratingKp ?: 0.0,
+                    imdb = content.fullShow.ratingImdb ?: 0.0,
+                    filmCritics = 0.0,
+                    russianFilmCritics = 0.0,
+                    await = 0.0,
+                ),
+                votes = Votes(
+                    kp = content.fullShow.votesKp ?: 0,
+                    imdb = content.fullShow.votesImdb ?: 0,
+                    filmCritics = 0,
+                    russianFilmCritics = 0,
+                    await = 0,
+                ),
+                genres = content.fullShow.genres.map { KinopoiskGenre(name = it) },
+                countries = content.fullShow.countries.map { KinopoiskCountry(name = it) },
+                year = content.fullShow.year,
+                seriesLength = content.fullShow.seriesLength,
+                movieLength = content.fullShow.movieLength,
+                ageRating = content.fullShow.ageRating?.toString() ?: "",
+            )
         }
     }
 }

@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -63,10 +64,7 @@ sealed class HomeScreenUiState {
 @Immutable
 sealed interface ImmersiveContentUiState {
     data object Loading : ImmersiveContentUiState
-    data class Content(
-        val fullShow: FullShow,
-    ) : ImmersiveContentUiState
-
+    data class Content(val fullShow: FullShow) : ImmersiveContentUiState
     data object Error : ImmersiveContentUiState
 }
 
@@ -178,36 +176,29 @@ class HomeScreenViewModel @Inject constructor(
         _immersiveContentState.asStateFlow()
 
     private val kinopoiskCache = mutableMapOf<Int, ImmersiveContentUiState.Content>()
-    private val cancelledRequests = mutableSetOf<Int>()
     private var fetchJob: Job? = null
 
     fun onImmersiveShowFocused(show: Show) {
         fetchJob?.cancel()
-
-        val wasCancelled = show.id in cancelledRequests
-        if (wasCancelled) {
-            cancelledRequests.remove(show.id)
-            kinopoiskCache.remove(show.id)
-        }
 
         if (kinopoiskCache.containsKey(show.id)) {
             _immersiveContentState.value = kinopoiskCache[show.id]!!
             return
         }
 
+        // Do NOT change state immediately: the previous content keeps showing during navigation.
+        // Only update after the debounce so fast D-pad movement produces no visual changes.
         fetchJob = viewModelScope.launch {
-            _immersiveContentState.value = ImmersiveContentUiState.Loading
+            delay(400L)
             try {
                 val fullShow = withContext(Dispatchers.IO) {
                     movieRepository.getFullMovieByFilmixId(show.id)
                 }
-
                 val content = ImmersiveContentUiState.Content(fullShow = fullShow)
                 kinopoiskCache[show.id] = content
                 _immersiveContentState.value = content
-
             } catch (e: CancellationException) {
-                cancelledRequests.add(show.id)
+                throw e
             } catch (e: Exception) {
                 _immersiveContentState.value = ImmersiveContentUiState.Error
             }

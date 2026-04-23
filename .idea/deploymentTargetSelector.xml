@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="app.tv">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-10-12T12:05:26.586196Z">
+        <DropdownSelection timestamp="2026-04-23T08:22:07.868470Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=/Users/posaydone/.android/avd/Television_1080p.avd" />
@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="app.mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-04-22T14:20:42.190425Z">
+        <DropdownSelection timestamp="2026-04-23T08:19:29.589372Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=/Users/posaydone/.android/avd/Medium_Phone.avd" />

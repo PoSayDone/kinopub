@@ -119,7 +119,7 @@ private fun MetadataRow(
             if (durationText.isNotEmpty()) add(durationText)
             countries?.mapNotNull { it.name }?.take(2)?.joinToString(", ")
                 ?.let { if (it.isNotEmpty()) add(it) }
-            ageRating?.let { add("$it+") }
+            if (ageRating.isNotEmpty()) add("$ageRating+")
         }
     }
 

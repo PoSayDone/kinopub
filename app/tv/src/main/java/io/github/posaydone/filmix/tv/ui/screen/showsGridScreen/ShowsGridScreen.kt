@@ -1,6 +1,5 @@
 package io.github.posaydone.filmix.tv.ui.screen.showsGridScreen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,8 +41,6 @@ fun ShowsGridScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentQueryType by viewModel.currentQueryType.collectAsStateWithLifecycle()
-
-    Log.d("ScreenDebug", "ShowsGridScreen recomposing. State is: ${uiState::class.simpleName}")
 
     when (val state = uiState) {
         is ShowsGridUiState.Loading -> {

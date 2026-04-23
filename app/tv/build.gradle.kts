@@ -16,17 +16,16 @@ android {
         applicationId = "io.github.posaydone.filmix.tv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
+        versionCode = (System.currentTimeMillis() / 1000).toInt()
         versionName = "1.0"
         vectorDrawables {
             useSupportLibrary = true
         }
-
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
