@@ -17,14 +17,14 @@ import androidx.compose.ui.res.stringResource
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.core.model.Episode
-import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.mobile.ui.utils.isPipSupported
 
 @Composable
 fun PlayerTopControls(
     showType: ShowType?,
-    showDetails: FullShow,
+    showDetails: ShowDetails,
     selectedSeason: Season?,
     selectedEpisode: Episode?,
     onMoreClick: () -> Unit,

@@ -2,9 +2,12 @@ package io.github.posaydone.filmix.core.network.dataSource
 
 import android.os.Build
 import io.github.posaydone.filmix.core.model.Country
-import io.github.posaydone.filmix.core.model.FilmixCategory
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import io.github.posaydone.filmix.core.model.File
 import io.github.posaydone.filmix.core.model.Genre
+import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.LastEpisode
 import io.github.posaydone.filmix.core.model.MaxEpisode
 import io.github.posaydone.filmix.core.model.PageWithShows
@@ -49,83 +52,64 @@ class KinopubRemoteDataSource @Inject constructor(
     private var streamingTypesCache: List<KinoPubStreamingType>? = null
     private var serverLocationsCache: List<KinoPubServerLocation>? = null
 
-    suspend fun fetchPage(
-        limit: Int = 48,
-        page: Int? = null,
-        category: String = "s0",
-        genre: String? = null,
-    ): PageWithShows<Show> {
-        val response = kinoPubApiService.listItems(
-            type = categoryTypeFromString(category),
-            genre = genre,
-            page = page,
-            perPage = limit,
-            sort = "updated-",
-        )
-        return response.toPage(page, limit) { it.toShow() }
-    }
-
     suspend fun fetchCatalogPage(
         contentType: String?,
         sort: String,
         period: String?,
+        genreIds: Set<Int> = emptySet(),
+        countryIds: Set<Int> = emptySet(),
         limit: Int = 48,
         page: Int? = null,
     ): PageWithShows<Show> {
         val response = kinoPubApiService.listItems(
             type = contentType,
+            genre = genreIds.takeIf { it.isNotEmpty() }?.joinToString(","),
+            country = countryIds.takeIf { it.isNotEmpty() }?.joinToString(","),
             page = page,
             perPage = limit,
             sort = sort,
-            period = period?.takeIf { it.isNotEmpty() && it != "all" },
+            conditions = periodToCondition(period),
         )
         return response.toPage(page, limit) { it.toShow() }
     }
 
+    private fun periodToCondition(period: String?): String? {
+        val durationSeconds = when (period) {
+            KinoPubPeriod.WEEK         -> 7L   * 24 * 3600
+            KinoPubPeriod.MONTH        -> 30L  * 24 * 3600
+            KinoPubPeriod.THREE_MONTHS -> 90L  * 24 * 3600
+            KinoPubPeriod.SIX_MONTHS   -> 180L * 24 * 3600
+            KinoPubPeriod.YEAR         -> 365L * 24 * 3600
+            else -> return null
+        }
+        val cutoff = System.currentTimeMillis() / 1000 - durationSeconds
+        return "created>$cutoff"
+    }
+
+    suspend fun fetchGenres(genreType: String?): List<io.github.posaydone.filmix.core.model.kinopub.KinoPubGenre> =
+        kinoPubApiService.getGenres(genreType)
+
+    suspend fun fetchCountries(): List<io.github.posaydone.filmix.core.model.kinopub.KinoPubCountry> =
+        kinoPubApiService.getCountries()
+
     suspend fun fetchViewingPage(limit: Int = 48, page: Int = 1): PageWithShows<Show> {
-        val movieItems = kinoPubApiService.listWatchingMovies(subscribed = 1).items.map { it.toShow() }
+        val movieItems = kinoPubApiService.listWatchingMovies().items.map { it.toShow() }
         val serialItems = kinoPubApiService.listWatchingSerials(subscribed = 1).items.map { it.toShow() }
         val combined = (movieItems + serialItems).distinctBy(Show::id)
         return combined.toPage(page = page, limit = limit)
     }
 
     suspend fun fetchWatchingMovies(): List<Show> =
-        kinoPubApiService.listWatchingMovies(subscribed = 1).items.map { it.toShow() }
+        kinoPubApiService.listWatchingMovies().items.map { it.toShow() }
 
     suspend fun fetchWatchingSerials(): List<Show> =
         kinoPubApiService.listWatchingSerials(subscribed = 1).items.map { it.toShow() }
 
-    suspend fun fetchPopularPage(
-        limit: Int = 48,
-        page: Int? = null,
-        section: FilmixCategory = FilmixCategory.MOVIE,
-    ): PageWithShows<Show> {
-        val response = kinoPubApiService.getPopularItems(
-            type = categoryTypeForSection(section),
-            page = page,
-            perPage = limit,
-        )
-        return response.toPage(page, limit) { it.toShow() }
-    }
-
-    suspend fun fetchFreshPage(
-        limit: Int = 48,
-        page: Int? = null,
-        section: FilmixCategory = FilmixCategory.MOVIE,
-    ): PageWithShows<Show> {
-        val response = kinoPubApiService.getFreshItems(
-            type = categoryTypeForSection(section),
-            page = page,
-            perPage = limit,
-        )
-        return response.toPage(page, limit) { it.toShow() }
-    }
-
     suspend fun fetchHistoryPageFull(
         limit: Int = 10,
         page: Int? = null,
-    ): PageWithShows<ShowDetails> {
-        return fetchUniqueHistoryPage(limit = limit, page = page) { it.toHistoryShowDetails() }
+    ): PageWithShows<HistoryShow> {
+        return fetchUniqueHistoryPage(limit = limit, page = page) { it.toHistoryShow() }
     }
 
     suspend fun fetchHistoryPage(limit: Int = 10, page: Int = 1): PageWithShows<Show> {
@@ -348,28 +332,6 @@ class KinopubRemoteDataSource @Inject constructor(
             page = requestedPage,
             status = "200",
         )
-    }
-
-    private fun categoryTypeFromString(category: String): String? = when (category) {
-        FilmixCategory.MOVIE.toString() -> "movie"
-        FilmixCategory.SERIES.toString() -> "serial"
-        FilmixCategory.CONCERT.toString() -> "concert"
-        FilmixCategory.FILM_3D.toString() -> "3d"
-        FilmixCategory.DOCUMENTARY_MOVIE.toString() -> "documovie"
-        FilmixCategory.DOCUMENTARY_SERIES.toString() -> "docuserial"
-        FilmixCategory.TV_SHOW.toString() -> "tvshow"
-        else -> null
-    }
-
-    private fun categoryTypeForSection(section: FilmixCategory): String? = when (section) {
-        FilmixCategory.MOVIE -> "movie"
-        FilmixCategory.SERIES -> "serial"
-        FilmixCategory.CARTOON, FilmixCategory.CARTOON_SERIES -> null
-        FilmixCategory.CONCERT -> "concert"
-        FilmixCategory.FILM_3D -> "3d"
-        FilmixCategory.DOCUMENTARY_MOVIE -> "documovie"
-        FilmixCategory.DOCUMENTARY_SERIES -> "docuserial"
-        FilmixCategory.TV_SHOW -> "tvshow"
     }
 
     private suspend fun getStreamingTypes(): List<KinoPubStreamingType> {
@@ -625,9 +587,9 @@ class KinopubRemoteDataSource @Inject constructor(
             title = title,
             originalTitle = title,
             year = year ?: 0,
-            updated = updated_at?.toString(),
-            actors = null,
-            directors = null,
+            poster = bestPosterUrl(),
+            backdropUrl = posters?.wide,
+            isSeries = isSeries,
             lastEpisode = if (isSeries && maxSeasonNumber != null && maxEpisodeNumber != null) {
                 LastEpisode(
                     season = maxSeasonNumber,
@@ -644,23 +606,18 @@ class KinopubRemoteDataSource @Inject constructor(
             } else {
                 null
             },
-            countries = ArrayList(countries.map { Country(it.id, it.title) }),
-            genres = ArrayList(genres.map { Genre(it.title.slug(), it.id, it.title) }),
-            poster = bestPosterUrl(),
-            rip = null,
+            countries = countries.map { Country(it.id, it.title) },
+            genres = genres.map { Genre(it.id, it.title.slug(), it.title) },
             quality = qualityLabel(),
             votesPos = positiveVotes(),
             votesNeg = negativeVotes(),
             ratingImdb = imdb_rating ?: 0.0,
-            ratingKinopoisk = kinopoisk_rating ?: 0.0,
-            url = "",
+            ratingKp = kinopoisk_rating ?: 0.0,
             duration = durationMinutes(),
-            votesIMDB = imdb_votes,
-            votesKinopoisk = kinopoisk_votes,
+            votesImdb = imdb_votes,
+            votesKp = kinopoisk_votes,
             idKinopoisk = kinopoisk,
-            mpaa = null,
-            slogan = null,
-            shortStory = plot.orEmpty(),
+            description = plot.orEmpty(),
             status = toShowStatus(),
             isFavorite = bookmarks?.any { it.id == existingFavoritesFolderId } == true,
             isDeferred = in_watchlist,
@@ -668,11 +625,21 @@ class KinopubRemoteDataSource @Inject constructor(
         )
     }
 
-    private fun KinoPubHistoryEntry.toHistoryShowDetails(): ShowDetails? {
+    private fun KinoPubHistoryEntry.toHistoryShow(): HistoryShow? {
         val historyItem = item ?: return null
-        val details = historyItem.toShowDetails(existingFavoritesFolderId = null)
-        return details.copy(
-            duration = media?.duration ?: details.duration,
+        val isSeries = historyItem.isSeries()
+        return HistoryShow(
+            id = historyItem.id,
+            title = historyItem.title,
+            poster = historyItem.bestPosterUrl(),
+            isSeries = isSeries,
+            description = historyItem.plot.orEmpty(),
+            thumbnail = media?.thumbnail,
+            watchedSeconds = media?.time ?: time,
+            durationSeconds = media?.duration ?: historyItem.durationMinutes()?.let { it * 60 },
+            seasonNumber = media?.snumber?.takeIf { isSeries && it > 0 },
+            episodeNumber = media?.number?.takeIf { isSeries },
+            episodeTitle = media?.title?.takeIf { it.isNotBlank() && isSeries },
         )
     }
 

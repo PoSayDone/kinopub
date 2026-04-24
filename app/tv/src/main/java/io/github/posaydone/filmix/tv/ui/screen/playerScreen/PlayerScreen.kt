@@ -33,7 +33,7 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewMo
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
 import io.github.posaydone.filmix.core.model.Episode
-import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.PlayerDialogs
@@ -79,7 +79,7 @@ fun VideoPlayerScreenContent(
     player: MediaController,
     viewModel: PlayerScreenViewModel,
     playerState: PlayerState,
-    showDetails: FullShow,
+    showDetails: ShowDetails,
     selectedSeason: Season?,
     selectedEpisode: Episode?,
 ) {

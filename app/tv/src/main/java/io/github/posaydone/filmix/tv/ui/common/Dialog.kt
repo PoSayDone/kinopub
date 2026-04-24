@@ -1,7 +1,6 @@
 package io.github.posaydone.filmix.tv.ui.common
 
-import android.util.EventLogTags.Description
-import androidx.compose.animation.AnimatedVisibility
+import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Transition
@@ -9,8 +8,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -28,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,8 +44,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.res.stringResource
-import io.github.posaydone.filmix.core.common.R
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -58,6 +52,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -66,6 +61,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -77,12 +73,10 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
+import androidx.tv.material3.ListItem
+import androidx.tv.material3.ListItemDefaults
 import kotlin.math.max
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.tv.material3.Button
-import androidx.tv.material3.ButtonDefaults
-import androidx.tv.material3.Icon
+import io.github.posaydone.filmix.tv.ui.theme.KinopubTheme
 
 /**
  * Dialogs provide important prompts in a user flow. They can require an action, communicate
@@ -220,28 +214,70 @@ fun SideDialog(
     onBack: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
+    val backAction = onBack ?: onDismissRequest
+
     Dialog(
         showDialog = showDialog,
         onDismissRequest = onDismissRequest,
-        alignment = DialogAlignment.End
+        alignment = DialogAlignment.End,
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        SideDialogPanel(
+            modifier = modifier
+                .padding(24.dp)
+                .dialogFocusable()
+                .onPreviewKeyEvent { keyEvent ->
+                    if (
+                        keyEvent.nativeKeyEvent.action == AndroidKeyEvent.ACTION_UP &&
+                        (
+                            keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BACK ||
+                                keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_ESCAPE
+                            )
+                    ) {
+                        backAction()
+                        true
+                    } else {
+                        false
+                    }
+                }
+                .focusable(false),
+            width = width,
+            title = title,
+            description = description,
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun SideDialogPanel(
+    modifier: Modifier = Modifier,
+    width: Dp = 320.dp,
+    title: String,
+    description: String?,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .width(width)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = modifier
-                .dialogFocusable()
-                .focusable(false)
-                .background(MaterialTheme.colorScheme.surface)
-                .fillMaxHeight()
-                .width(width)
-                .clip(RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(20.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .padding(
-                        top = 24.dp,
-                        bottom = 12.dp,
-                        start = 16.dp,
-                        end = 16.dp
-                    )
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
                     .focusable(false),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -252,20 +288,6 @@ fun SideDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start)
                 ) {
-                    if (onBack != null) {
-                        Button(
-                            onClick = onBack,
-                            colors = ButtonDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = stringResource(R.string.back)
-                            )
-                        }
-                    }
-
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -273,13 +295,18 @@ fun SideDialog(
                     )
                 }
 
-                if (!description.isNullOrBlank()) Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                if (!description.isNullOrBlank()) {
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
-            content()
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                content()
+            }
         }
     }
 }
@@ -499,6 +526,8 @@ fun Dialog(
 
     val finalProperties = if (alignment != DialogAlignment.Center) {
         DialogProperties(
+            dismissOnBackPress = properties.dismissOnBackPress,
+            dismissOnClickOutside = properties.dismissOnClickOutside,
             decorFitsSystemWindows = properties.decorFitsSystemWindows,
             usePlatformDefaultWidth = false,
             securePolicy = properties.securePolicy
@@ -580,11 +609,14 @@ fun Dialog(
                 }
             }
 
-            LaunchedEffect(alphaAndScaleTransitionState.currentState) {
+            LaunchedEffect(alphaAndScaleTransitionState.currentState, alignment, contentWidth) {
                 when (alphaAndScaleTransitionState.currentState) {
                     AnimationStage.Intro -> {
-                        alphaAndScaleTransitionState.targetState = AnimationStage.Display
-                        translationTransitionState.targetState = AnimationStage.Display
+                        val canStartDisplay = alignment == DialogAlignment.Center || contentWidth > 0
+                        if (canStartDisplay) {
+                            alphaAndScaleTransitionState.targetState = AnimationStage.Display
+                            translationTransitionState.targetState = AnimationStage.Display
+                        }
                     }
 
                     AnimationStage.Outro -> {
@@ -709,6 +741,77 @@ private fun Modifier.dialogFocusable() = composed {
             .focusRequester(focusRequester)
             .focusProperties { exit = { FocusRequester.Cancel } }
             .focusGroup())
+}
+
+@Preview(name = "Side Dialog", widthDp = 1280, heightDp = 720)
+@Composable
+private fun SideDialogPreview() {
+    KinopubTheme {
+        SideDialogPreviewScene(
+            title = "Фильтры",
+            description = "Настройте каталог перед просмотром",
+            onBack = null
+        )
+    }
+}
+
+@Preview(name = "Side Dialog Back", widthDp = 1280, heightDp = 720)
+@Composable
+private fun SideDialogWithBackPreview() {
+    KinopubTheme {
+        SideDialogPreviewScene(
+            title = "Качество",
+            description = "Выберите вариант воспроизведения",
+            onBack = {}
+        )
+    }
+}
+
+@Composable
+private fun SideDialogPreviewScene(
+    title: String,
+    description: String?,
+    onBack: (() -> Unit)?,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.72f)),
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        SideDialogPanel(
+            modifier = Modifier.padding(24.dp),
+            title = title,
+            description = description
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ListItem(
+                    selected = false,
+                    onClick = {},
+                    headlineContent = { Text("1080p") },
+                    supportingContent = { Text("Основной поток") },
+                    scale = ListItemDefaults.scale(focusedScale = 1.02f)
+                )
+                ListItem(
+                    selected = true,
+                    onClick = {},
+                    headlineContent = { Text("720p") },
+                    supportingContent = { Text("Стабильное соединение") },
+                    scale = ListItemDefaults.scale(focusedScale = 1.02f)
+                )
+                ListItem(
+                    selected = false,
+                    onClick = {},
+                    headlineContent = { Text("480p") },
+                    supportingContent = { Text("Экономия трафика") },
+                    scale = ListItemDefaults.scale(focusedScale = 1.02f)
+                )
+            }
+        }
+    }
 }
 
 @ExperimentalTvMaterial3Api

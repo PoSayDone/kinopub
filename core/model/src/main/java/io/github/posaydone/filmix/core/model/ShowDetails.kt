@@ -1,44 +1,38 @@
 package io.github.posaydone.filmix.core.model
 
-import com.google.gson.annotations.SerializedName
-
 data class ShowDetails(
-    @SerializedName("id") var id: Int,
-    @SerializedName("category") var category: String? = null,
-    @SerializedName("title") var title: String,
-    @SerializedName("original_title") var originalTitle: String,
-    @SerializedName("year") var year: Int,
-    @SerializedName("updated") var updated: String? = null,
-    @SerializedName("actors") var actors: ArrayList<KinopoiskPerson>? = null,
-    @SerializedName("directors") var directors: ArrayList<KinopoiskPerson?>? = arrayListOf(),
-    @SerializedName("last_episode") var lastEpisode: LastEpisode? = LastEpisode(),
-    @SerializedName("max_episode") var maxEpisode: MaxEpisode? = MaxEpisode(),
-    @SerializedName("countries") var countries: ArrayList<Country> = arrayListOf(),
-    @SerializedName("genres") var genres: ArrayList<Genre> = arrayListOf(),
-    @SerializedName("poster") var poster: String,
-    @SerializedName("rip") var rip: String? = null,
-    @SerializedName("quality") var quality: String? = null,
-    @SerializedName("votesPos") var votesPos: Int,
-    @SerializedName("votesNeg") var votesNeg: Int,
-    @SerializedName("ratingImdb") var ratingImdb: Double,
-    @SerializedName("ratingKinopoisk") var ratingKinopoisk: Double,
-    @SerializedName("url") var url: String = "",
-    @SerializedName("duration") var duration: Int? = null,
-    @SerializedName("votesIMDB") var votesIMDB: Int? = null,
-    @SerializedName("votesKinopoisk") var votesKinopoisk: Int? = null,
-    @SerializedName("idKinopoisk") var idKinopoisk: Int? = null,
-    @SerializedName("mpaa") var mpaa: String? = null,
-    @SerializedName("slogan") var slogan: String? = null,
-    @SerializedName("short_story") var shortStory: String,
-    @SerializedName("status") var status: ShowStatus? = ShowStatus(),
-    @SerializedName("is_favorite") var isFavorite: Boolean? = null,
-    @SerializedName("is_deferred") var isDeferred: Boolean? = null,
-    @SerializedName("is_hdr") var isHdr: Boolean? = null,
+    val id: Int,
+    val title: String,
+    val originalTitle: String,
+    val year: Int,
+    val poster: String,
+    val backdropUrl: String?,
+    val description: String,
+    val isSeries: Boolean,
+    val quality: String?,
+    val status: ShowStatus?,
+    val isFavorite: Boolean?,
+    val isDeferred: Boolean?,
+    val isHdr: Boolean?,
+    val ratingKp: Double,
+    val ratingImdb: Double,
+    val votesKp: Int?,
+    val votesImdb: Int?,
+    val votesPos: Int,
+    val votesNeg: Int,
+    val duration: Int?,
+    val ageRating: Int = 0,
+    val genres: List<Genre>,
+    val countries: List<Country>,
+    val lastEpisode: LastEpisode?,
+    val maxEpisode: MaxEpisode?,
+    val idKinopoisk: Int?,
+    val category: String?,
 )
 
 data class Genre(
-    val alt_name: String,
     val id: Int,
+    val slug: String,
     val name: String,
 )
 
@@ -47,20 +41,14 @@ data class Country(
     val name: String,
 )
 
-data class Person(
-    var id: String,
-    var name: String,
-    var poster: String,
-)
-
 data class MaxEpisode(
     val season: Int? = null,
     val episode: Int? = null,
 )
 
 data class LastEpisode(
-    var season: Int? = null,
-    var episode: String? = null,
-    var translation: String? = null,
-    var date: String? = null,
+    val season: Int? = null,
+    val episode: String? = null,
+    val translation: String? = null,
+    val date: String? = null,
 )

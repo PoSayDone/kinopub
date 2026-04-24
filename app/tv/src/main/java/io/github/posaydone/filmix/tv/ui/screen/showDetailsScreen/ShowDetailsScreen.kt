@@ -44,7 +44,6 @@ import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
-import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
 import io.github.posaydone.filmix.core.model.Rating
@@ -88,24 +87,22 @@ fun ShowDetailsScreen(
         }
 
         is ShowDetailsScreenUiState.Done -> {
-            val playProgress = if (s.fullShow.isSeries) {
+            val playProgress = if (s.showDetails.isSeries) {
                 s.showProgress.latestSeriesProgress()
             } else {
                 s.showProgress.latestProgressItem()
             }
             val playButtonText = when {
-                s.fullShow.isSeries && playProgress != null -> stringResource(
+                s.showDetails.isSeries && playProgress != null -> stringResource(
                     R.string.continueWatchingSeries,
                     playProgress.season,
                     playProgress.episode,
                 )
-
-                !s.fullShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
+                !s.showDetails.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
                 else -> stringResource(R.string.playString)
             }
             Details(
                 showDetails = s.showDetails,
-                fullShow = s.fullShow,
                 showProgress = s.showProgress,
                 showImages = s.showImages,
                 showTrailers = s.showTrailers,
@@ -118,7 +115,7 @@ fun ShowDetailsScreen(
                     )
                 },
                 playButtonText = playButtonText,
-                goToEpisodes = if (s.fullShow.isSeries) {
+                goToEpisodes = if (s.showDetails.isSeries) {
                     { navigateToEpisodes(showId) }
                 } else null,
                 modifier = Modifier
@@ -133,7 +130,6 @@ fun ShowDetailsScreen(
 @Composable
 private fun Details(
     showDetails: ShowDetails,
-    fullShow: FullShow,
     showProgress: ShowProgress?,
     showImages: ShowImages,
     showTrailers: ShowTrailers?,
@@ -154,8 +150,7 @@ private fun Details(
                 .fillMaxHeight()
         ) {
             ImmersiveBackground(
-                imageUrl = fullShow.backdropUrl ?: showImages.frames.firstOrNull()?.url
-                ?: showDetails.poster
+                imageUrl = showDetails.backdropUrl ?: showImages.frames.firstOrNull()?.url ?: showDetails.poster
             )
             Box(
                 Modifier
@@ -173,33 +168,29 @@ private fun Details(
                     ), verticalArrangement = Arrangement.SpaceBetween
             ) {
                 ImmersiveDetails(
-                    logoUrl = fullShow.logoUrl,
-                    title = fullShow.title,
-                    description = fullShow.description ?: fullShow.shortDescription ?: showDetails.shortStory,
+                    logoUrl = null,
+                    title = showDetails.title,
+                    description = showDetails.description,
                     rating = Rating(
-                        kp = fullShow.ratingKp,
-                        imdb = fullShow.ratingImdb,
+                        kp = showDetails.ratingKp,
+                        imdb = showDetails.ratingImdb,
                         filmCritics = .0,
                         russianFilmCritics = .0,
                         await = .0
                     ),
                     votes = Votes(
-                        kp = fullShow.votesKp,
-                        imdb = fullShow.votesImdb,
+                        kp = showDetails.votesKp,
+                        imdb = showDetails.votesImdb,
                         filmCritics = 0,
                         russianFilmCritics = 0,
                         await = 0
                     ),
-                    genres = fullShow.genres.map { g ->
-                        KinopoiskGenre(
-                            g
-                        )
-                    },
-                    countries = fullShow.countries.map { c -> KinopoiskCountry(c) },
-                    year = fullShow.year,
-                    movieLength = fullShow.movieLength ?: showDetails.duration,
-                    seriesLength = fullShow.seriesLength,
-                    ageRating = fullShow.ageRating.toString()
+                    genres = showDetails.genres.map { KinopoiskGenre(it.name) },
+                    countries = showDetails.countries.map { KinopoiskCountry(it.name) },
+                    year = showDetails.year,
+                    movieLength = if (!showDetails.isSeries) showDetails.duration else null,
+                    seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
+                    ageRating = showDetails.ageRating.toString()
                 )
                 ShowDetailsButtons(
                     modifier = Modifier.onFocusChanged {

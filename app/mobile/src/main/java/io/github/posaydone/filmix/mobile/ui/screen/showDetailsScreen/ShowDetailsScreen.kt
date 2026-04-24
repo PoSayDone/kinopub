@@ -76,7 +76,6 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenU
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
 import io.github.posaydone.filmix.core.common.utils.formatDuration
 import io.github.posaydone.filmix.core.common.utils.formatVoteCount
-import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
@@ -87,7 +86,6 @@ import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.LargeButton
 import io.github.posaydone.filmix.mobile.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.mobile.ui.common.Loading
-import kotlin.math.max
 
 val TAG = "ShowDetailsScreen"
 
@@ -119,24 +117,22 @@ fun ShowDetailsScreen(
 
 
             is ShowDetailsScreenUiState.Done -> {
-                val playProgress = if (s.fullShow.isSeries) {
+                val playProgress = if (s.showDetails.isSeries) {
                     s.showProgress.latestSeriesProgress()
                 } else {
                     s.showProgress.latestProgressItem()
                 }
                 val playButtonText = when {
-                    s.fullShow.isSeries && playProgress != null -> stringResource(
+                    s.showDetails.isSeries && playProgress != null -> stringResource(
                         R.string.continueWatchingSeries,
                         playProgress.season,
                         playProgress.episode,
                     )
-
-                    !s.fullShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
+                    !s.showDetails.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
                     else -> stringResource(R.string.playString)
                 }
                 Details(
                     showDetails = s.showDetails,
-                    fullShow = s.fullShow,
                     showProgress = s.showProgress,
                     showImages = s.showImages,
                     showTrailers = s.showTrailers,
@@ -149,7 +145,7 @@ fun ShowDetailsScreen(
                         )
                     },
                     playButtonText = playButtonText,
-                    navigateToEpisodes = if (s.fullShow.isSeries) {
+                    navigateToEpisodes = if (s.showDetails.isSeries) {
                         { navigateToEpisodes(showId) }
                     } else null,
                     navigateBack = navigateBack,
@@ -166,7 +162,6 @@ fun ShowDetailsScreen(
 @Composable
 private fun Details(
     showDetails: ShowDetails,
-    fullShow: FullShow,
     showProgress: ShowProgress,
     showImages: ShowImages,
     showTrailers: ShowTrailers,
@@ -189,8 +184,8 @@ private fun Details(
 
     Box(modifier = modifier) {
         ShowPoster(
-            backdropUrl = fullShow.backdropUrl,
-            posterUrl = fullShow.posterUrl,
+            backdropUrl = showDetails.backdropUrl,
+            posterUrl = showDetails.poster,
             height = headerHeight,
             modifier = Modifier.graphicsLayer {
                 val scrollOffset = lazyListState.firstVisibleItemScrollOffset.toFloat()
@@ -212,18 +207,20 @@ private fun Details(
 
             item {
                 ShowBannerContent(
-                    title = fullShow.title,
-                    logoUrl = fullShow.logoUrl,
-                    ratingKp = fullShow.ratingKp,
-                    votesKp = fullShow.votesKp,
-                    originalTitle = fullShow.originalTitle,
-                    year = fullShow.year,
-                    genres = fullShow.genres,
-                    countries = fullShow.countries,
-                    totalMinutes = max(
-                        fullShow.movieLength ?: 0, fullShow.seriesLength ?: 0
-                    ).takeIf { it > 0 } ?: showDetails.duration ?: 0,
-                    ageRating = fullShow.ageRating.takeIf { it > 0 },
+                    title = showDetails.title,
+                    logoUrl = null,
+                    ratingKp = showDetails.ratingKp,
+                    votesKp = showDetails.votesKp,
+                    originalTitle = showDetails.originalTitle,
+                    year = showDetails.year,
+                    genres = showDetails.genres.map { it.name },
+                    countries = showDetails.countries.map { it.name },
+                    totalMinutes = if (showDetails.isSeries) {
+                        showDetails.maxEpisode?.episode?.takeIf { it > 0 }
+                    } else {
+                        showDetails.duration?.takeIf { it > 0 }
+                    },
+                    ageRating = showDetails.ageRating.takeIf { it > 0 },
                     isFavorite = showDetails.isFavorite,
                     onPlayClick = navigateToMoviePlayer,
                     playButtonText = playButtonText,
@@ -241,17 +238,14 @@ private fun Details(
                     Column(
                         modifier = Modifier.padding(24.dp),
                     ) {
-                        DescriptionSection(
-                            description = fullShow.description ?: fullShow.shortDescription
-                            ?: showDetails.shortStory
-                        )
+                        DescriptionSection(description = showDetails.description)
                     }
                 }
             }
         }
 
         DynamicTopAppBar(
-            title = fullShow.title, isScrolled = isScrolled, navigateBack = navigateBack
+            title = showDetails.title, isScrolled = isScrolled, navigateBack = navigateBack
         )
     }
 }

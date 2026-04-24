@@ -12,16 +12,6 @@ data class KinoPubPagination(
     val total_count: Int? = null,
 )
 
-data class KinoPubContentType(
-    val id: String,
-    val title: String,
-)
-
-data class KinoPubTypesResponse(
-    val status: Int,
-    val items: List<KinoPubContentType>,
-)
-
 data class KinoPubGenre(
     val id: Int,
     val title: String,

@@ -5,24 +5,6 @@ sealed class ShowResourceResponse {
     data class MovieResourceResponse(val movies: List<VideoWithQualities>) : ShowResourceResponse()
 }
 
-class FilmixSeries : LinkedHashMap<String, FilmixTranslation>()
-
-class FilmixTranslation : LinkedHashMap<String, FilmixSeason>()
-
-data class FilmixSeason(
-    val season: Int,
-    val episodes: Map<String, FilmixEpisode>,
-)
-
-data class FilmixEpisode(
-    val episode: Int,
-    val ad_skip: Int,
-    val title: String,
-    val released: String,
-    val files: List<File>,
-)
-
-
 data class Series(
     val seasons: List<Season>,
 )
@@ -75,11 +57,4 @@ data class File(
     val proPlus: Boolean,
 ) {
     override fun toString(): String = quality.toString()
-}
-
-enum class FilmixCategory(val value: Int) {
-    MOVIE(0), SERIES(7), CARTOON(14), CARTOON_SERIES(93),
-    CONCERT(3), FILM_3D(6), DOCUMENTARY_MOVIE(11), DOCUMENTARY_SERIES(12), TV_SHOW(13);
-
-    override fun toString(): String = value.toString()
 }

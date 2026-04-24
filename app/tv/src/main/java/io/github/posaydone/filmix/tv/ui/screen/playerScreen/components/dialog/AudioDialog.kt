@@ -1,17 +1,17 @@
 package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.dialog
 
 import androidx.annotation.OptIn
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.dp
-import androidx.media3.common.util.UnstableApi
 import androidx.compose.ui.res.stringResource
+import androidx.media3.common.util.UnstableApi
 import io.github.posaydone.filmix.core.common.R
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
@@ -32,6 +32,14 @@ fun <T> AudioDialog(
     showType: ShowType?,
     onDismiss: () -> Unit,
 ) {
+    val initialFocusRequester = remember { FocusRequester() }
+    val initialFocusIndex = translations.indexOf(selectedTranslation).takeIf { it >= 0 } ?: 0
+
+    LaunchedEffect(Unit) {
+        if (translations.isNotEmpty()) {
+            initialFocusRequester.requestFocus()
+        }
+    }
 
     SideDialog(
         showDialog = isAudioDialogOpen,
@@ -39,11 +47,14 @@ fun <T> AudioDialog(
         title = stringResource(R.string.select_audio_track),
         description = null
     ) {
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
-        ) {
-            items(translations) { item ->
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            itemsIndexed(translations) { index, item ->
                 SingleSelectionCard(
+                    modifier = if (index == initialFocusIndex) {
+                        Modifier.focusRequester(initialFocusRequester)
+                    } else {
+                        Modifier
+                    },
                     selectionOption = item,
                     selectedOption = selectedTranslation,
                     onOptionClicked = {

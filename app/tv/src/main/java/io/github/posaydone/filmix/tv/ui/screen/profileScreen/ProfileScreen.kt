@@ -151,7 +151,6 @@ fun ProfileScreenContent(
 
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
 
-    // Stream Type Dialog
     SettingDialog(
         title = stringResource(R.string.stream_type),
         description = stringResource(R.string.stream_type),
@@ -164,7 +163,6 @@ fun ProfileScreenContent(
         opened = showStreamTypeDialog,
         onDismiss = { showStreamTypeDialog = false })
 
-    // Server Location Dialog
     SettingDialog(
         title = stringResource(R.string.server_location),
         description = stringResource(R.string.server_location_description),
@@ -407,7 +405,8 @@ fun SettingDialog(
         showDialog = opened, onDismissRequest = onDismiss, title = title, description = description
     ) {
         LazyColumn(
-            contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(0.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(values.toList()) { (key, label) ->
                 Card(
@@ -418,7 +417,7 @@ fun SettingDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

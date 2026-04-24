@@ -16,16 +16,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.sharedViewModel.FavoritesScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.FavoritesScreenViewModel
+import io.github.posaydone.filmix.core.model.HistoryShow
+import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowsRow
-import org.w3c.dom.Text
 import androidx.compose.ui.res.stringResource
 import io.github.posaydone.filmix.core.common.R
 
@@ -73,9 +75,11 @@ fun FavoritesScreenContent(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToShowsGrid: (queryType: String) -> Unit,
-    watchingList: List<io.github.posaydone.filmix.core.model.Show>,
-    historyList: List<io.github.posaydone.filmix.core.model.Show>,
+    watchingList: List<Show>,
+    historyList: List<HistoryShow>,
 ) {
+    val historyShows = remember(historyList) { historyList.map { it.toShow() } }
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -96,7 +100,7 @@ fun FavoritesScreenContent(
         ShowsRow(
             title = stringResource(R.string.history),
             modifier = Modifier.padding(top = 16.dp),
-            showList = historyList,
+            showList = historyShows,
             onShowClick = { show ->
                 navigateToShowDetails(show.id)
             },
@@ -105,3 +109,19 @@ fun FavoritesScreenContent(
             })
     }
 }
+
+private fun HistoryShow.toShow(): Show = Show(
+    id = id,
+    last_episode = null,
+    last_season = null,
+    original_name = title,
+    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
+    quality = "",
+    status = null,
+    title = title,
+    votesNeg = 0,
+    votesPos = 0,
+    year = 0,
+    url = "",
+    description = description,
+)

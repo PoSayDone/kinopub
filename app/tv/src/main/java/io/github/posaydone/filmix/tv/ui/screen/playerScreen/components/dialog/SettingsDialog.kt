@@ -2,11 +2,9 @@ package io.github.posaydone.filmix.tv.ui.screen.playerScreen.components.dialog
 
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -16,6 +14,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,10 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
@@ -52,6 +48,7 @@ fun SettingsDialog(
     onCropSelected: (String) -> Unit,
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.MAIN) }
+    var mainPageFocusTarget by remember { mutableStateOf(SettingsMainPageFocusTarget.QUALITY) }
     var selectedTempQuality by remember { mutableStateOf(selectedQuality) }
     var selectedTempCrop by remember { mutableStateOf(selectedCrop) }
 
@@ -61,6 +58,7 @@ fun SettingsDialog(
         onDismissRequest = {
             onDismiss()
             currentPage = SettingsPage.MAIN
+            mainPageFocusTarget = SettingsMainPageFocusTarget.QUALITY
         },
         onBack = if (currentPage != SettingsPage.MAIN) {
             { currentPage = SettingsPage.MAIN }
@@ -72,16 +70,19 @@ fun SettingsDialog(
         },
         description = null
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             when (currentPage) {
                 SettingsPage.MAIN -> {
                     MainSettingsPage(
-                        onQualityClick = { currentPage = SettingsPage.QUALITY },
-                        onCropClick = { currentPage = SettingsPage.CROP },
+                        initialFocusTarget = mainPageFocusTarget,
+                        onQualityClick = {
+                            mainPageFocusTarget = SettingsMainPageFocusTarget.QUALITY
+                            currentPage = SettingsPage.QUALITY
+                        },
+                        onCropClick = {
+                            mainPageFocusTarget = SettingsMainPageFocusTarget.CROP
+                            currentPage = SettingsPage.CROP
+                        },
                         selectedCrop = selectedTempCrop,
                         selectedQuality = selectedTempQuality
                     )
@@ -114,28 +115,28 @@ fun SettingsDialog(
 
 @Composable
 private fun MainSettingsPage(
+    initialFocusTarget: SettingsMainPageFocusTarget,
     onQualityClick: () -> Unit,
     onCropClick: () -> Unit,
     selectedQuality: File?,
     selectedCrop: String?,
     modifier: Modifier = Modifier,
 ) {
-    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+    val qualityItemFocusRequester = remember { FocusRequester() }
+    val cropItemFocusRequester = remember { FocusRequester() }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(lazyColumn)
-            .focusRestorer(firstItem),
-        contentPadding = PaddingValues(vertical = 16.dp),
-    ) {
+    LaunchedEffect(Unit) {
+        when (initialFocusTarget) {
+            SettingsMainPageFocusTarget.QUALITY -> qualityItemFocusRequester.requestFocus()
+            SettingsMainPageFocusTarget.CROP -> cropItemFocusRequester.requestFocus()
+        }
+    }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
         item {
             ListItem(
-                modifier = Modifier.focusRequester(firstItem),
-                onClick = {
-                    onQualityClick()
-                    lazyColumn.saveFocusedChild()
-                },
+                modifier = Modifier.focusRequester(qualityItemFocusRequester),
+                onClick = onQualityClick,
                 selected = false,
                 headlineContent = { Text(stringResource(R.string.quality)) },
                 leadingContent = {
@@ -158,6 +159,7 @@ private fun MainSettingsPage(
 
         item {
             ListItem(
+                modifier = Modifier.focusRequester(cropItemFocusRequester),
                 onClick = { onCropClick() },
                 selected = false,
                 headlineContent = { Text(stringResource(R.string.crop)) },
@@ -188,20 +190,21 @@ private fun QualitySettingsPage(
     onQualitySelected: (File) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+    val initialFocusRequester = remember { FocusRequester() }
+    val initialFocusIndex = qualities.indexOf(selectedQuality).takeIf { it >= 0 } ?: 0
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(lazyColumn)
-            .focusRestorer(firstItem),
-        contentPadding = PaddingValues(vertical = 16.dp),
-    ) {
+    LaunchedEffect(Unit) {
+        if (qualities.isNotEmpty()) {
+            initialFocusRequester.requestFocus()
+        }
+    }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
         itemsIndexed(qualities) { index, quality ->
             ListItem(
                 modifier = Modifier.let {
-                    if (index == 0) {
-                        it.focusRequester(firstItem)
+                    if (index == initialFocusIndex) {
+                        it.focusRequester(initialFocusRequester)
                     } else {
                         it
                     }
@@ -227,20 +230,21 @@ private fun CropSettingsPage(
     onCropSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+    val initialFocusRequester = remember { FocusRequester() }
+    val initialFocusIndex = cropOptions.indexOf(selectedCrop).takeIf { it >= 0 } ?: 0
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(lazyColumn)
-            .focusRestorer(firstItem),
-        contentPadding = PaddingValues(vertical = 16.dp),
-    ) {
+    LaunchedEffect(Unit) {
+        if (cropOptions.isNotEmpty()) {
+            initialFocusRequester.requestFocus()
+        }
+    }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
         itemsIndexed(cropOptions) { index, option ->
             ListItem(
                 modifier = Modifier.let {
-                    if (index == 0) {
-                        it.focusRequester(firstItem)
+                    if (index == initialFocusIndex) {
+                        it.focusRequester(initialFocusRequester)
                     } else {
                         it
                     }
@@ -261,4 +265,8 @@ private fun CropSettingsPage(
 
 enum class SettingsPage {
     MAIN, QUALITY, CROP
+}
+
+private enum class SettingsMainPageFocusTarget {
+    QUALITY, CROP
 }

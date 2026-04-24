@@ -77,7 +77,7 @@ fun EpisodesScreen(
         )
 
         is EpisodesScreenUiState.Done -> Box(modifier = modifier.fillMaxSize()) {
-            ImmersiveBackground(imageUrl = s.fullShow.backdropUrl ?: s.fullShow.posterUrl)
+            ImmersiveBackground(imageUrl = s.showDetails.backdropUrl ?: s.showDetails.poster)
             Box(
                 Modifier
                     .fillMaxSize()

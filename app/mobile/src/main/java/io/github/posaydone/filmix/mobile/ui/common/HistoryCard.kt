@@ -21,10 +21,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import io.github.posaydone.filmix.core.model.ShowDetails
+import io.github.posaydone.filmix.core.model.HistoryShow
 
 @Composable
-fun HistoryCard(showDetails: ShowDetails, onClick: () -> Unit) {
+fun HistoryCard(show: HistoryShow, onClick: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color(android.graphics.Color.TRANSPARENT)
@@ -35,7 +35,7 @@ fun HistoryCard(showDetails: ShowDetails, onClick: () -> Unit) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .crossfade(true)
-                    .data(showDetails.poster)
+                    .data(show.thumbnail?.takeIf { it.isNotBlank() } ?: show.poster)
                     .build(),
                 contentDescription = stringResource(R.string.poster),
                 contentScale = ContentScale.Crop,
@@ -48,12 +48,12 @@ fun HistoryCard(showDetails: ShowDetails, onClick: () -> Unit) {
             )
             {
                 Text(
-                    text = showDetails.title, style = MaterialTheme.typography.titleLarge,
+                    text = show.title, style = MaterialTheme.typography.titleLarge,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = showDetails.shortStory,
+                    text = show.description,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 5,
                     overflow = TextOverflow.Ellipsis,

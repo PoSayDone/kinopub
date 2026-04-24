@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import io.github.posaydone.filmix.core.common.R
+import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.latestProgressItem
 import io.github.posaydone.filmix.core.model.latestSeriesProgress
@@ -30,18 +31,11 @@ import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.ShowPoster
 import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.TitleSection
 import io.github.posaydone.filmix.mobile.ui.utils.bottomBorder
 
-/**
- * A reusable banner component for the home screen.
- *
- * @param show The show to display in the banner.
- * @param modifier Modifier for this component.
- * @param onClick Lambda to be invoked when the banner is clicked.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeBanner(
     modifier: Modifier = Modifier,
-    featuredShow: io.github.posaydone.filmix.core.model.FullShow,
+    featuredShow: ShowDetails,
     featuredShowProgress: ShowProgress,
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     onClick: (Int) -> Unit,
@@ -58,7 +52,6 @@ fun HomeBanner(
             playProgress.season,
             playProgress.episode,
         )
-
         !featuredShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
         else -> stringResource(R.string.playString)
     }
@@ -66,7 +59,7 @@ fun HomeBanner(
     Box(modifier = modifier) {
         ShowPoster(
             backdropUrl = featuredShow.backdropUrl,
-            posterUrl = featuredShow.posterUrl,
+            posterUrl = featuredShow.poster,
             height = headerHeight
         )
 
@@ -83,7 +76,7 @@ fun HomeBanner(
             ) {
                 TitleSection(
                     title = featuredShow.title,
-                    logoUrl = featuredShow.logoUrl,
+                    logoUrl = null,
                     height = 80.dp,
                 )
                 Column(
@@ -95,7 +88,7 @@ fun HomeBanner(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = featuredShow.description ?: featuredShow.shortDescription ?: "",
+                        text = featuredShow.description.takeIf { it.isNotBlank() } ?: "",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

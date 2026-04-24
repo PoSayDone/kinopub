@@ -14,9 +14,10 @@ import io.github.posaydone.filmix.core.common.R
 @Composable
 fun <T> SingleSelectionCard(modifier: Modifier = Modifier, selectionOption: T, selectedOption: T?, onOptionClicked: (T) -> Unit) {
     ListItem(
+        modifier = modifier,
         headlineContent = { Text(text = selectionOption.toString()) },
         scale = ListItemDefaults.scale(focusedScale = 1.02f),
-        selected = false,
+        selected = selectedOption == selectionOption,
         onClick = { onOptionClicked(selectionOption) },
         trailingContent = {
             if (selectedOption == selectionOption) {

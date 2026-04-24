@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.LocalContentColor
@@ -19,12 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
-import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.model.ShowDetails
 
 @Composable
 fun PlayerMediaTitle(
-    showDetails: FullShow,
+    showDetails: ShowDetails,
     currentSeason: String?,
     currentEpisode: String?,
     modifier: Modifier = Modifier,
@@ -50,30 +48,12 @@ fun PlayerMediaTitle(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                if (!showDetails.logoUrl.isNullOrBlank()) {
-                    SubcomposeAsyncImage(
-                        model = showDetails.logoUrl,
-                        contentDescription = showDetails.title,
-                        modifier = Modifier.sizeIn(
-                            maxWidth = screenWidth * 0.2f, maxHeight = screenHeight * 0.08f
-                        ),
-                        error = {
-                            Text(
-                                text = showDetails.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
-                                color = Color.White,
-                            )
-                        },
-                    )
-                } else {
-                    Text(
-                        text = showDetails.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        color = Color.White,
-                    )
-                }
+                Text(
+                    text = showDetails.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    color = Color.White,
+                )
 
                 if (currentSeason != null && currentEpisode != null) {
                     Spacer(Modifier.height(8.dp))

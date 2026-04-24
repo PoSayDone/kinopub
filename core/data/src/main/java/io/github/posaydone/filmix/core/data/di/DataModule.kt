@@ -7,7 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.posaydone.filmix.core.data.AuthRepository
-import io.github.posaydone.filmix.core.data.KinopubRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.data.SessionManagerImpl
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.network.dataSource.AuthRemoteDataSource
@@ -27,8 +27,8 @@ object DataModule {
         dataSource: KinopubRemoteDataSource,
         sessionManager: SessionManager,
         @ApplicationScope externalScope: CoroutineScope
-    ): KinopubRepository {
-        return KinopubRepository(dataSource, sessionManager, externalScope)
+    ): ShowRepository {
+        return ShowRepository(dataSource, sessionManager, externalScope)
     }
 
     @Provides

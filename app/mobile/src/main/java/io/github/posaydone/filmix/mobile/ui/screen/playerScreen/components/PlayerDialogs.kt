@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.media3.common.util.UnstableApi
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowType
-import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.dialog.AudioDialog
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.dialog.EpisodeDialog
 import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.dialog.SettingsDialog
@@ -15,7 +15,7 @@ import io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components.dialo
 @OptIn(UnstableApi::class)
 @Composable
 fun PlayerDialogs(
-    showDetails: FullShow,
+    showDetails: ShowDetails,
     viewModel: PlayerScreenViewModel,
 
     isEpisodeDialogOpen: Boolean,

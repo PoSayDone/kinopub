@@ -4,7 +4,10 @@ import android.util.Log
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -68,17 +71,23 @@ fun EpisodeDialog(
             emptyList()
         }
 
-        Column(modifier = Modifier.focusable(false)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .focusable(false)
+        ) {
             ScrollableTabRow(
                 items = seasonsList,
                 selectedTabIndex = selectedTab,
                 onTabSelected = { selectedTab = it },
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp)
+                contentPadding = PaddingValues(0.dp)
             )
+            Spacer(modifier = Modifier.height(16.dp))
             LazyColumn(
+                modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+                contentPadding = PaddingValues(0.dp)
             ) {
                 itemsIndexed(selectedSeasonEpisodes) { index, episode ->
                     val itemModifier = if (episode == selectedEpisode) {

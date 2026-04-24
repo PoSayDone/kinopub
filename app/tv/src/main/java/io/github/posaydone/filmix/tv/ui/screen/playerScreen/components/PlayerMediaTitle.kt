@@ -8,16 +8,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil.compose.SubcomposeAsyncImage
-import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.model.ShowDetails
 
 @Composable
 fun PlayerMediaTitle(
-    showDetails: FullShow,
+    showDetails: ShowDetails,
     currentSeason: String?,
     currentEpisode: String?,
     modifier: Modifier = Modifier,
@@ -31,27 +29,11 @@ fun PlayerMediaTitle(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        if (!showDetails.logoUrl.isNullOrBlank()) {
-            SubcomposeAsyncImage(
-                model = showDetails.logoUrl,
-                contentDescription = primaryTitle,
-                modifier = Modifier.width(300.dp),
-                contentScale = ContentScale.Fit,
-                error = {
-                    Text(
-                        text = primaryTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                    )
-                },
-            )
-        } else {
-            Text(
-                text = primaryTitle,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-            )
-        }
+        Text(
+            text = primaryTitle,
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 1,
+        )
         if (originalTitle != null) {
             Text(
                 text = originalTitle,

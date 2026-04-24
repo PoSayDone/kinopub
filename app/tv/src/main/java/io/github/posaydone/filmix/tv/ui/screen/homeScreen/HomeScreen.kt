@@ -50,6 +50,9 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import io.github.posaydone.filmix.shared.graphData.MainGraphData
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
 import io.github.posaydone.filmix.core.model.Rating
@@ -275,7 +278,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.HISTORY.name, "История просмотра"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.HISTORY.name, title = "История просмотра"))
                         },
                     )
                 }
@@ -295,7 +298,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные фильмы", "movie", "views", "month"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные фильмы", KinoPubContentType.MOVIE, KinoPubSort.VIEWS, KinoPubPeriod.MONTH))
                         },
                     )
                 }
@@ -315,7 +318,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые фильмы", "movie", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые фильмы", KinoPubContentType.MOVIE, KinoPubSort.CREATED))
                         },
                     )
                 }
@@ -335,7 +338,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные сериалы", "serial", "views", "month"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные сериалы", KinoPubContentType.SERIAL, KinoPubSort.WATCHERS, KinoPubPeriod.THREE_MONTHS))
                         },
                     )
                 }
@@ -355,7 +358,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые сериалы", "serial", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые сериалы", KinoPubContentType.SERIAL, KinoPubSort.CREATED))
                         },
                     )
                 }
@@ -375,7 +378,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Концерты", "concert", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Концерты", KinoPubContentType.CONCERT, KinoPubSort.CREATED))
                         },
                     )
                 }
@@ -395,7 +398,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "3D фильмы", "3d", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "3D фильмы", KinoPubContentType.FILM_3D, KinoPubSort.CREATED))
                         },
                     )
                 }
@@ -415,7 +418,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные фильмы", "documovie", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные фильмы", KinoPubContentType.DOCUMOVIE, KinoPubSort.CREATED))
                         },
                     )
                 }
@@ -435,7 +438,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные сериалы", "docuserial", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные сериалы", KinoPubContentType.DOCUSERIAL, KinoPubSort.CREATED))
                         },
                     )
                 }
@@ -455,7 +458,7 @@ private fun Body(
                             debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
                         },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "ТВ Шоу", "tvshow", "added", "all"))
+                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "ТВ Шоу", KinoPubContentType.TVSHOW, KinoPubSort.CREATED))
                         },
                     )
                 }

@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.KinopubRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.model.ShowList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ import javax.inject.Inject
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class ExploreScreenViewModel @Inject constructor(
-    private val repository: KinopubRepository,
+    private val repository: ShowRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 

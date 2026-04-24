@@ -6,7 +6,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.KinopubRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.model.Show
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +17,7 @@ data class SearchResultsNavKey(val query: String)
 @HiltViewModel(assistedFactory = SearchResultsViewModel.Factory::class)
 class SearchResultsViewModel @AssistedInject constructor(
     @Assisted val navKey: SearchResultsNavKey,
-    repository: KinopubRepository,
+    repository: ShowRepository,
 ) : ViewModel() {
    
     @AssistedFactory

@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.data.AuthRepository
-import io.github.posaydone.filmix.core.data.KinopubRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.model.DeviceAuthorizationStatus
 import io.github.posaydone.filmix.core.model.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +34,7 @@ sealed class AuthScreenUiState {
 class AuthScreenViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val authRepository: AuthRepository,
-    private val kinopubRepository: KinopubRepository,
+    private val showRepository: ShowRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthScreenUiState>(AuthScreenUiState.Idle)
@@ -89,7 +89,7 @@ class AuthScreenViewModel @Inject constructor(
                         sessionManager.saveRefreshToken(result.response.refresh_token)
                         runCatching {
                             withContext(Dispatchers.IO) {
-                                kinopubRepository.notifyDevice()
+                                showRepository.notifyDevice()
                             }
                         }
                         _uiState.value = AuthScreenUiState.Success

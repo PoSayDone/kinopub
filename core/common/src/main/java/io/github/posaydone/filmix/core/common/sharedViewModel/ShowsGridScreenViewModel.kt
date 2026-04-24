@@ -7,9 +7,15 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.KinopubRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubCountry
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubGenre
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubGenreType
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -20,8 +26,8 @@ data class ShowsGridNavKey(
     val queryType: ShowsGridQueryType,
     val title: String = "",
     val contentType: String? = null,
-    val sort: String = CatalogSort.VIEWS.apiValue,
-    val period: String = CatalogPeriod.MONTH.apiValue ?: "",
+    val sort: String = KinoPubSort.UPDATED,
+    val period: String = KinoPubPeriod.MONTH,
 )
 
 enum class WatchingFilter(val label: String) {
@@ -29,16 +35,21 @@ enum class WatchingFilter(val label: String) {
 }
 
 enum class CatalogSort(val apiValue: String, val label: String) {
-    VIEWS("views", "По просмотрам"),
-    ADDED("added", "По новизне"),
-    UPDATED("updated-", "По обновлению"),
+    WATCHERS(KinoPubSort.WATCHERS, "Популярные"),
+    UPDATED(KinoPubSort.UPDATED, "По обновлению"),
+    CREATED(KinoPubSort.CREATED, "Новые"),
+    RATING(KinoPubSort.RATING, "По рейтингу"),
+    VIEWS(KinoPubSort.VIEWS, "По просмотрам"),
+    KINOPOISK(KinoPubSort.KINOPOISK, "По Кинопоиску"),
+    IMDB(KinoPubSort.IMDB, "По IMDb"),
 }
 
 enum class CatalogPeriod(val apiValue: String?, val label: String) {
-    MONTH("month", "Месяц"),
-    THREE_MONTHS("3month", "3 месяца"),
-    SIX_MONTHS("6month", "6 месяцев"),
-    YEAR("year", "Год"),
+    WEEK(KinoPubPeriod.WEEK, "Неделя"),
+    MONTH(KinoPubPeriod.MONTH, "Месяц"),
+    THREE_MONTHS(KinoPubPeriod.THREE_MONTHS, "3 месяца"),
+    SIX_MONTHS(KinoPubPeriod.SIX_MONTHS, "6 месяцев"),
+    YEAR(KinoPubPeriod.YEAR, "Год"),
     ALL(null, "Всё время"),
 }
 
@@ -46,19 +57,27 @@ data class ContentTypeOption(val apiValue: String?, val label: String)
 
 val allContentTypes = listOf(
     ContentTypeOption(null, "Все"),
-    ContentTypeOption("movie", "Фильмы"),
-    ContentTypeOption("serial", "Сериалы"),
-    ContentTypeOption("concert", "Концерты"),
-    ContentTypeOption("3d", "3D"),
-    ContentTypeOption("documovie", "Докум. фильмы"),
-    ContentTypeOption("docuserial", "Докум. сериалы"),
-    ContentTypeOption("tvshow", "ТВ Шоу"),
+    ContentTypeOption(KinoPubContentType.MOVIE, "Фильмы"),
+    ContentTypeOption(KinoPubContentType.SERIAL, "Сериалы"),
+    ContentTypeOption(KinoPubContentType.CONCERT, "Концерты"),
+    ContentTypeOption(KinoPubContentType.FILM_3D, "3D"),
+    ContentTypeOption(KinoPubContentType.DOCUMOVIE, "Докум. фильмы"),
+    ContentTypeOption(KinoPubContentType.DOCUSERIAL, "Докум. сериалы"),
+    ContentTypeOption(KinoPubContentType.TVSHOW, "ТВ Шоу"),
 )
+
+fun genreTypeForContentType(contentType: String?): String? = when (contentType) {
+    KinoPubContentType.MOVIE, KinoPubContentType.SERIAL, KinoPubContentType.FILM_3D -> KinoPubGenreType.MOVIE
+    KinoPubContentType.CONCERT -> KinoPubGenreType.MUSIC
+    KinoPubContentType.DOCUMOVIE, KinoPubContentType.DOCUSERIAL -> KinoPubGenreType.DOCU
+    KinoPubContentType.TVSHOW -> KinoPubGenreType.TVSHOW
+    else -> null
+}
 
 @HiltViewModel(assistedFactory = ShowsGridScreenViewModel.Factory::class)
 class ShowsGridScreenViewModel @AssistedInject constructor(
     @Assisted private val navKey: ShowsGridNavKey,
-    private val repository: KinopubRepository,
+    private val repository: ShowRepository,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -78,11 +97,24 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
     private val _catalogContentType = MutableStateFlow<String?>(null)
     val catalogContentType = _catalogContentType.asStateFlow()
 
-    private val _catalogSort = MutableStateFlow(CatalogSort.VIEWS)
+    private val _catalogSort = MutableStateFlow(CatalogSort.UPDATED)
     val catalogSort = _catalogSort.asStateFlow()
 
     private val _catalogPeriod = MutableStateFlow(CatalogPeriod.MONTH)
     val catalogPeriod = _catalogPeriod.asStateFlow()
+
+    // Genre / country filter state
+    private val _genres = MutableStateFlow<List<KinoPubGenre>>(emptyList())
+    val genres = _genres.asStateFlow()
+
+    private val _countries = MutableStateFlow<List<KinoPubCountry>>(emptyList())
+    val countries = _countries.asStateFlow()
+
+    private val _selectedGenreIds = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedGenreIds = _selectedGenreIds.asStateFlow()
+
+    private val _selectedCountryIds = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedCountryIds = _selectedCountryIds.asStateFlow()
 
     // WATCHING filter state
     private val _watchingFilter = MutableStateFlow(WatchingFilter.ALL)
@@ -91,6 +123,9 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
     // Watching data (loaded once, filtered in-memory)
     private var watchingMovies: List<Show> = emptyList()
     private var watchingSerials: List<Show> = emptyList()
+
+    // Genres cache keyed by genre type string
+    private val genresCache = mutableMapOf<String?, List<KinoPubGenre>>()
 
     private var currentPage = 1
     private var isLoading = false
@@ -105,9 +140,11 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
         if (internalQueryType == ShowsGridQueryType.CATALOG) {
             _catalogContentType.value = navKey.contentType
             _catalogSort.value = CatalogSort.entries.firstOrNull { it.apiValue == navKey.sort }
-                ?: CatalogSort.VIEWS
+                ?: CatalogSort.UPDATED
             _catalogPeriod.value = CatalogPeriod.entries.firstOrNull { it.apiValue == navKey.period }
                 ?: CatalogPeriod.MONTH
+            loadGenresForContentType(navKey.contentType)
+            loadCountries()
         }
 
         if (internalQueryType == ShowsGridQueryType.WATCHING) {
@@ -152,6 +189,8 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
     fun setCatalogContentType(contentType: String?) {
         if (_catalogContentType.value == contentType) return
         _catalogContentType.value = contentType
+        _selectedGenreIds.value = emptySet()
+        loadGenresForContentType(contentType)
         reload()
     }
 
@@ -165,6 +204,56 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
         if (_catalogPeriod.value == period) return
         _catalogPeriod.value = period
         reload()
+    }
+
+    fun setGenre(genreId: Int?) {
+        val newIds = if (genreId == null) {
+            emptySet()
+        } else {
+            val current = _selectedGenreIds.value
+            if (genreId in current) current - genreId else current + genreId
+        }
+        if (_selectedGenreIds.value == newIds) return
+        _selectedGenreIds.value = newIds
+        reload()
+    }
+
+    fun setCountry(countryId: Int?) {
+        val newIds = if (countryId == null) {
+            emptySet()
+        } else {
+            val current = _selectedCountryIds.value
+            if (countryId in current) current - countryId else current + countryId
+        }
+        if (_selectedCountryIds.value == newIds) return
+        _selectedCountryIds.value = newIds
+        reload()
+    }
+
+    // — Genre / country loading —
+
+    private fun loadGenresForContentType(contentType: String?) {
+        val genreType = genreTypeForContentType(contentType)
+        genresCache[genreType]?.let { _genres.value = it; return }
+        viewModelScope.launch {
+            try {
+                val loaded = repository.getGenres(genreType)
+                genresCache[genreType] = loaded
+                _genres.value = loaded
+            } catch (_: Exception) {
+                _genres.value = emptyList()
+            }
+        }
+    }
+
+    private fun loadCountries() {
+        viewModelScope.launch {
+            try {
+                _countries.value = repository.getCountries()
+            } catch (_: Exception) {
+                _countries.value = emptyList()
+            }
+        }
     }
 
     // — Pagination —
@@ -221,13 +310,21 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
     private suspend fun fetchPage(page: Int): ShowList = when (internalQueryType) {
         ShowsGridQueryType.FAVORITES -> repository.getFavoritesPage(page = page).items
         ShowsGridQueryType.HISTORY -> repository.getHistoryPage(page = page).items
-        ShowsGridQueryType.CATALOG -> repository.getCatalogPage(
-            contentType = _catalogContentType.value,
-            sort = _catalogSort.value.apiValue,
-            period = _catalogPeriod.value.apiValue,
-            page = page,
-        ).items
-        ShowsGridQueryType.WATCHING -> emptyList() // handled separately via loadWatchingData
+        ShowsGridQueryType.CATALOG -> {
+            val sort = _catalogSort.value
+            val periodApiValue = _catalogPeriod.value.apiValue.takeIf {
+                sort == CatalogSort.WATCHERS || sort == CatalogSort.VIEWS
+            }
+            repository.getCatalogPage(
+                contentType = _catalogContentType.value,
+                sort = sort.apiValue,
+                period = periodApiValue,
+                genreIds = _selectedGenreIds.value,
+                countryIds = _selectedCountryIds.value,
+                page = page,
+            ).items
+        }
+        ShowsGridQueryType.WATCHING -> emptyList()
     }
 }
 

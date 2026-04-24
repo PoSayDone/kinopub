@@ -4,7 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.KinopubRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
+import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.ShowList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,13 +20,13 @@ sealed interface FavoritesScreenUiState {
     data class Error(val message: String, val onRetry: () -> Unit) : FavoritesScreenUiState
     data class Done(
         val watchingList: ShowList,
-        val historyList: ShowList,
+        val historyList: List<HistoryShow>,
     ) : FavoritesScreenUiState
 }
 
 @HiltViewModel
 class FavoritesScreenViewModel @Inject constructor(
-    private val repository: KinopubRepository,
+    private val repository: ShowRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<FavoritesScreenUiState>(FavoritesScreenUiState.Loading)
@@ -40,7 +41,7 @@ class FavoritesScreenViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 repository.getViewingList(limit = 20),
-                repository.getHistoryList(limit = 20),
+                repository.getHistoryListFull(limit = 20),
             ) { watching, history ->
                 FavoritesScreenUiState.Done(watchingList = watching, historyList = history)
             }.catch { e ->

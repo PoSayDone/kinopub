@@ -4,11 +4,13 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.KinopubRepository
-import io.github.posaydone.filmix.core.data.MovieRepository
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.data.SettingsManager
-import io.github.posaydone.filmix.core.model.FullShow
 import io.github.posaydone.filmix.core.model.SessionManager
+import io.github.posaydone.filmix.core.model.ShowDetails
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.ShowProgress
@@ -37,7 +39,7 @@ sealed class HomeScreenUiState {
 
     data class Done(
         val sessionManager: SessionManager,
-        val featuredShow: FullShow,
+        val featuredShow: ShowDetails,
         val featuredShowProgress: ShowProgress,
         val lastSeenShows: ShowList,
         val popularMovies: ShowList,
@@ -55,8 +57,7 @@ sealed class HomeScreenUiState {
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val kinopubRepository: KinopubRepository,
-    private val movieRepository: MovieRepository,
+    private val showRepository: ShowRepository,
     private val sessionManager: SessionManager,
     settingsManager: SettingsManager,
 ) : ViewModel() {
@@ -69,16 +70,16 @@ class HomeScreenViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
         combine(
-            kinopubRepository.getHistoryList(20).mapToResult(),
-            kinopubRepository.getCatalogList("movie", "views", "month", 20).mapToResult(),
-            kinopubRepository.getCatalogList("movie", "added", limit = 20).mapToResult(),
-            kinopubRepository.getCatalogList("serial", "views", "month", 20).mapToResult(),
-            kinopubRepository.getCatalogList("serial", "added", limit = 20).mapToResult(),
-            kinopubRepository.getCatalogList("concert", "added", limit = 20).mapToResult(),
-            kinopubRepository.getCatalogList("3d", "added", limit = 20).mapToResult(),
-            kinopubRepository.getCatalogList("documovie", "added", limit = 20).mapToResult(),
-            kinopubRepository.getCatalogList("docuserial", "added", limit = 20).mapToResult(),
-            kinopubRepository.getCatalogList("tvshow", "added", limit = 20).mapToResult(),
+            showRepository.getHistoryList(20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.VIEWS,    KinoPubPeriod.MONTH, 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.CREATED,  limit = 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.SERIAL,     KinoPubSort.WATCHERS, KinoPubPeriod.THREE_MONTHS, 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.SERIAL,     KinoPubSort.CREATED,  limit = 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.CONCERT,    KinoPubSort.CREATED,  limit = 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.FILM_3D,    KinoPubSort.CREATED,  limit = 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.DOCUMOVIE,  KinoPubSort.CREATED,  limit = 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.DOCUSERIAL, KinoPubSort.CREATED,  limit = 20).mapToResult(),
+            showRepository.getCatalogList(KinoPubContentType.TVSHOW,     KinoPubSort.CREATED,  limit = 20).mapToResult(),
         ) { results ->
             @Suppress("UNCHECKED_CAST")
             val lastSeenResult = results[0] as Result<ShowList>
@@ -132,14 +133,19 @@ class HomeScreenViewModel @Inject constructor(
                 ).firstNotNullOfOrNull { it.firstOrNull()?.id }
                     ?: throw IllegalStateException("No content available for the home screen.")
 
-                val fullShow = movieRepository.getFullMovieByFilmixId(featuredShowId)
+                val featuredShow = showRepository.getShowDetails(featuredShowId)
+                val images = runCatching { showRepository.getShowImages(featuredShowId) }.getOrNull()
+                val backdropUrl = images?.frames?.firstOrNull()?.url
+                    ?: images?.posters?.firstOrNull()?.url
+                    ?: featuredShow.backdropUrl
+                    ?: featuredShow.poster
                 val featuredShowProgress = runCatching {
-                    kinopubRepository.getShowProgress(featuredShowId)
+                    showRepository.getShowProgress(featuredShowId)
                 }.getOrDefault(emptyList())
 
                 HomeScreenUiState.Done(
                     sessionManager = sessionManager,
-                    featuredShow = fullShow,
+                    featuredShow = featuredShow.copy(backdropUrl = backdropUrl),
                     featuredShowProgress = featuredShowProgress,
                     lastSeenShows = lastSeenShows,
                     popularMovies = popularMovies,
@@ -151,7 +157,7 @@ class HomeScreenViewModel @Inject constructor(
                     newDocumentaryFilms = newDocumentaryFilms,
                     newDocumentarySeries = newDocumentarySeries,
                     newTvShows = newTvShows,
-                    getShowImages = { kinopubRepository.getShowImages(it) })
+                    getShowImages = { showRepository.getShowImages(it) })
             }
         }
     }.stateIn(

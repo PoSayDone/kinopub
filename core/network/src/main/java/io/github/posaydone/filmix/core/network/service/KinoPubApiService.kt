@@ -3,9 +3,11 @@ package io.github.posaydone.filmix.core.network.service
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkActionResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkFoldersResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkItemsResponse
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubCountry
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubCreateFolderResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceSettingsResponse
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubGenre
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubHistoryResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubItemDetailResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubItemsResponse
@@ -14,7 +16,6 @@ import io.github.posaydone.filmix.core.model.kinopub.KinoPubServerLocationsRespo
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubStatusResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubStreamingTypesResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubTrailerResponse
-import io.github.posaydone.filmix.core.model.kinopub.KinoPubTypesResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubUserResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubWatchingInfoResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubWatchingMoviesResponse
@@ -28,17 +29,23 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface KinoPubApiService {
-    @GET("v1/types")
-    suspend fun getContentTypes(): KinoPubTypesResponse
+    @GET("v1/genres")
+    suspend fun getGenres(
+        @Query("type") type: String? = null,
+    ): List<KinoPubGenre>
+
+    @GET("v1/countries")
+    suspend fun getCountries(): List<KinoPubCountry>
 
     @GET("v1/items")
     suspend fun listItems(
         @Query("type") type: String? = null,
         @Query("genre") genre: String? = null,
+        @Query("country") country: String? = null,
         @Query("page") page: Int? = null,
         @Query("perpage") perPage: Int? = null,
         @Query("sort") sort: String? = null,
-        @Query("period") period: String? = null,
+        @Query("conditions[]") conditions: String? = null,
     ): KinoPubItemsResponse
 
     @GET("v1/items/fresh")

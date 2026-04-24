@@ -6,10 +6,9 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.posaydone.filmix.core.data.KinopubRepository
-import io.github.posaydone.filmix.core.data.MovieRepository
-import io.github.posaydone.filmix.core.model.FullShow
+import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.model.SessionManager
+import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowTrailers
@@ -23,14 +22,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-
 sealed class ShowDetailsScreenUiState {
     data object Loading : ShowDetailsScreenUiState()
     data class Error(val message: String, val onRetry: () -> Unit) : ShowDetailsScreenUiState()
     data class Done(
         val sessionManager: SessionManager,
-        val fullShow: FullShow,
-        val showDetails: io.github.posaydone.filmix.core.model.ShowDetails, // Still need this for isFavorite status
+        val showDetails: ShowDetails,
         val showImages: ShowImages,
         val showTrailers: ShowTrailers,
         val showProgress: ShowProgress,
@@ -38,22 +35,19 @@ sealed class ShowDetailsScreenUiState {
     ) : ShowDetailsScreenUiState()
 }
 
-private var TAG = "SWAG"
-
 data class ShowDetailsNavKey(val showId: Int)
 
 @HiltViewModel(assistedFactory = ShowDetailsScreenViewModel.Factory::class)
 class ShowDetailsScreenViewModel @AssistedInject constructor(
     @Assisted val navKey: ShowDetailsNavKey,
-    private val kinopubRepository: KinopubRepository,
-    private val movieRepository: MovieRepository,
+    private val showRepository: ShowRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
         fun create(navKey: ShowDetailsNavKey): ShowDetailsScreenViewModel
     }
-    
+
     private val retryChannel = Channel<Unit>(Channel.CONFLATED)
 
     val uiState = retryChannel.receiveAsFlow()
@@ -61,38 +55,37 @@ class ShowDetailsScreenViewModel @AssistedInject constructor(
             flow {
                 try {
                     val showId = navKey.showId
-                    val showDetails = kinopubRepository.getShowDetails(showId) // Need this for toggleFavorites
-                    val fullShow = movieRepository.getFullMovieByFilmixId(showId)
-                    val images = kinopubRepository.getShowImages(showId)
-                    val trailers = kinopubRepository.getShowTrailers(showId)
-                    val history = kinopubRepository.getShowProgress(showId)
+                    val showDetails = showRepository.getShowDetails(showId)
+                    val images = showRepository.getShowImages(showId)
+                    val trailers = showRepository.getShowTrailers(showId)
+                    val progress = showRepository.getShowProgress(showId)
+
+                    val backdropUrl = images.frames.firstOrNull()?.url
+                        ?: images.posters.firstOrNull()?.url
+                        ?: showDetails.backdropUrl
+                        ?: showDetails.poster
+                    val enriched = showDetails.copy(backdropUrl = backdropUrl)
 
                     emit(
                         ShowDetailsScreenUiState.Done(
-                            fullShow = fullShow,
-                            showDetails = showDetails,
+                            showDetails = enriched,
                             showImages = images,
                             showTrailers = trailers,
-                            showProgress = history,
+                            showProgress = progress,
                             sessionManager = sessionManager,
-                            toggleFavorites = { toggleFavorites() }
-                        ))
-                } catch (error: Exception) {
-                    emit(
-                        ShowDetailsScreenUiState.Error(
-                            message = "Unknown error",
-                            onRetry = ::reload
+                            toggleFavorites = { toggleFavorites() },
                         )
                     )
+                } catch (error: Exception) {
+                    emit(ShowDetailsScreenUiState.Error(message = "Unknown error", onRetry = ::reload))
                 }
             }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ShowDetailsScreenUiState.Loading
+            initialValue = ShowDetailsScreenUiState.Loading,
         )
-
 
     init {
         reload()
@@ -104,24 +97,17 @@ class ShowDetailsScreenViewModel @AssistedInject constructor(
             if (currentState is ShowDetailsScreenUiState.Done) {
                 val currentShowDetails = currentState.showDetails
                 val newFavoriteState = !(currentShowDetails.isFavorite ?: false)
-
                 val success = withContext(Dispatchers.IO) {
-                    kinopubRepository.toggleFavorite(
-                        showId = currentShowDetails.id, isFavorite = newFavoriteState
+                    showRepository.toggleFavorite(
+                        showId = currentShowDetails.id, isFavorite = newFavoriteState,
                     )
                 }
-
-                if (success) {
-                    reload()
-                }
+                if (success) reload()
             }
         }
     }
 
     fun reload() {
-        viewModelScope.launch {
-            retryChannel.send(Unit)
-        }
+        viewModelScope.launch { retryChannel.send(Unit) }
     }
-
 }

@@ -122,7 +122,7 @@ fun HomeScreen(
 @Composable
 private fun Body(
     modifier: Modifier = Modifier,
-    featuredShow: io.github.posaydone.filmix.core.model.FullShow,
+    featuredShow: io.github.posaydone.filmix.core.model.ShowDetails,
     featuredShowProgress: ShowProgress,
     lastSeenShows: ShowList,
     popularMovies: ShowList,
