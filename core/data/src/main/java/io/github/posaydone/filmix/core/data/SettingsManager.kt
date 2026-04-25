@@ -21,8 +21,10 @@ class SettingsManager @Inject constructor(
         private const val DEFAULT_VIDEO_QUALITY = "auto"
         private const val VOICE_TRACK_KEY_PREFIX = "voice_track_"
         private const val HOME_IMMERSIVE_BACKGROUND_ENABLED_KEY = "home_immersive_background_enabled"
+        private const val HOME_IMMERSIVE_GRADIENT_ENABLED_KEY = "home_immersive_gradient_enabled"
         private const val HOME_IMMERSIVE_DETAILS_ENABLED_KEY = "home_immersive_details_enabled"
         private const val DEFAULT_HOME_IMMERSIVE_BACKGROUND_ENABLED = true
+        private const val DEFAULT_HOME_IMMERSIVE_GRADIENT_ENABLED = true
         private const val DEFAULT_HOME_IMMERSIVE_DETAILS_ENABLED = true
     }
 
@@ -39,6 +41,15 @@ class SettingsManager @Inject constructor(
     )
     val homeImmersiveBackgroundEnabled: StateFlow<Boolean> =
         _homeImmersiveBackgroundEnabled.asStateFlow()
+
+    private val _homeImmersiveGradientEnabled = MutableStateFlow(
+        prefs.getBoolean(
+            HOME_IMMERSIVE_GRADIENT_ENABLED_KEY,
+            DEFAULT_HOME_IMMERSIVE_GRADIENT_ENABLED
+        )
+    )
+    val homeImmersiveGradientEnabled: StateFlow<Boolean> =
+        _homeImmersiveGradientEnabled.asStateFlow()
 
     private val _homeImmersiveDetailsEnabled = MutableStateFlow(
         prefs.getBoolean(
@@ -65,6 +76,15 @@ class SettingsManager @Inject constructor(
     fun setHomeImmersiveBackgroundEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(HOME_IMMERSIVE_BACKGROUND_ENABLED_KEY, enabled).apply()
         _homeImmersiveBackgroundEnabled.value = enabled
+    }
+
+    fun isHomeImmersiveGradientEnabled(): Boolean {
+        return _homeImmersiveGradientEnabled.value
+    }
+
+    fun setHomeImmersiveGradientEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(HOME_IMMERSIVE_GRADIENT_ENABLED_KEY, enabled).apply()
+        _homeImmersiveGradientEnabled.value = enabled
     }
 
     fun isHomeImmersiveDetailsEnabled(): Boolean {

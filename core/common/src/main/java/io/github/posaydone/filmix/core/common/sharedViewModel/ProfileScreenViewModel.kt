@@ -39,6 +39,8 @@ class ProfileScreenViewModel @Inject constructor(
     val videoQuality: StateFlow<String> = settingsManager.videoQuality
     val homeImmersiveBackgroundEnabled: StateFlow<Boolean> =
         settingsManager.homeImmersiveBackgroundEnabled
+    val homeImmersiveGradientEnabled: StateFlow<Boolean> =
+        settingsManager.homeImmersiveGradientEnabled
     val homeImmersiveDetailsEnabled: StateFlow<Boolean> =
         settingsManager.homeImmersiveDetailsEnabled
 
@@ -120,6 +122,10 @@ class ProfileScreenViewModel @Inject constructor(
 
     fun updateHomeImmersiveBackgroundEnabled(enabled: Boolean) {
         settingsManager.setHomeImmersiveBackgroundEnabled(enabled)
+    }
+
+    fun updateHomeImmersiveGradientEnabled(enabled: Boolean) {
+        settingsManager.setHomeImmersiveGradientEnabled(enabled)
     }
 
     fun updateHomeImmersiveDetailsEnabled(enabled: Boolean) {

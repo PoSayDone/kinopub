@@ -1,6 +1,7 @@
 package io.github.posaydone.filmix.tv.ui.common
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,13 +31,18 @@ import kotlinx.coroutines.launch
 fun ImmersiveBackground(
     modifier: Modifier = Modifier,
     imageUrl: String?,
+    dynamicGradientEnabled: Boolean = true,
 ) {
     val defaultSurface = MaterialTheme.colorScheme.surface
-    var gradientColor by remember { mutableStateOf(defaultSurface) }
+    var gradientColor by remember(imageUrl, dynamicGradientEnabled, defaultSurface) {
+        mutableStateOf(defaultSurface)
+    }
     val scope = rememberCoroutineScope()
 
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(gradientColor)
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -57,11 +63,13 @@ fun ImmersiveBackground(
             error = ColorPainter(defaultSurface),
             fallback = ColorPainter(defaultSurface),
             onSuccess = { state ->
+                if (!dynamicGradientEnabled) {
+                    return@AsyncImage
+                }
+
                 val drawable = state.result.drawable
                 scope.launch(Dispatchers.Default) {
                     try {
-                        // Create a software copy of the bitmap to bypass Palette's hardware bitmap limitations
-                        // without needing to use `allowHardware(false)` on the Coil ImageRequest.
                         val bitmap = drawable.toBitmap().copy(Bitmap.Config.ARGB_8888, true)
 
                         if (bitmap != null) {
@@ -70,22 +78,19 @@ fun ImmersiveBackground(
                                 .maximumColorCount(8)
                                 .generate()
 
-                            // Emulate Material 3 content-based dynamic color by adjusting HSL
-                            // 0.06f sets it perfectly into a dark background format ideal for TV gradients
                             palette.dominantSwatch?.hsl?.let { hsl ->
                                 gradientColor = Color.hsl(
                                     hue = hsl[0],
                                     saturation = 0.9f,
-                                    lightness = 0.06f,
+                                    lightness = 0.04f,
                                     alpha = 1f
                                 )
                             }
 
-                            // Clean up our copied software bitmap to prevent memory spikes
                             bitmap.recycle()
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace() // Fallback remains defaultSurface
+                        e.printStackTrace() 
                     }
                 }
             }

@@ -76,6 +76,7 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val videoQuality by viewModel.videoQuality.collectAsStateWithLifecycle()
     val homeImmersiveBackgroundEnabled by viewModel.homeImmersiveBackgroundEnabled.collectAsStateWithLifecycle()
+    val homeImmersiveGradientEnabled by viewModel.homeImmersiveGradientEnabled.collectAsStateWithLifecycle()
     val homeImmersiveDetailsEnabled by viewModel.homeImmersiveDetailsEnabled.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
@@ -97,6 +98,7 @@ fun ProfileScreen(
                 currentServerLocation = state.currentServerLocation,
                 serverLocations = state.serverLocations,
                 homeImmersiveBackgroundEnabled = homeImmersiveBackgroundEnabled,
+                homeImmersiveGradientEnabled = homeImmersiveGradientEnabled,
                 homeImmersiveDetailsEnabled = homeImmersiveDetailsEnabled,
                 modifier = Modifier.fillMaxSize(),
                 onVideoQualityChange = { viewModel.updateDefaultVideoQuality(it) },
@@ -105,6 +107,7 @@ fun ProfileScreen(
                 onHomeImmersiveBackgroundChange = {
                     viewModel.updateHomeImmersiveBackgroundEnabled(it)
                 },
+                onHomeImmersiveGradientChange = { viewModel.updateHomeImmersiveGradientEnabled(it) },
                 onHomeImmersiveDetailsChange = { viewModel.updateHomeImmersiveDetailsEnabled(it) },
             )
         }
@@ -123,11 +126,13 @@ fun ProfileScreenContent(
     currentServerLocation: String,
     serverLocations: Map<String, String>,
     homeImmersiveBackgroundEnabled: Boolean,
+    homeImmersiveGradientEnabled: Boolean,
     homeImmersiveDetailsEnabled: Boolean,
     onVideoQualityChange: (quality: String) -> Unit,
     onStreamTypeChange: (newStreamType: String) -> Unit,
     onServerLocationChange: (newServerLocation: String) -> Unit,
     onHomeImmersiveBackgroundChange: (Boolean) -> Unit,
+    onHomeImmersiveGradientChange: (Boolean) -> Unit,
     onHomeImmersiveDetailsChange: (Boolean) -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
@@ -256,6 +261,18 @@ fun ProfileScreenContent(
                         },
                         onClick = {
                             onHomeImmersiveBackgroundChange(!homeImmersiveBackgroundEnabled)
+                        },
+                        showArrow = false,
+                    )
+                    SettingItem(
+                        title = stringResource(R.string.home_screen_immersive_gradient),
+                        currentValue = if (homeImmersiveGradientEnabled) {
+                            stringResource(R.string.enabled)
+                        } else {
+                            stringResource(R.string.disabled)
+                        },
+                        onClick = {
+                            onHomeImmersiveGradientChange(!homeImmersiveGradientEnabled)
                         },
                         showArrow = false,
                     )

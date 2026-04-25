@@ -66,6 +66,8 @@ class HomeScreenViewModel @Inject constructor(
     private val retryChannel = Channel<Unit>()
     val showImmersiveBackground: StateFlow<Boolean> =
         settingsManager.homeImmersiveBackgroundEnabled
+    val showImmersiveGradient: StateFlow<Boolean> =
+        settingsManager.homeImmersiveGradientEnabled
     val showImmersiveDetails: StateFlow<Boolean> =
         settingsManager.homeImmersiveDetailsEnabled
 

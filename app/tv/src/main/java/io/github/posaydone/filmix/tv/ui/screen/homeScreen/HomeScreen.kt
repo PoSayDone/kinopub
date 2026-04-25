@@ -97,6 +97,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showImmersiveBackground by viewModel.showImmersiveBackground.collectAsStateWithLifecycle()
+    val showImmersiveGradient by viewModel.showImmersiveGradient.collectAsStateWithLifecycle()
     val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -121,6 +122,7 @@ fun HomeScreen(
             newDocumentarySeries = s.newDocumentarySeries,
             newTvShows = s.newTvShows,
             showImmersiveBackground = showImmersiveBackground,
+            showImmersiveGradient = showImmersiveGradient,
             showImmersiveDetails = showImmersiveDetails,
             navigateToShowDetails = navigateToShowDetails,
             navigateToPlayer = navigateToPlayer,
@@ -158,6 +160,7 @@ private fun HomeScreenPreview() {
             newDocumentarySeries = previewShowList,
             newTvShows = previewShowList,
             showImmersiveBackground = true,
+            showImmersiveGradient = true,
             showImmersiveDetails = true,
             navigateToShowDetails = {},
             navigateToPlayer = { _, _, _ -> },
@@ -199,6 +202,7 @@ private fun Body(
     newDocumentarySeries: ShowList,
     newTvShows: ShowList,
     showImmersiveBackground: Boolean,
+    showImmersiveGradient: Boolean,
     showImmersiveDetails: Boolean,
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
@@ -266,7 +270,10 @@ private fun Body(
             label = "ImmersiveBackground",
         ) { backdropUrl ->
             if (backdropUrl != null) {
-                ImmersiveBackground(imageUrl = backdropUrl)
+                ImmersiveBackground(
+                    imageUrl = backdropUrl,
+                    dynamicGradientEnabled = showImmersiveGradient,
+                )
             }
         }
 
