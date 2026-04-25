@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,8 +41,14 @@ class FavoritesScreenViewModel @Inject constructor(
         _uiState.value = FavoritesScreenUiState.Loading
         viewModelScope.launch {
             combine(
-                repository.getViewingList(limit = 20),
-                repository.getHistoryListFull(limit = 20),
+                flow {
+                    emit(
+                        (repository.getWatchingSerials() + repository.getWatchingMovies())
+                            .distinctBy { it.id }
+                            .take(20)
+                    )
+                },
+                flow { emit(repository.getHistoryList(limit = 20)) },
             ) { watching, history ->
                 FavoritesScreenUiState.Done(watchingList = watching, historyList = history)
             }.catch { e ->

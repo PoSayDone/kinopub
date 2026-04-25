@@ -12,6 +12,7 @@ import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import io.github.posaydone.filmix.core.model.ShowImages
+import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.ShowProgress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -41,7 +43,7 @@ sealed class HomeScreenUiState {
         val sessionManager: SessionManager,
         val featuredShow: ShowDetails,
         val featuredShowProgress: ShowProgress,
-        val lastSeenShows: ShowList,
+        val lastSeenShows: List<HistoryShow>,
         val popularMovies: ShowList,
         val newMovies: ShowList,
         val popularSeries: ShowList,
@@ -70,7 +72,7 @@ class HomeScreenViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
         combine(
-            showRepository.getHistoryList(20).mapToResult(),
+            flow { emit(showRepository.getHistoryList(20)) }.mapToResult(),
             showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.VIEWS,    KinoPubPeriod.MONTH, 20).mapToResult(),
             showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.CREATED,  limit = 20).mapToResult(),
             showRepository.getCatalogList(KinoPubContentType.SERIAL,     KinoPubSort.WATCHERS, KinoPubPeriod.THREE_MONTHS, 20).mapToResult(),
@@ -82,7 +84,7 @@ class HomeScreenViewModel @Inject constructor(
             showRepository.getCatalogList(KinoPubContentType.TVSHOW,     KinoPubSort.CREATED,  limit = 20).mapToResult(),
         ) { results ->
             @Suppress("UNCHECKED_CAST")
-            val lastSeenResult = results[0] as Result<ShowList>
+            val lastSeenResult = results[0] as Result<List<HistoryShow>>
             val popularMoviesResult = results[1] as Result<ShowList>
             val newMoviesResult = results[2] as Result<ShowList>
             val popularSeriesResult = results[3] as Result<ShowList>
@@ -124,13 +126,11 @@ class HomeScreenViewModel @Inject constructor(
                 val newDocumentarySeries = newDocumentarySeriesResult.getOrThrow()
                 val newTvShows = newTvShowsResult.getOrThrow()
 
-                val featuredShowId = listOf(
-                    lastSeenShows,
-                    popularMovies,
-                    newMovies,
-                    popularSeries,
-                    newSeries,
-                ).firstNotNullOfOrNull { it.firstOrNull()?.id }
+                val featuredShowId = lastSeenShows.firstOrNull()?.id
+                    ?: popularMovies.firstOrNull()?.id
+                    ?: newMovies.firstOrNull()?.id
+                    ?: popularSeries.firstOrNull()?.id
+                    ?: newSeries.firstOrNull()?.id
                     ?: throw IllegalStateException("No content available for the home screen.")
 
                 val featuredShow = showRepository.getShowDetails(featuredShowId)

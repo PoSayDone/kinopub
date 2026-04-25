@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -29,16 +30,17 @@ class HistoryScreenViewModel @Inject constructor(private val repository: ShowRep
     private val retryChannel = Channel<Unit>()
 
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
-        repository.getHistoryListFull().map { Result.success(it) }
+        flow { emit(repository.getHistoryList()) }
+            .map { Result.success(it) }
             .catch { emit(Result.failure(it)) }
     }.map { result ->
-        when {
-            result.isSuccess -> HistoryScreenUiState.Done(historyList = result.getOrThrow())
-            result.isFailure -> HistoryScreenUiState.Error(message = result.exceptionOrNull()?.message
-                ?: "Unknown error",
-                onRetry = { retry() })
-
-            else -> HistoryScreenUiState.Loading
+        if (result.isSuccess) {
+            HistoryScreenUiState.Done(historyList = result.getOrThrow())
+        } else {
+            HistoryScreenUiState.Error(
+                message = result.exceptionOrNull()?.message ?: "Unknown error",
+                onRetry = { retry() },
+            )
         }
     }.stateIn(
         scope = viewModelScope,

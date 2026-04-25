@@ -8,6 +8,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.data.ShowRepository
+import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
@@ -147,10 +148,10 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
             loadCountries()
         }
 
-        if (internalQueryType == ShowsGridQueryType.WATCHING) {
-            loadWatchingData()
-        } else {
-            loadInitialData()
+        when (internalQueryType) {
+            ShowsGridQueryType.WATCHING -> loadWatchingData()
+            ShowsGridQueryType.HISTORY -> loadInitialHistoryData()
+            else -> loadInitialShowsData()
         }
     }
 
@@ -171,11 +172,11 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
 
     private fun applyWatchingFilter() {
         val shows = when (_watchingFilter.value) {
-            WatchingFilter.ALL -> (watchingMovies + watchingSerials).distinctBy { it.id }
+            WatchingFilter.ALL -> (watchingSerials + watchingMovies).distinctBy { it.id }
             WatchingFilter.MOVIES -> watchingMovies
             WatchingFilter.SERIALS -> watchingSerials
         }
-        _uiState.value = ShowsGridUiState.Success(shows = shows, hasNextPage = false)
+        _uiState.value = ShowsGridUiState.ShowsSuccess(shows = shows, hasNextPage = false)
     }
 
     fun setWatchingFilter(filter: WatchingFilter) {
@@ -262,19 +263,52 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
         currentPage = 1
         hasReachedEnd = false
         isLoading = false
-        loadInitialData()
+        when (internalQueryType) {
+            ShowsGridQueryType.HISTORY -> loadInitialHistoryData()
+            ShowsGridQueryType.WATCHING -> loadWatchingData()
+            else -> loadInitialShowsData()
+        }
     }
 
-    private fun loadInitialData() {
+    fun retry() {
+        reload()
+    }
+
+    private fun loadInitialShowsData() {
         if (isLoading) return
         isLoading = true
         _uiState.value = ShowsGridUiState.Loading
 
         viewModelScope.launch {
             try {
-                val shows = fetchPage(currentPage)
+                val shows = fetchShowsPage(currentPage)
                 hasReachedEnd = shows.isEmpty()
-                _uiState.value = ShowsGridUiState.Success(shows = shows, hasNextPage = !hasReachedEnd)
+                _uiState.value = ShowsGridUiState.ShowsSuccess(
+                    shows = shows,
+                    hasNextPage = !hasReachedEnd,
+                )
+                currentPage = 2
+            } catch (e: Exception) {
+                _uiState.value = ShowsGridUiState.Error(e.message ?: "Unknown error")
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    private fun loadInitialHistoryData() {
+        if (isLoading) return
+        isLoading = true
+        _uiState.value = ShowsGridUiState.Loading
+
+        viewModelScope.launch {
+            try {
+                val historyShows = fetchHistoryPage(currentPage)
+                hasReachedEnd = historyShows.isEmpty()
+                _uiState.value = ShowsGridUiState.HistorySuccess(
+                    historyShows = historyShows,
+                    hasNextPage = !hasReachedEnd,
+                )
                 currentPage = 2
             } catch (e: Exception) {
                 _uiState.value = ShowsGridUiState.Error(e.message ?: "Unknown error")
@@ -285,19 +319,30 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
     }
 
     fun loadNextPage() {
+        when (internalQueryType) {
+            ShowsGridQueryType.HISTORY -> loadNextHistoryPage()
+            ShowsGridQueryType.WATCHING -> Unit
+            else -> loadNextShowsPage()
+        }
+    }
+
+    private fun loadNextShowsPage() {
         if (isLoading || hasReachedEnd) return
         isLoading = true
 
         viewModelScope.launch {
-            val currentState = _uiState.value as? ShowsGridUiState.Success ?: run {
+            val currentState = _uiState.value as? ShowsGridUiState.ShowsSuccess ?: run {
                 isLoading = false
                 return@launch
             }
             try {
-                val newShows = fetchPage(currentPage)
+                val newShows = fetchShowsPage(currentPage)
                 hasReachedEnd = newShows.isEmpty()
                 val merged = (currentState.shows + newShows).distinctBy { it.id }
-                _uiState.value = currentState.copy(shows = merged, hasNextPage = !hasReachedEnd)
+                _uiState.value = currentState.copy(
+                    shows = merged,
+                    hasNextPage = !hasReachedEnd,
+                )
                 if (!hasReachedEnd) currentPage++
             } catch (e: Exception) {
                 _uiState.value = ShowsGridUiState.Error(e.message ?: "Unknown error")
@@ -307,9 +352,35 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun fetchPage(page: Int): ShowList = when (internalQueryType) {
-        ShowsGridQueryType.FAVORITES -> repository.getFavoritesPage(page = page).items
-        ShowsGridQueryType.HISTORY -> repository.getHistoryPage(page = page).items
+    private fun loadNextHistoryPage() {
+        if (isLoading || hasReachedEnd) return
+        isLoading = true
+
+        viewModelScope.launch {
+            val currentState = _uiState.value as? ShowsGridUiState.HistorySuccess ?: run {
+                isLoading = false
+                return@launch
+            }
+            try {
+                val newShows = fetchHistoryPage(currentPage)
+                hasReachedEnd = newShows.isEmpty()
+                val merged = (currentState.historyShows + newShows).distinctBy { it.id }
+                _uiState.value = currentState.copy(
+                    historyShows = merged,
+                    hasNextPage = !hasReachedEnd,
+                )
+                if (!hasReachedEnd) currentPage++
+            } catch (e: Exception) {
+                _uiState.value = ShowsGridUiState.Error(e.message ?: "Unknown error")
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    private suspend fun fetchShowsPage(page: Int): ShowList = when (internalQueryType) {
+        ShowsGridQueryType.FAVORITES -> repository.getFavoritesPage(page = page)
+        ShowsGridQueryType.HISTORY -> emptyList()
         ShowsGridQueryType.CATALOG -> {
             val sort = _catalogSort.value
             val periodApiValue = _catalogPeriod.value.apiValue.takeIf {
@@ -322,9 +393,13 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
                 genreIds = _selectedGenreIds.value,
                 countryIds = _selectedCountryIds.value,
                 page = page,
-            ).items
+            )
         }
         ShowsGridQueryType.WATCHING -> emptyList()
+    }
+
+    private suspend fun fetchHistoryPage(page: Int): List<HistoryShow> {
+        return repository.getHistoryList(limit = 48, page = page)
     }
 }
 
@@ -332,8 +407,12 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
 sealed interface ShowsGridUiState {
     data object Loading : ShowsGridUiState
     data class Error(val message: String) : ShowsGridUiState
-    data class Success(
+    data class ShowsSuccess(
         val shows: ShowList,
+        val hasNextPage: Boolean,
+    ) : ShowsGridUiState
+    data class HistorySuccess(
+        val historyShows: List<HistoryShow>,
         val hasNextPage: Boolean,
     ) : ShowsGridUiState
 }

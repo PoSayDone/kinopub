@@ -44,6 +44,9 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:model"))
 
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     

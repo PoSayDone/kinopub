@@ -77,6 +77,12 @@ fun ShowDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        if (uiState is ShowDetailsScreenUiState.Done) {
+            viewModel.reload()
+        }
+    }
+
     when (val s = uiState) {
         is ShowDetailsScreenUiState.Loading -> {
             Loading(modifier = Modifier.fillMaxSize())

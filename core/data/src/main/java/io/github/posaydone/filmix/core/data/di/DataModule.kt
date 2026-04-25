@@ -6,12 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.github.posaydone.filmix.core.data.AuthRepository
-import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.data.SessionManagerImpl
 import io.github.posaydone.filmix.core.model.SessionManager
-import io.github.posaydone.filmix.core.network.dataSource.AuthRemoteDataSource
-import io.github.posaydone.filmix.core.network.dataSource.KinopubRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,30 +19,9 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
-    fun provideFilmixRepository(
-        dataSource: KinopubRemoteDataSource,
-        sessionManager: SessionManager,
-        @ApplicationScope externalScope: CoroutineScope
-    ): ShowRepository {
-        return ShowRepository(dataSource, sessionManager, externalScope)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAuthRepository(
-        dataSource: AuthRemoteDataSource,
-    ): AuthRepository {
-        return AuthRepository(dataSource)
-    }
-
-    @Provides
-    @Singleton
     fun provideSessionManager(
         @ApplicationContext context: Context,
-    ): SessionManager {
-        return SessionManagerImpl(context)
-    }
-
+    ): SessionManager = SessionManagerImpl(context)
 
     @Provides
     @Singleton

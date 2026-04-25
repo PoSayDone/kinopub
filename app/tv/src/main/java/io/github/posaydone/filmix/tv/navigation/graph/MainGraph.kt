@@ -145,6 +145,9 @@ fun MainGraph() {
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
                         },
+                        navigateToPlayer = { showId, startSeason, startEpisode ->
+                            topLevelBackStack.add(MainGraphData.Player(showId, startSeason, startEpisode))
+                        },
                         navigateToShowsGrid = { grid ->
                             topLevelBackStack.add(grid)
                         },
@@ -164,6 +167,9 @@ fun MainGraph() {
                     FavoritesScreen(
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
+                        },
+                        navigateToPlayer = { showId, startSeason, startEpisode ->
+                            topLevelBackStack.add(MainGraphData.Player(showId, startSeason, startEpisode))
                         },
                         navigateToShowsGrid = { queryType ->
                             val title = when (queryType) {

@@ -109,7 +109,7 @@ fun ShowsRow(
                 ) {
                     if (onViewAll != null) {
                         item {
-                            ShowCard(
+                            BaseCard(
                                 onClick = { onViewAll() },
                                 modifier = Modifier
                                     .width(cardWidth)
@@ -178,12 +178,9 @@ private fun ShowsRowItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    ShowCard(
-        onClick = { onShowSelected(show) }, title = {
-            ShowsRowItemText(
-                showItemTitle = showItemTitle, isItemFocused = isFocused, show = show
-            )
-        }, modifier = Modifier
+    BaseCard(
+        onClick = { onShowSelected(show) },
+        modifier = Modifier
             .width(cardWidth)
             .onFocusChanged {
                 isFocused = it.isFocused
@@ -191,7 +188,15 @@ private fun ShowsRowItem(
                     onShowFocused(show)
                 }
             }
-            .then(modifier)) {
+            .then(modifier),
+        title = {
+            ShowsRowItemText(
+                showItemTitle = showItemTitle,
+                isItemFocused = isFocused,
+                title = show.title.substringBefore('/').trim(),
+            )
+        },
+    ) {
         ShowsRowItemImage(
             modifier = Modifier.aspectRatio(itemDirection.aspectRatio),
             showIndexOverImage = showIndexOverImage,
@@ -241,25 +246,25 @@ private fun ShowsRowItemImage(
 }
 
 @Composable
-private fun ShowsRowItemText(
+internal fun ShowsRowItemText(
     showItemTitle: Boolean,
     isItemFocused: Boolean,
-    show: Show,
+    title: String,
     modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Center,
+    titleMode: CardTitleMode = CardTitleMode.ON_FOCUS,
 ) {
     if (showItemTitle) {
-        val movieNameAlpha by animateFloatAsState(
-            targetValue = if (isItemFocused) 1f else 0f,
+        val alpha by animateFloatAsState(
+            targetValue = if (titleMode == CardTitleMode.ALWAYS || isItemFocused) 1f else 0f,
             label = "",
         )
         Text(
-            text = show.title.substringBefore('/').trim(),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            textAlign = TextAlign.Center,
+            text = title,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            textAlign = textAlign,
             modifier = modifier
-                .alpha(movieNameAlpha)
+                .alpha(alpha)
                 .padding(top = 16.dp),
             softWrap = true,
             maxLines = 2,

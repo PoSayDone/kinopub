@@ -53,7 +53,7 @@ import io.github.posaydone.filmix.core.model.findEpisodeProgress
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.Loading
-import io.github.posaydone.filmix.tv.ui.common.ShowCard
+import io.github.posaydone.filmix.tv.ui.common.BaseCard
 import io.github.posaydone.filmix.tv.ui.common.gradientOverlay
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 
@@ -209,7 +209,7 @@ private fun EpisodeCard(
     val isWatched = watchedSeconds > 0
     val hasSignificantProgress = watchedSeconds > 60
 
-    ShowCard(
+    BaseCard(
         onClick = onClick,
         modifier = Modifier
             .width(EpisodeCardWidth)

@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +50,9 @@ import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
+import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
+import io.github.posaydone.filmix.core.model.toShow
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
@@ -61,6 +64,7 @@ import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.ShowStatus
 import io.github.posaydone.filmix.core.model.Votes
 import io.github.posaydone.filmix.tv.ui.common.Error
+import io.github.posaydone.filmix.tv.ui.common.HistoryShowsRow
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails
 import io.github.posaydone.filmix.tv.ui.common.Loading
@@ -87,12 +91,19 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 fun HomeScreen(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (Int) -> Unit,
+    navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit = { _, _, _ -> },
     navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showImmersiveBackground by viewModel.showImmersiveBackground.collectAsStateWithLifecycle()
     val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        if (uiState is HomeScreenUiState.Done) {
+            viewModel.retry()
+        }
+    }
 
     when (val s = uiState) {
         is HomeScreenUiState.Loading -> Loading(modifier = Modifier.fillMaxSize())
@@ -112,6 +123,7 @@ fun HomeScreen(
             showImmersiveBackground = showImmersiveBackground,
             showImmersiveDetails = showImmersiveDetails,
             navigateToShowDetails = navigateToShowDetails,
+            navigateToPlayer = navigateToPlayer,
             navigateToShowsGrid = navigateToShowsGrid,
         )
     }
@@ -135,7 +147,7 @@ private fun HomeScreenPreview() {
         Body(
             modifier = Modifier
                 .fillMaxSize(),
-            lastSeenShows = previewShowList,
+            lastSeenShows = emptyList(),
             popularMovies = previewShowList,
             newMovies = previewShowList,
             popularSeries = previewShowList,
@@ -148,6 +160,7 @@ private fun HomeScreenPreview() {
             showImmersiveBackground = true,
             showImmersiveDetails = true,
             navigateToShowDetails = {},
+            navigateToPlayer = { _, _, _ -> },
         )
     }
 }
@@ -175,7 +188,7 @@ private fun previewShow(
 @Composable
 private fun Body(
     modifier: Modifier = Modifier,
-    lastSeenShows: ShowList,
+    lastSeenShows: List<HistoryShow>,
     popularMovies: ShowList,
     newMovies: ShowList,
     popularSeries: ShowList,
@@ -188,17 +201,25 @@ private fun Body(
     showImmersiveBackground: Boolean,
     showImmersiveDetails: Boolean,
     navigateToShowDetails: (showId: Int) -> Unit,
+    navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val debounceJob = remember { arrayOfNulls<Job>(1) }
     var focusedShow by remember {
         mutableStateOf(
-            lastSeenShows.firstOrNull()
+            lastSeenShows.firstOrNull()?.toShow()
                 ?: popularMovies.firstOrNull()
                 ?: newMovies.firstOrNull()
         )
     }
+    val onShowFocused: (Show) -> Unit = { show ->
+        if (show.id != focusedShow?.id) {
+            debounceJob[0]?.cancel()
+            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+        }
+    }
+
     val lazyColumnState = rememberLazyListState()
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
 
@@ -241,7 +262,7 @@ private fun Body(
     Box(modifier = modifier) {
         Crossfade(
             targetState = if (showImmersiveBackground) focusedShow?.backdropUrl else null,
-            animationSpec = tween(durationMillis = 600),
+            animationSpec = tween(durationMillis = 400),
             label = "ImmersiveBackground",
         ) { backdropUrl ->
             if (backdropUrl != null) {
@@ -262,21 +283,20 @@ private fun Body(
                     }
                 }
                 item(contentType = "LastSeenRow") {
-                    ShowsRow(
+                    HistoryShowsRow(
                         modifier = Modifier
                             .padding(bottom = 16.dp)
                             .focusRequester(firstItem),
+                        historyList = lastSeenShows,
                         showItemTitle = false,
-                        showList = lastSeenShows,
+                        showItemOriginalTitle = false,
+                        showItemYear = false,
                         title = stringResource(R.string.continue_watching),
                         onShowSelected = { show ->
                             lazyColumn.saveFocusedChild()
-                            navigateToShowDetails(show.id)
+                            navigateToPlayer(show.id, show.seasonNumber ?: -1, show.episodeNumber ?: -1)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show.toShow()) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.HISTORY.name, title = "История просмотра"))
                         },
@@ -293,10 +313,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные фильмы", KinoPubContentType.MOVIE, KinoPubSort.VIEWS, KinoPubPeriod.MONTH))
                         },
@@ -313,10 +330,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые фильмы", KinoPubContentType.MOVIE, KinoPubSort.CREATED))
                         },
@@ -333,10 +347,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные сериалы", KinoPubContentType.SERIAL, KinoPubSort.WATCHERS, KinoPubPeriod.THREE_MONTHS))
                         },
@@ -353,10 +364,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые сериалы", KinoPubContentType.SERIAL, KinoPubSort.CREATED))
                         },
@@ -373,10 +381,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Концерты", KinoPubContentType.CONCERT, KinoPubSort.CREATED))
                         },
@@ -393,10 +398,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "3D фильмы", KinoPubContentType.FILM_3D, KinoPubSort.CREATED))
                         },
@@ -413,10 +415,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные фильмы", KinoPubContentType.DOCUMOVIE, KinoPubSort.CREATED))
                         },
@@ -433,10 +432,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные сериалы", KinoPubContentType.DOCUSERIAL, KinoPubSort.CREATED))
                         },
@@ -453,10 +449,7 @@ private fun Body(
                             lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
-                        onShowFocused = { show ->
-                            debounceJob[0]?.cancel()
-                            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
-                        },
+                        onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
                             navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "ТВ Шоу", KinoPubContentType.TVSHOW, KinoPubSort.CREATED))
                         },
@@ -468,7 +461,7 @@ private fun Body(
 
         Crossfade(
             targetState = if (showImmersiveDetails) focusedShow else null,
-            animationSpec = tween(durationMillis = 400),
+            animationSpec = tween(durationMillis = 200),
             label = "ImmersiveDetails",
         ) { show ->
             if (show != null) {

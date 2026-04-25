@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.palette.ktx)
 
     //Hilt
     implementation(libs.hilt.android)

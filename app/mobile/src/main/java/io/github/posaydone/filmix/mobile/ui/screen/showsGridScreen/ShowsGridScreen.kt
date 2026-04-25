@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridUiState
+import io.github.posaydone.filmix.core.model.HistoryShow
+import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.Loading
@@ -65,16 +67,30 @@ fun ShowsGridScreen(
 
             is ShowsGridUiState.Error -> {
                 Error(
-                    modifier = Modifier.fillMaxSize(), onRetry = { /* Handle retry */ })
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = viewModel::retry,
+                )
             }
 
-            is ShowsGridUiState.Success -> {
+            is ShowsGridUiState.ShowsSuccess -> {
                 ShowsGridContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     navigateToShowDetails = navigateToShowDetails,
                     shows = state.shows,
+                    hasNextPage = state.hasNextPage,
+                    onLoadNext = { viewModel.loadNextPage() },
+                )
+            }
+
+            is ShowsGridUiState.HistorySuccess -> {
+                ShowsGridContent(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    navigateToShowDetails = navigateToShowDetails,
+                    shows = state.historyShows.map { it.toShow() },
                     hasNextPage = state.hasNextPage,
                     onLoadNext = { viewModel.loadNextPage() },
                 )
@@ -140,3 +156,19 @@ fun ShowsGridContent(
         }
     }
 }
+
+private fun HistoryShow.toShow(): Show = Show(
+    id = id,
+    last_episode = null,
+    last_season = null,
+    original_name = title,
+    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
+    quality = "",
+    status = null,
+    title = title,
+    votesNeg = 0,
+    votesPos = 0,
+    year = 0,
+    url = "",
+    description = description,
+)

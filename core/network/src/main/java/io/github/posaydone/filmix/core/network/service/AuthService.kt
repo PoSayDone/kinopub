@@ -1,12 +1,9 @@
 package io.github.posaydone.filmix.core.network.service
 
-import io.github.posaydone.filmix.core.model.AuthRequestBody
 import io.github.posaydone.filmix.core.model.AuthResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceCodeResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubStatusResponse
 import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
 import retrofit2.http.Query
 

@@ -2,7 +2,6 @@ package io.github.posaydone.filmix.tv.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -33,15 +32,12 @@ fun ShowsGrid(
     ) {
         items(showList, key = { it.id }) { show ->
             ShowCard(
+                show = show,
                 onClick = { onShowClick(show.id) },
-                modifier = Modifier.aspectRatio(2f / 3f),
-            ) {
-                PosterImage(
-                    contentDescritpion = show.title,
-                    imageUrl = show.poster,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+                showTitle = false,
+                showOriginalTitle = false,
+                showYear = false,
+            )
         }
     }
 }
