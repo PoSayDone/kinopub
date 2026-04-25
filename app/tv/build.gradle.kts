@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(project(":core:data"))
+    implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
@@ -102,5 +103,6 @@ dependencies {
     // For image loading in Compose
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
+    implementation(libs.material.kolor)
     implementation(libs.androidx.core.splashscreen)
 }

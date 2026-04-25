@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Job
@@ -35,6 +36,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
@@ -69,6 +71,7 @@ import io.github.posaydone.filmix.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.common.ShowsRow
+import io.github.posaydone.filmix.tv.ui.theme.HomeScreenDynamicTheme
 import io.github.posaydone.filmix.tv.ui.theme.KinopubTheme
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import io.github.posaydone.filmix.tv.ui.utils.Padding
@@ -93,12 +96,14 @@ fun HomeScreen(
     navigateToShowDetails: (Int) -> Unit,
     navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit = { _, _, _ -> },
     navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
+    onThemeSeedColorChanged: (Color?) -> Unit = {},
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showImmersiveBackground by viewModel.showImmersiveBackground.collectAsStateWithLifecycle()
     val showImmersiveGradient by viewModel.showImmersiveGradient.collectAsStateWithLifecycle()
     val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
+    var themeSeedColor by remember { mutableStateOf<Color?>(null) }
 
     LaunchedEffect(Unit) {
         if (uiState is HomeScreenUiState.Done) {
@@ -106,28 +111,37 @@ fun HomeScreen(
         }
     }
 
-    when (val s = uiState) {
-        is HomeScreenUiState.Loading -> Loading(modifier = Modifier.fillMaxSize())
-        is HomeScreenUiState.Error -> Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
-        is HomeScreenUiState.Done -> Body(
-            modifier = Modifier.fillMaxSize(),
-            lastSeenShows = s.lastSeenShows,
-            popularMovies = s.popularMovies,
-            newMovies = s.newMovies,
-            popularSeries = s.popularSeries,
-            newSeries = s.newSeries,
-            newConcerts = s.newConcerts,
-            new3d = s.new3d,
-            newDocumentaryFilms = s.newDocumentaryFilms,
-            newDocumentarySeries = s.newDocumentarySeries,
-            newTvShows = s.newTvShows,
-            showImmersiveBackground = showImmersiveBackground,
-            showImmersiveGradient = showImmersiveGradient,
-            showImmersiveDetails = showImmersiveDetails,
-            navigateToShowDetails = navigateToShowDetails,
-            navigateToPlayer = navigateToPlayer,
-            navigateToShowsGrid = navigateToShowsGrid,
-        )
+    HomeScreenDynamicTheme(
+        seedColor = themeSeedColor,
+        enabled = true,
+    ) {
+        when (val s = uiState) {
+            is HomeScreenUiState.Loading -> Loading(modifier = Modifier.fillMaxSize())
+            is HomeScreenUiState.Error -> Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
+            is HomeScreenUiState.Done -> Body(
+                modifier = Modifier.fillMaxSize(),
+                lastSeenShows = s.lastSeenShows,
+                popularMovies = s.popularMovies,
+                newMovies = s.newMovies,
+                popularSeries = s.popularSeries,
+                newSeries = s.newSeries,
+                newConcerts = s.newConcerts,
+                new3d = s.new3d,
+                newDocumentaryFilms = s.newDocumentaryFilms,
+                newDocumentarySeries = s.newDocumentarySeries,
+                newTvShows = s.newTvShows,
+                showImmersiveBackground = showImmersiveBackground,
+                showImmersiveGradient = showImmersiveGradient,
+                showImmersiveDetails = showImmersiveDetails,
+                navigateToShowDetails = navigateToShowDetails,
+                navigateToPlayer = navigateToPlayer,
+                navigateToShowsGrid = navigateToShowsGrid,
+                onThemeSeedColorChanged = { color ->
+                    themeSeedColor = color
+                    onThemeSeedColorChanged(color)
+                },
+            )
+        }
     }
 }
 
@@ -164,6 +178,7 @@ private fun HomeScreenPreview() {
             showImmersiveDetails = true,
             navigateToShowDetails = {},
             navigateToPlayer = { _, _, _ -> },
+            onThemeSeedColorChanged = {},
         )
     }
 }
@@ -207,20 +222,47 @@ private fun Body(
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
+    onThemeSeedColorChanged: (Color?) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val debounceJob = remember { arrayOfNulls<Job>(1) }
-    var focusedShow by remember {
-        mutableStateOf(
-            lastSeenShows.firstOrNull()?.toShow()
-                ?: popularMovies.firstOrNull()
-                ?: newMovies.firstOrNull()
-        )
+    val availableShows = remember(
+        lastSeenShows,
+        popularMovies,
+        newMovies,
+        popularSeries,
+        newSeries,
+        newConcerts,
+        new3d,
+        newDocumentaryFilms,
+        newDocumentarySeries,
+        newTvShows,
+    ) {
+        buildList {
+            addAll(lastSeenShows.map(HistoryShow::toShow))
+            addAll(popularMovies)
+            addAll(newMovies)
+            addAll(popularSeries)
+            addAll(newSeries)
+            addAll(newConcerts)
+            addAll(new3d)
+            addAll(newDocumentaryFilms)
+            addAll(newDocumentarySeries)
+            addAll(newTvShows)
+        }
+    }
+    val fallbackFocusedShow = availableShows.firstOrNull()
+    var focusedShowId by rememberSaveable { mutableStateOf(fallbackFocusedShow?.id) }
+    val focusedShow = remember(availableShows, fallbackFocusedShow, focusedShowId) {
+        availableShows.firstOrNull { it.id == focusedShowId } ?: fallbackFocusedShow
     }
     val onShowFocused: (Show) -> Unit = { show ->
-        if (show.id != focusedShow?.id) {
+        if (show.id != focusedShowId) {
             debounceJob[0]?.cancel()
-            debounceJob[0] = scope.launch { delay(300L); focusedShow = show }
+            debounceJob[0] = scope.launch {
+                delay(300L)
+                focusedShowId = show.id
+            }
         }
     }
 
@@ -231,6 +273,7 @@ private fun Body(
     val backdropHeight = screenHeightDp.dp - 32.dp
     val childPadding = rememberChildPadding()
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+    val immersiveBackdropUrl = focusedShow?.backdropUrl
 
     val immersiveHeightFraction = remember(screenHeightDp) {
         val spacerHeight = screenHeightDp - 324
@@ -263,16 +306,23 @@ private fun Body(
             }
         }
 
+    LaunchedEffect(showImmersiveBackground, showImmersiveGradient, immersiveBackdropUrl) {
+        if (!showImmersiveBackground || !showImmersiveGradient || immersiveBackdropUrl == null) {
+            onThemeSeedColorChanged(null)
+        }
+    }
+
     Box(modifier = modifier) {
         Crossfade(
-            targetState = if (showImmersiveBackground) focusedShow?.backdropUrl else null,
+            targetState = if (showImmersiveBackground) immersiveBackdropUrl else null,
             animationSpec = tween(durationMillis = 400),
             label = "ImmersiveBackground",
         ) { backdropUrl ->
             if (backdropUrl != null) {
                 ImmersiveBackground(
                     imageUrl = backdropUrl,
-                    dynamicGradientEnabled = showImmersiveGradient,
+                    dynamicThemeEnabled = showImmersiveGradient,
+                    onThemeSeedColorResolved = onThemeSeedColorChanged,
                 )
             }
         }

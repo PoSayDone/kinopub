@@ -23,13 +23,16 @@ import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,6 +65,7 @@ import io.github.posaydone.filmix.tv.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.common.gradientOverlay
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
+import io.github.posaydone.filmix.tv.ui.theme.HomeScreenDynamicTheme
 import kotlinx.coroutines.launch
 
 private const val TAG = "ShowDetailsScreen"
@@ -76,6 +80,7 @@ fun ShowDetailsScreen(
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var themeSeedColor by remember { mutableStateOf<Color?>(null) }
 
     LaunchedEffect(Unit) {
         if (uiState is ShowDetailsScreenUiState.Done) {
@@ -83,51 +88,70 @@ fun ShowDetailsScreen(
         }
     }
 
-    when (val s = uiState) {
-        is ShowDetailsScreenUiState.Loading -> {
-            Loading(modifier = Modifier.fillMaxSize())
-        }
+    val backdropUrl = (uiState as? ShowDetailsScreenUiState.Done)?.let { state ->
+        resolveImmersiveImageUrl(
+            showDetails = state.showDetails,
+            showImages = state.showImages,
+        )
+    }
 
-        is ShowDetailsScreenUiState.Error -> {
-            Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
+    LaunchedEffect(backdropUrl) {
+        if (backdropUrl == null) {
+            themeSeedColor = null
         }
+    }
 
-        is ShowDetailsScreenUiState.Done -> {
-            val playProgress = if (s.showDetails.isSeries) {
-                s.showProgress.latestSeriesProgress()
-            } else {
-                s.showProgress.latestProgressItem()
+    HomeScreenDynamicTheme(
+        seedColor = themeSeedColor,
+        enabled = true,
+    ) {
+        when (val s = uiState) {
+            is ShowDetailsScreenUiState.Loading -> {
+                Loading(modifier = Modifier.fillMaxSize())
             }
-            val playButtonText = when {
-                s.showDetails.isSeries && playProgress != null -> stringResource(
-                    R.string.continueWatchingSeries,
-                    playProgress.season,
-                    playProgress.episode,
-                )
-                !s.showDetails.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
-                else -> stringResource(R.string.playString)
+
+            is ShowDetailsScreenUiState.Error -> {
+                Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
             }
-            Details(
-                showDetails = s.showDetails,
-                showProgress = s.showProgress,
-                showImages = s.showImages,
-                showTrailers = s.showTrailers,
-                toggleFavorites = s.toggleFavorites,
-                goToMoviePlayer = {
-                    navigateToMoviePlayer(
-                        showId,
-                        playProgress?.season ?: -1,
-                        playProgress?.episode ?: -1,
+
+            is ShowDetailsScreenUiState.Done -> {
+                val playProgress = if (s.showDetails.isSeries) {
+                    s.showProgress.latestSeriesProgress()
+                } else {
+                    s.showProgress.latestProgressItem()
+                }
+                val playButtonText = when {
+                    s.showDetails.isSeries && playProgress != null -> stringResource(
+                        R.string.continueWatchingSeries,
+                        playProgress.season,
+                        playProgress.episode,
                     )
-                },
-                playButtonText = playButtonText,
-                goToEpisodes = if (s.showDetails.isSeries) {
-                    { navigateToEpisodes(showId) }
-                } else null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .animateContentSize()
-            )
+                    !s.showDetails.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
+                    else -> stringResource(R.string.playString)
+                }
+                Details(
+                    showDetails = s.showDetails,
+                    showProgress = s.showProgress,
+                    showImages = s.showImages,
+                    showTrailers = s.showTrailers,
+                    toggleFavorites = s.toggleFavorites,
+                    goToMoviePlayer = {
+                        navigateToMoviePlayer(
+                            showId,
+                            playProgress?.season ?: -1,
+                            playProgress?.episode ?: -1,
+                        )
+                    },
+                    playButtonText = playButtonText,
+                    goToEpisodes = if (s.showDetails.isSeries) {
+                        { navigateToEpisodes(showId) }
+                    } else null,
+                    onThemeSeedColorChanged = { themeSeedColor = it },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .animateContentSize()
+                )
+            }
         }
     }
 }
@@ -143,6 +167,7 @@ private fun Details(
     goToMoviePlayer: () -> Unit,
     playButtonText: String,
     goToEpisodes: (() -> Unit)? = null,
+    onThemeSeedColorChanged: (Color?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
@@ -156,7 +181,12 @@ private fun Details(
                 .fillMaxHeight()
         ) {
             ImmersiveBackground(
-                imageUrl = showDetails.backdropUrl ?: showImages.frames.firstOrNull()?.url ?: showDetails.poster
+                imageUrl = resolveImmersiveImageUrl(
+                    showDetails = showDetails,
+                    showImages = showImages,
+                ),
+                dynamicThemeEnabled = true,
+                onThemeSeedColorResolved = onThemeSeedColorChanged,
             )
             Box(
                 Modifier
@@ -214,6 +244,16 @@ private fun Details(
         }
 
     }
+}
+
+private fun resolveImmersiveImageUrl(
+    showDetails: ShowDetails,
+    showImages: ShowImages,
+): String? {
+    return showDetails.backdropUrl?.takeUnless(String::isBlank)
+        ?: showImages.frames.firstOrNull()?.url?.takeUnless(String::isBlank)
+        ?: showImages.posters.firstOrNull()?.url?.takeUnless(String::isBlank)
+        ?: showDetails.poster.takeUnless(String::isBlank)
 }
 
 //@Preview(device = "id:tv_4k")

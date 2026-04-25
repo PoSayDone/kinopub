@@ -1,17 +1,14 @@
 package io.github.posaydone.filmix.tv.ui.common
 
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,23 +23,22 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ImmersiveBackground(
     modifier: Modifier = Modifier,
     imageUrl: String?,
-    dynamicGradientEnabled: Boolean = true,
+    dynamicThemeEnabled: Boolean = true,
+    onThemeSeedColorResolved: (Color) -> Unit = {},
 ) {
-    val defaultSurface = MaterialTheme.colorScheme.surface
-    var gradientColor by remember(imageUrl, dynamicGradientEnabled, defaultSurface) {
-        mutableStateOf(defaultSurface)
-    }
+    val surfaceColor = MaterialTheme.colorScheme.surface
     val scope = rememberCoroutineScope()
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(gradientColor)
+            .background(surfaceColor)
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -58,42 +54,39 @@ fun ImmersiveBackground(
                 .fillMaxWidth(0.8f)
                 .aspectRatio(16/9f)
                 .align(Alignment.TopEnd)
-                .gradientOverlay(gradientColor),
-            placeholder = ColorPainter(defaultSurface),
-            error = ColorPainter(defaultSurface),
-            fallback = ColorPainter(defaultSurface),
+                .gradientOverlay(surfaceColor),
+            placeholder = ColorPainter(surfaceColor),
+            error = ColorPainter(surfaceColor),
+            fallback = ColorPainter(surfaceColor),
             onSuccess = { state ->
-                if (!dynamicGradientEnabled) {
+                if (!dynamicThemeEnabled) {
                     return@AsyncImage
                 }
 
                 val drawable = state.result.drawable
-                scope.launch(Dispatchers.Default) {
-                    try {
-                        val bitmap = drawable.toBitmap().copy(Bitmap.Config.ARGB_8888, true)
-
-                        if (bitmap != null) {
-                            val palette = Palette.Builder(bitmap)
-                                .clearFilters()
-                                .maximumColorCount(8)
-                                .generate()
-
-                            palette.dominantSwatch?.hsl?.let { hsl ->
-                                gradientColor = Color.hsl(
-                                    hue = hsl[0],
-                                    saturation = 0.9f,
-                                    lightness = 0.04f,
-                                    alpha = 1f
-                                )
-                            }
-
-                            bitmap.recycle()
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace() 
+                scope.launch {
+                    val themeSeedColor = withContext(Dispatchers.Default) {
+                        drawable.extractThemeSeedColor()
                     }
+                    themeSeedColor?.let(onThemeSeedColorResolved)
                 }
             }
         )
+    }
+}
+
+private fun Drawable.extractThemeSeedColor(): Color? {
+    return try {
+        val bitmap = toBitmap().copy(Bitmap.Config.ARGB_8888, true)
+        val palette = Palette.Builder(bitmap)
+            .clearFilters()
+            .maximumColorCount(8)
+            .generate()
+        val swatch = palette.vibrantSwatch ?: palette.dominantSwatch ?: palette.mutedSwatch
+
+        bitmap.recycle()
+        swatch?.rgb?.let(::Color)
+    } catch (_: Exception) {
+        null
     }
 }
