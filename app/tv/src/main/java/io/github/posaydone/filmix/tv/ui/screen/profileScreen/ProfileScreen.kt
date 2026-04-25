@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -155,6 +156,10 @@ fun ProfileScreenContent(
     }
 
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+
+    LaunchedEffect(Unit) {
+        runCatching { firstItem.requestFocus() }
+    }
 
     SettingDialog(
         title = stringResource(R.string.stream_type),

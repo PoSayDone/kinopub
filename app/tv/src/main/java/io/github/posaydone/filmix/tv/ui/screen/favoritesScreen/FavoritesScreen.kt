@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -71,6 +72,10 @@ private fun FavoritesScreenContent(
     val childPadding = rememberChildPadding()
     val lazyListState = rememberLazyListState()
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+
+    LaunchedEffect(Unit) {
+        runCatching { firstItem.requestFocus() }
+    }
 
     LazyColumn(
         state = lazyListState,
