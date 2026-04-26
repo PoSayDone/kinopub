@@ -16,7 +16,7 @@ fun Loading(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.padding(start = 80.dp),
+        modifier = modifier.focusable().padding(start = 80.dp),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(
