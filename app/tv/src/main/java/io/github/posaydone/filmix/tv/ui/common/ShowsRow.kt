@@ -113,7 +113,6 @@ fun ShowsRow(
                                 onClick = { onViewAll() },
                                 modifier = Modifier
                                     .width(cardWidth)
-                                    .focusRequester(firstItem),
                             ) {
                                 Box(
                                     modifier = Modifier

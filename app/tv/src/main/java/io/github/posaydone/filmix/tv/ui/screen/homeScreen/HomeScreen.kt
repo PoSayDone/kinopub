@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.geometry.Rect
@@ -100,6 +101,7 @@ fun HomeScreen(
     val showImmersiveBackground by viewModel.showImmersiveBackground.collectAsStateWithLifecycle()
     val showImmersiveGradient by viewModel.showImmersiveGradient.collectAsStateWithLifecycle()
     val showImmersiveDetails by viewModel.showImmersiveDetails.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         if (uiState is HomeScreenUiState.Done) {
             viewModel.retry()
@@ -240,16 +242,6 @@ private fun Body(
     val focusedShow = remember(availableShows, fallbackFocusedShow, focusedShowId) {
         availableShows.firstOrNull { it.id == focusedShowId } ?: fallbackFocusedShow
     }
-    val onShowFocused: (Show) -> Unit = { show ->
-        if (show.id != focusedShowId) {
-            debounceJob[0]?.cancel()
-            debounceJob[0] = scope.launch {
-                delay(300L)
-                focusedShowId = show.id
-            }
-        }
-    }
-
     val lazyColumnState = rememberLazyListState()
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
 
@@ -259,7 +251,7 @@ private fun Body(
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
 
     LaunchedEffect(Unit) {
-        runCatching { firstItem.requestFocus() }
+        runCatching { lazyColumn.requestFocus() }
     }
 
     val immersiveBackdropUrl = focusedShow?.backdropUrl
@@ -269,7 +261,7 @@ private fun Body(
         val clipDp = spacerHeight + 56
         (clipDp.toFloat() / screenHeightDp).coerceIn(0.5f, 0.85f)
     }
-    
+
     val rowsClipShape = remember(immersiveHeightFraction) {
         object : Shape {
             override fun createOutline(
@@ -294,6 +286,18 @@ private fun Body(
                 baseModifier
             }
         }
+   
+    val onShowFocused: (Show) -> Unit = { show ->
+        lazyColumn.saveFocusedChild()
+        if (show.id != focusedShowId) {
+            debounceJob[0]?.cancel()
+            debounceJob[0] = scope.launch {
+                delay(300L)
+                focusedShowId = show.id
+            }
+        }
+    }
+
 
     Box(modifier = modifier) {
         Crossfade(
@@ -329,12 +333,20 @@ private fun Body(
                         showItemYear = false,
                         title = stringResource(R.string.continue_watching),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
-                            navigateToPlayer(show.id, show.seasonNumber ?: -1, show.episodeNumber ?: -1)
+                            navigateToPlayer(
+                                show.id,
+                                show.seasonNumber ?: -1,
+                                show.episodeNumber ?: -1
+                            )
                         },
                         onShowFocused = { show -> onShowFocused(show.toShow()) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.HISTORY.name, title = "История просмотра"))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.HISTORY.name,
+                                    title = "История просмотра"
+                                )
+                            )
                         },
                     )
                 }
@@ -346,12 +358,19 @@ private fun Body(
                         showList = popularMovies,
                         title = stringResource(R.string.popular_movies),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные фильмы", KinoPubContentType.MOVIE, KinoPubSort.VIEWS, KinoPubPeriod.MONTH))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Популярные фильмы",
+                                    KinoPubContentType.MOVIE,
+                                    KinoPubSort.VIEWS,
+                                    KinoPubPeriod.MONTH
+                                )
+                            )
                         },
                     )
                 }
@@ -363,12 +382,18 @@ private fun Body(
                         showList = newMovies,
                         title = stringResource(R.string.new_movies),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые фильмы", KinoPubContentType.MOVIE, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Новые фильмы",
+                                    KinoPubContentType.MOVIE,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }
@@ -380,12 +405,19 @@ private fun Body(
                         showList = popularSeries,
                         title = stringResource(R.string.popular_series),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Популярные сериалы", KinoPubContentType.SERIAL, KinoPubSort.WATCHERS, KinoPubPeriod.THREE_MONTHS))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Популярные сериалы",
+                                    KinoPubContentType.SERIAL,
+                                    KinoPubSort.WATCHERS,
+                                    KinoPubPeriod.THREE_MONTHS
+                                )
+                            )
                         },
                     )
                 }
@@ -397,12 +429,18 @@ private fun Body(
                         showList = newSeries,
                         title = stringResource(R.string.new_series),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Новые сериалы", KinoPubContentType.SERIAL, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Новые сериалы",
+                                    KinoPubContentType.SERIAL,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }
@@ -414,12 +452,18 @@ private fun Body(
                         showList = newConcerts,
                         title = stringResource(R.string.new_concerts),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Концерты", KinoPubContentType.CONCERT, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Концерты",
+                                    KinoPubContentType.CONCERT,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }
@@ -431,12 +475,18 @@ private fun Body(
                         showList = new3d,
                         title = stringResource(R.string.new_3d),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "3D фильмы", KinoPubContentType.FILM_3D, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "3D фильмы",
+                                    KinoPubContentType.FILM_3D,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }
@@ -448,12 +498,18 @@ private fun Body(
                         showList = newDocumentaryFilms,
                         title = stringResource(R.string.new_documentary_films),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные фильмы", KinoPubContentType.DOCUMOVIE, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Документальные фильмы",
+                                    KinoPubContentType.DOCUMOVIE,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }
@@ -465,12 +521,18 @@ private fun Body(
                         showList = newDocumentarySeries,
                         title = stringResource(R.string.new_documentary_series),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "Документальные сериалы", KinoPubContentType.DOCUSERIAL, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "Документальные сериалы",
+                                    KinoPubContentType.DOCUSERIAL,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }
@@ -482,12 +544,18 @@ private fun Body(
                         showList = newTvShows,
                         title = stringResource(R.string.new_tv_shows),
                         onShowSelected = { show ->
-                            lazyColumn.saveFocusedChild()
                             navigateToShowDetails(show.id)
                         },
                         onShowFocused = { show -> onShowFocused(show) },
                         onViewAll = {
-                            navigateToShowsGrid(MainGraphData.ShowsGrid(ShowsGridQueryType.CATALOG.name, "ТВ Шоу", KinoPubContentType.TVSHOW, KinoPubSort.CREATED))
+                            navigateToShowsGrid(
+                                MainGraphData.ShowsGrid(
+                                    ShowsGridQueryType.CATALOG.name,
+                                    "ТВ Шоу",
+                                    KinoPubContentType.TVSHOW,
+                                    KinoPubSort.CREATED
+                                )
+                            )
                         },
                     )
                 }

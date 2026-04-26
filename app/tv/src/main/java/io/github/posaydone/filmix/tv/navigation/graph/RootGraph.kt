@@ -3,6 +3,13 @@ package io.github.posaydone.filmix.tv.navigation.graph
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
@@ -22,7 +29,7 @@ fun RootGraph(
     sessionManager: SessionManager,
     authEventFlow: SharedFlow<@JvmSuppressWildcards AuthEvent>,
 ) {
-
+    val (display) = remember { FocusRequester.createRefs() }
     val startDestination =
         if (sessionManager.isLoggedIn()) MainGraphData.MainGraph else MainGraphData.Auth
     val backStack = rememberNavBackStack(startDestination)
@@ -39,6 +46,9 @@ fun RootGraph(
     }
 
     NavDisplay(
+        modifier = Modifier
+            .focusRequester(display)
+            .focusRestorer(),
         backStack = backStack, onBack = { backStack.removeLastOrNull() }, entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator()

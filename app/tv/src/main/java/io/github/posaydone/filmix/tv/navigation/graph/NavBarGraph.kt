@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -38,59 +39,50 @@ fun NavBarGraph(
     content: @Composable () -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val isActive = topLevelBackStack.backStack.last() is NavBarGraphData
 
-    Box(
+    ModalNavigationDrawer(
         modifier = Modifier
-            .fillMaxSize()
-            .focusGroup()
-            .focusProperties {
-                onEnter = { if (isActive) FocusRequester.Default else FocusRequester.Cancel }
-            }
-    ) {
-        ModalNavigationDrawer(
-            modifier = Modifier.focusRestorer(contentFocusRequester),
-            drawerState = drawerState,
-            drawerContent = {
-                LazyColumn(
-                    userScrollEnabled = false,
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(12.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(
-                        8.dp, alignment = Alignment.CenterVertically
-                    ),
-                ) {
-                    itemsIndexed(navBarScreenItems) { _, item ->
-                        val context = LocalContext.current
-                        val text = getLocalizedTitle(context, item)
-                        val icon = getIcon(item.icon)
-                        val isSelected = item == topLevelBackStack.topLevelKey
+            .focusRequester(drawerFocusRequester)
+            .focusRestorer(contentFocusRequester),
+        drawerState = drawerState,
+        drawerContent = {
+            LazyColumn(
+                userScrollEnabled = false,
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(12.dp)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(
+                    8.dp, alignment = Alignment.CenterVertically
+                ),
+            ) {
+                itemsIndexed(navBarScreenItems) { _, item ->
+                    val context = LocalContext.current
+                    val text = getLocalizedTitle(context, item)
+                    val icon = getIcon(item.icon)
+                    val isSelected = item == topLevelBackStack.topLevelKey
 
-                        NavigationDrawerItem(
-                            selected = isSelected,
-                            onClick = {
-                                topLevelBackStack.addTopLevel(item)
-                                drawerState.setValue(DrawerValue.Closed)
-                                contentFocusRequester.requestFocus()
-                            },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = null,
-                                )
-                            },
-                        ) {
-                            Text(text)
-                        }
+                    NavigationDrawerItem(
+                        selected = isSelected,
+                        onClick = {
+                            topLevelBackStack.addTopLevel(item)
+                            drawerState.setValue(DrawerValue.Closed)
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                            )
+                        },
+                    ) {
+                        Text(text)
                     }
                 }
-            },
-        ) {
-            Box(modifier = Modifier.padding(start = ClosedDrawerWidth)) {
-                content()
             }
+        },
+    ) {
+        Box(modifier = Modifier.padding(start = ClosedDrawerWidth)) {
+            content()
         }
     }
 }

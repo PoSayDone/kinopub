@@ -121,21 +121,12 @@ private fun ShowsRowItem(
     modifier: Modifier = Modifier,
     onMovieFocused: (Show) -> Unit = {},
 ) {
-    var isFocused by remember { mutableStateOf(false) }
 
     ShowCard(
         show = show, onClick = { onMovieSelected(show) }, modifier = Modifier
             .onFocusChanged {
-                isFocused = it.isFocused
                 if (it.isFocused) {
                     onMovieFocused(show)
-                }
-            }
-            .focusProperties {
-                left = if (index == 0) {
-                    FocusRequester.Cancel
-                } else {
-                    FocusRequester.Default
                 }
             }
             .then(modifier))

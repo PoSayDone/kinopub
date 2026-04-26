@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -66,7 +67,9 @@ fun MainGraph() {
     val (drawer, firstItem) = remember { FocusRequester.createRefs() }
 
     NavDisplay(
-        modifier = Modifier.focusRequester(firstItem),
+        modifier = Modifier
+            .focusRequester(firstItem)
+            .focusRestorer(),
         backStack = topLevelBackStack.backStack,
         onBack = { topLevelBackStack.removeLast() },
         entryDecorators = listOf(

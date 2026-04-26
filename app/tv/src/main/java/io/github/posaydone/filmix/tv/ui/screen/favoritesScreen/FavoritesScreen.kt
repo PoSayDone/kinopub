@@ -1,6 +1,7 @@
 package io.github.posaydone.filmix.tv.ui.screen.favoritesScreen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -74,15 +75,15 @@ private fun FavoritesScreenContent(
     val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
 
     LaunchedEffect(Unit) {
-        runCatching { firstItem.requestFocus() }
+        runCatching { lazyColumn.requestFocus() }
     }
 
     LazyColumn(
         state = lazyListState,
         modifier = Modifier
-            .fillMaxSize()
             .focusRequester(lazyColumn)
-            .focusRestorer(firstItem),
+            .focusRestorer(firstItem)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
@@ -102,8 +103,10 @@ private fun FavoritesScreenContent(
                 title = "Я смотрю",
                 modifier = Modifier.focusRequester(firstItem),
                 showList = watchingList,
-                onShowSelected = { show ->
+                onShowFocused = {
                     lazyColumn.saveFocusedChild()
+                },
+                onShowSelected = { show ->
                     navigateToShowDetails(show.id)
                 },
                 onViewAll = {
@@ -116,8 +119,10 @@ private fun FavoritesScreenContent(
                 title = stringResource(R.string.history),
                 modifier = Modifier.padding(bottom = childPadding.bottom),
                 historyList = historyList,
-                onShowSelected = { show ->
+                onShowFocused = {
                     lazyColumn.saveFocusedChild()
+                },
+                onShowSelected = { show ->
                     navigateToPlayer(show.id, show.seasonNumber ?: -1, show.episodeNumber ?: -1)
                 },
                 onViewAll = {
