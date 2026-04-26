@@ -248,7 +248,7 @@ private fun Body(
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
     val backdropHeight = screenHeightDp.dp - 32.dp
     val childPadding = rememberChildPadding()
-    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+    val (lazyColumn, firstItem) = remember() { FocusRequester.createRefs() }
 
     LaunchedEffect(Unit) {
         runCatching { lazyColumn.requestFocus() }

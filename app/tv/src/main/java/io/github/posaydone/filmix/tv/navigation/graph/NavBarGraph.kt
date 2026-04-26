@@ -1,24 +1,19 @@
 package io.github.posaydone.filmix.tv.navigation.graph
 
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import io.github.posaydone.filmix.shared.graphData.NavBarGraphData
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -34,16 +29,12 @@ private val ClosedDrawerWidth = 80.dp
 @Composable
 fun NavBarGraph(
     topLevelBackStack: TopLevelBackStack<Any>,
-    drawerFocusRequester: FocusRequester,
-    contentFocusRequester: FocusRequester,
     content: @Composable () -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     ModalNavigationDrawer(
-        modifier = Modifier
-            .focusRequester(drawerFocusRequester)
-            .focusRestorer(contentFocusRequester),
+        modifier = Modifier,
         drawerState = drawerState,
         drawerContent = {
             LazyColumn(
@@ -81,7 +72,10 @@ fun NavBarGraph(
             }
         },
     ) {
-        Box(modifier = Modifier.padding(start = ClosedDrawerWidth)) {
+        Box(
+            modifier = Modifier
+                .padding(start = ClosedDrawerWidth)
+        ) {
             content()
         }
     }

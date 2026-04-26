@@ -31,19 +31,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             KinopubTheme {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface)
+                CompositionLocalProvider(
+                    LocalContentColor provides MaterialTheme.colorScheme.onSurface
                 ) {
-                    CompositionLocalProvider(
-                        LocalContentColor provides MaterialTheme.colorScheme.onSurface
-                    ) {
-                        RootGraph(
-                            sessionManager = sessionManager,
-                            authEventFlow = authEventFlow
-                        )
-                    }
+                    RootGraph(
+                        sessionManager = sessionManager,
+                        authEventFlow = authEventFlow
+                    )
                 }
             }
         }

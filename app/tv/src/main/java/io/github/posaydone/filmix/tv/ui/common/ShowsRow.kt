@@ -23,6 +23,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
@@ -95,7 +97,7 @@ fun ShowsRow(
             }
             AnimatedContent(
                 targetState = showList,
-                label = "",
+                    label = "",
             ) {
                 LazyRow(
                     contentPadding = PaddingValues(
@@ -175,7 +177,7 @@ private fun ShowsRowItem(
     onShowFocused: (Show) -> Unit = {},
     cardWidth: Dp = 148.dp,
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    var isFocused by rememberSaveable { mutableStateOf(false) }
 
     BaseCard(
         onClick = { onShowSelected(show) },
@@ -183,7 +185,7 @@ private fun ShowsRowItem(
             .width(cardWidth)
             .onFocusChanged {
                 isFocused = it.isFocused
-                if (it.isFocused) {
+                if (isFocused) {
                     onShowFocused(show)
                 }
             }

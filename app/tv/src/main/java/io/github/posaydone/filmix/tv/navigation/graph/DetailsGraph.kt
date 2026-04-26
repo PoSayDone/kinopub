@@ -1,6 +1,9 @@
 package io.github.posaydone.filmix.tv.navigation.graph
 
 import androidx.annotation.OptIn
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -26,6 +29,15 @@ fun DetailsGraph(showId: Int) {
     val backStack = rememberNavBackStack(MainGraphData.ShowDetails(showId))
 
     NavDisplay(
+        transitionSpec = {
+            EnterTransition.None togetherWith ExitTransition.None
+        },
+        popTransitionSpec = {
+            EnterTransition.None togetherWith ExitTransition.None
+        },
+        predictivePopTransitionSpec = {
+            EnterTransition.None togetherWith ExitTransition.None
+        },
         backStack = backStack,
         onBack = { backStack.removeAt(backStack.lastIndex) },
         entryDecorators = listOf(

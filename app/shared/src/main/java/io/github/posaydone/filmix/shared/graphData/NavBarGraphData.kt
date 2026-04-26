@@ -3,7 +3,7 @@ package io.github.posaydone.filmix.shared.graphData
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
-var navBarScreenItems = listOf<NavBarGraphData>(
+var navBarScreenItems = listOf(
     NavBarGraphData.Home,
     NavBarGraphData.Explore,
     NavBarGraphData.Favorite,
@@ -11,7 +11,7 @@ var navBarScreenItems = listOf<NavBarGraphData>(
 )
 
 @Serializable
-sealed class NavBarGraphData(val icon: String, val title: String): NavKey {
+sealed class NavBarGraphData(val icon: String, val title: String) : NavKey {
     @Serializable
     data object Home : NavBarGraphData(
         title = "Home", icon = "Home"

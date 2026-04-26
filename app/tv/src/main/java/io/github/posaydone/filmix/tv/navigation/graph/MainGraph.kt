@@ -3,6 +3,10 @@ package io.github.posaydone.filmix.tv.navigation.graph
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.annotation.OptIn
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.focusable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Explore
@@ -38,6 +42,7 @@ import io.github.posaydone.filmix.tv.ui.screen.favoritesScreen.FavoritesScreen
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.HomeScreen
 import io.github.posaydone.filmix.tv.ui.screen.playerScreen.PlayerScreen
 import io.github.posaydone.filmix.tv.ui.screen.showsGridScreen.ShowsGridScreen
+import kotlin.collections.listOf
 
 fun getIcon(iconName: String): ImageVector {
     return when (iconName) {
@@ -64,12 +69,19 @@ fun getLocalizedTitle(context: Context, item: NavBarGraphData): String {
 @Composable
 fun MainGraph() {
     val topLevelBackStack = remember { TopLevelBackStack<Any>(NavBarGraphData.Home) }
-    val (drawer, firstItem) = remember { FocusRequester.createRefs() }
 
     NavDisplay(
+        transitionSpec = {
+            EnterTransition.None togetherWith ExitTransition.None
+        },
+        popTransitionSpec = {
+            EnterTransition.None togetherWith ExitTransition.None
+        },
+        predictivePopTransitionSpec = {
+            EnterTransition.None togetherWith ExitTransition.None
+        },
         modifier = Modifier
-            .focusRequester(firstItem)
-            .focusRestorer(),
+            .focusable(false),
         backStack = topLevelBackStack.backStack,
         onBack = { topLevelBackStack.removeLast() },
         entryDecorators = listOf(
@@ -78,7 +90,7 @@ fun MainGraph() {
         ),
         entryProvider = entryProvider {
             entry<NavBarGraphData.Home> {
-                NavBarGraph(topLevelBackStack, drawer, firstItem) {
+                NavBarGraph(topLevelBackStack) {
                     HomeScreen(
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
@@ -95,7 +107,7 @@ fun MainGraph() {
                 }
             }
             entry<NavBarGraphData.Explore> {
-                NavBarGraph(topLevelBackStack, drawer, firstItem) {
+                NavBarGraph(topLevelBackStack) {
                     ExploreScreen(
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
@@ -104,7 +116,7 @@ fun MainGraph() {
                 }
             }
             entry<NavBarGraphData.Favorite> {
-                NavBarGraph(topLevelBackStack, drawer, firstItem) {
+                NavBarGraph(topLevelBackStack) {
                     FavoritesScreen(
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
@@ -126,7 +138,7 @@ fun MainGraph() {
                 }
             }
             entry<NavBarGraphData.ProfileGraph> {
-                NavBarGraph(topLevelBackStack, drawer, firstItem) {
+                NavBarGraph(topLevelBackStack) {
                     ProfileGraph()
                 }
             }
