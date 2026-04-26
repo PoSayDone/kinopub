@@ -2,8 +2,11 @@ package io.github.posaydone.filmix.tv.ui.common
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,28 +26,31 @@ import androidx.tv.material3.Text
 fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
     val (lazyRow, firstItem) = remember { FocusRequester.createRefs() }
 
-    Column(
+    Box(
         modifier = modifier
-            .focusable(false),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(
-            space = 12.dp, alignment = Alignment.CenterVertically
-        ),
+            .padding(start = 80.dp)
     ) {
-        Text(
-            text = "Error", style = MaterialTheme.typography.headlineLarge,
-        )
-        Text(
-            text = "Filmix service is unavailable or you don't have internet connection. Try again later.",
-            style = MaterialTheme.typography.bodyLarge,
-        )
 
-        LazyRow(
+        LazyColumn(
             modifier = Modifier
                 .focusRequester(lazyRow)
                 .focusRestorer(firstItem),
-            contentPadding = PaddingValues(8.dp)
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(
+                space = 12.dp, alignment = Alignment.CenterVertically
+            ),
         ) {
+            item {
+                Text(
+                    text = "Error", style = MaterialTheme.typography.headlineLarge,
+                )
+            }
+            item {
+                Text(
+                    text = "Filmix service is unavailable or you don't have internet connection. Try again later.",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
             item {
                 Button(
                     modifier = Modifier

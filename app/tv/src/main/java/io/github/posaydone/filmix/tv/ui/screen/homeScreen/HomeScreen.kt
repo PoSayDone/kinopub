@@ -286,7 +286,7 @@ private fun Body(
                 baseModifier
             }
         }
-   
+
     val onShowFocused: (Show) -> Unit = { show ->
         lazyColumn.saveFocusedChild()
         if (show.id != focusedShowId) {

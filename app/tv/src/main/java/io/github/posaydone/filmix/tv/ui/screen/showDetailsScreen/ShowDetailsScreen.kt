@@ -111,6 +111,7 @@ fun ShowDetailsScreen(
                     playProgress.season,
                     playProgress.episode,
                 )
+
                 !s.showDetails.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
                 else -> stringResource(R.string.playString)
             }
@@ -156,74 +157,72 @@ private fun Details(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    Column(modifier = modifier) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+    ) {
+        ImmersiveBackground(
+            imageUrl = resolveImmersiveImageUrl(
+                showDetails = showDetails,
+                showImages = showImages,
+            ),
+        )
         Box(
+            Modifier
+                .fillMaxSize()
+                .gradientOverlay(MaterialTheme.colorScheme.surface)
+        )
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
+                .fillMaxSize()
+                .padding(
+                    start = childPadding.start + 80.dp,
+                    top = childPadding.top + 24.dp,
+                    end = childPadding.end + 48.dp,
+                    bottom = childPadding.bottom + 24.dp
+                ), verticalArrangement = Arrangement.SpaceBetween
         ) {
-            ImmersiveBackground(
-                imageUrl = resolveImmersiveImageUrl(
-                    showDetails = showDetails,
-                    showImages = showImages,
+            ImmersiveDetails(
+                logoUrl = null,
+                title = showDetails.title,
+                description = showDetails.description,
+                rating = Rating(
+                    kp = showDetails.ratingKp,
+                    imdb = showDetails.ratingImdb,
+                    filmCritics = .0,
+                    russianFilmCritics = .0,
+                    await = .0
                 ),
+                votes = Votes(
+                    kp = showDetails.votesKp,
+                    imdb = showDetails.votesImdb,
+                    filmCritics = 0,
+                    russianFilmCritics = 0,
+                    await = 0
+                ),
+                genres = showDetails.genres.map { KinopoiskGenre(it.name) },
+                countries = showDetails.countries.map { KinopoiskCountry(it.name) },
+                year = showDetails.year,
+                movieLength = if (!showDetails.isSeries) showDetails.duration else null,
+                seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
+                ageRating = showDetails.ageRating.toString()
             )
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .gradientOverlay(MaterialTheme.colorScheme.surface)
+            ShowDetailsButtons(
+                modifier = Modifier.onFocusChanged {
+                    if (it.isFocused) {
+                        coroutineScope.launch { bringIntoViewRequester.bringIntoView() }
+                    }
+                },
+                goToMoviePlayer = goToMoviePlayer,
+                playButtonText = playButtonText,
+                goToEpisodes = goToEpisodes,
+                toggleFavorites = toggleFavorites,
+                isFavorite = showDetails.isFavorite == true
             )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = childPadding.start + 80.dp,
-                        top = childPadding.top + 24.dp,
-                        end = childPadding.end + 48.dp,
-                        bottom = childPadding.bottom + 24.dp
-                    ), verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                ImmersiveDetails(
-                    logoUrl = null,
-                    title = showDetails.title,
-                    description = showDetails.description,
-                    rating = Rating(
-                        kp = showDetails.ratingKp,
-                        imdb = showDetails.ratingImdb,
-                        filmCritics = .0,
-                        russianFilmCritics = .0,
-                        await = .0
-                    ),
-                    votes = Votes(
-                        kp = showDetails.votesKp,
-                        imdb = showDetails.votesImdb,
-                        filmCritics = 0,
-                        russianFilmCritics = 0,
-                        await = 0
-                    ),
-                    genres = showDetails.genres.map { KinopoiskGenre(it.name) },
-                    countries = showDetails.countries.map { KinopoiskCountry(it.name) },
-                    year = showDetails.year,
-                    movieLength = if (!showDetails.isSeries) showDetails.duration else null,
-                    seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
-                    ageRating = showDetails.ageRating.toString()
-                )
-                ShowDetailsButtons(
-                    modifier = Modifier.onFocusChanged {
-                        if (it.isFocused) {
-                            coroutineScope.launch { bringIntoViewRequester.bringIntoView() }
-                        }
-                    },
-                    goToMoviePlayer = goToMoviePlayer,
-                    playButtonText = playButtonText,
-                    goToEpisodes = goToEpisodes,
-                    toggleFavorites = toggleFavorites,
-                    isFavorite = showDetails.isFavorite == true
-                )
-            }
         }
-
     }
+
 }
 
 private fun resolveImmersiveImageUrl(
