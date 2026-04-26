@@ -159,6 +159,7 @@ private fun Details(
 
     Box(
         modifier = Modifier
+            .padding(start = 80.dp)
             .fillMaxWidth()
             .fillMaxHeight()
     ) {
@@ -168,16 +169,11 @@ private fun Details(
                 showImages = showImages,
             ),
         )
-        Box(
-            Modifier
-                .fillMaxSize()
-                .gradientOverlay(MaterialTheme.colorScheme.surface)
-        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    start = childPadding.start + 80.dp,
+                    start = childPadding.start,
                     top = childPadding.top + 24.dp,
                     end = childPadding.end + 48.dp,
                     bottom = childPadding.bottom + 24.dp

@@ -1,21 +1,15 @@
 package io.github.posaydone.filmix.tv.navigation.graph
 
 import androidx.annotation.OptIn
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
@@ -55,6 +49,15 @@ fun RootGraph(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface),
+        transitionSpec = {
+            fadeIn(tween(400)) togetherWith fadeOut(tween(300))
+        },
+        popTransitionSpec = {
+            fadeIn(tween(400)) togetherWith fadeOut(tween(300))
+        },
+        predictivePopTransitionSpec = {
+            fadeIn(tween(400)) togetherWith fadeOut(tween(300))
+        },
         backStack = backStack, onBack = { backStack.removeLastOrNull() }, entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator()

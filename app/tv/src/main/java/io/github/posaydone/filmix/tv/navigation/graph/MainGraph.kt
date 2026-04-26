@@ -3,8 +3,9 @@ package io.github.posaydone.filmix.tv.navigation.graph
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.annotation.OptIn
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.focusable
 import androidx.compose.material.icons.Icons
@@ -16,11 +17,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -72,13 +68,13 @@ fun MainGraph() {
 
     NavDisplay(
         transitionSpec = {
-            EnterTransition.None togetherWith ExitTransition.None
+            fadeIn(tween(300)) togetherWith fadeOut(tween(250))
         },
         popTransitionSpec = {
-            EnterTransition.None togetherWith ExitTransition.None
+            fadeIn(tween(300)) togetherWith fadeOut(tween(250))
         },
         predictivePopTransitionSpec = {
-            EnterTransition.None togetherWith ExitTransition.None
+            fadeIn(tween(300)) togetherWith fadeOut(tween(250))
         },
         modifier = Modifier
             .focusable(false),

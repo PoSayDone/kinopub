@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -33,7 +34,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -78,7 +78,9 @@ fun ShowsRow(
     onShowFocused: ((Show) -> Unit)? = {},
     onViewAll: (() -> Unit)? = null,
 ) {
-    val (lazyRow, firstItem) = remember { FocusRequester.createRefs() }
+    var lastFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
+    val lazyRow = remember { FocusRequester() }
+    val restoredItem = remember { FocusRequester() }
     val horizontalBivs = remember { CustomBringIntoViewSpec(0.4f, 0f) }
 
     CompositionLocalProvider(LocalBringIntoViewSpec provides horizontalBivs) {
@@ -107,7 +109,7 @@ fun ShowsRow(
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     modifier = Modifier
                         .focusRequester(lazyRow)
-                        .focusRestorer(firstItem)
+                        .focusProperties { onEnter = { runCatching { restoredItem.requestFocus() } } }
                 ) {
                     if (onViewAll != null) {
                         item {
@@ -135,8 +137,9 @@ fun ShowsRow(
                     }
 
                     itemsIndexed(showList, key = { _, show -> show.id }) { index, show ->
-                        val itemModifier = if (index == 0) {
-                            Modifier.focusRequester(firstItem)
+                        val safeIndex = lastFocusedIndex.coerceIn(0, showList.lastIndex.coerceAtLeast(0))
+                        val itemModifier = if (index == safeIndex) {
+                            Modifier.focusRequester(restoredItem)
                         } else {
                             Modifier
                         }
@@ -146,11 +149,11 @@ fun ShowsRow(
                             index = index,
                             cardWidth = cardWidth,
                             itemDirection = itemDirection,
-                            onShowSelected = {
-                                lazyRow.saveFocusedChild()
-                                onShowSelected(it)
+                            onShowSelected = { onShowSelected(it) },
+                            onShowFocused = {
+                                lastFocusedIndex = index
+                                onShowFocused?.invoke(show)
                             },
-                            onShowFocused = { onShowFocused?.invoke(show) },
                             show = show,
                             showItemTitle = showItemTitle,
                             showIndexOverImage = showIndexOverImage

@@ -30,11 +30,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
@@ -248,7 +246,9 @@ private fun Body(
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
     val backdropHeight = screenHeightDp.dp - 32.dp
     val childPadding = rememberChildPadding()
-    val (lazyColumn, firstItem) = remember() { FocusRequester.createRefs() }
+    val lazyColumn = remember { FocusRequester() }
+    val restoredRow = remember { FocusRequester() }
+    var lastFocusedRowKey by rememberSaveable { mutableStateOf("LastSeenRow") }
 
     LaunchedEffect(Unit) {
         runCatching { lazyColumn.requestFocus() }
@@ -278,7 +278,7 @@ private fun Body(
     val hasImmersiveArea = showImmersiveBackground || showImmersiveDetails
     val rowsModifier = Modifier
         .focusRequester(lazyColumn)
-        .focusRestorer(firstItem)
+        .focusProperties { onEnter = { runCatching { restoredRow.requestFocus() } } }
         .let { baseModifier ->
             if (hasImmersiveArea) {
                 baseModifier.clip(rowsClipShape)
@@ -326,7 +326,8 @@ private fun Body(
                     HistoryShowsRow(
                         modifier = Modifier
                             .padding(bottom = 16.dp)
-                            .focusRequester(firstItem),
+                            .then(if (lastFocusedRowKey == "LastSeenRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "LastSeenRow" },
                         historyList = lastSeenShows,
                         showItemTitle = false,
                         showItemOriginalTitle = false,
@@ -353,7 +354,10 @@ private fun Body(
 
                 item(contentType = "PopularMoviesRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "PopularMoviesRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "PopularMoviesRow" },
                         showItemTitle = false,
                         showList = popularMovies,
                         title = stringResource(R.string.popular_movies),
@@ -377,7 +381,10 @@ private fun Body(
 
                 item(contentType = "NewMoviesRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "NewMoviesRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "NewMoviesRow" },
                         showItemTitle = false,
                         showList = newMovies,
                         title = stringResource(R.string.new_movies),
@@ -400,7 +407,10 @@ private fun Body(
 
                 item(contentType = "PopularSeriesRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "PopularSeriesRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "PopularSeriesRow" },
                         showItemTitle = false,
                         showList = popularSeries,
                         title = stringResource(R.string.popular_series),
@@ -424,7 +434,10 @@ private fun Body(
 
                 item(contentType = "NewSeriesRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "NewSeriesRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "NewSeriesRow" },
                         showItemTitle = false,
                         showList = newSeries,
                         title = stringResource(R.string.new_series),
@@ -447,7 +460,10 @@ private fun Body(
 
                 item(contentType = "NewConcertsRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "NewConcertsRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "NewConcertsRow" },
                         showItemTitle = false,
                         showList = newConcerts,
                         title = stringResource(R.string.new_concerts),
@@ -470,7 +486,10 @@ private fun Body(
 
                 item(contentType = "New3dRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "New3dRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "New3dRow" },
                         showItemTitle = false,
                         showList = new3d,
                         title = stringResource(R.string.new_3d),
@@ -493,7 +512,10 @@ private fun Body(
 
                 item(contentType = "NewDocumentaryFilmsRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "NewDocumentaryFilmsRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "NewDocumentaryFilmsRow" },
                         showItemTitle = false,
                         showList = newDocumentaryFilms,
                         title = stringResource(R.string.new_documentary_films),
@@ -516,7 +538,10 @@ private fun Body(
 
                 item(contentType = "NewDocumentarySeriesRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "NewDocumentarySeriesRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "NewDocumentarySeriesRow" },
                         showItemTitle = false,
                         showList = newDocumentarySeries,
                         title = stringResource(R.string.new_documentary_series),
@@ -539,7 +564,10 @@ private fun Body(
 
                 item(contentType = "NewTvShowsRow") {
                     ShowsRow(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .then(if (lastFocusedRowKey == "NewTvShowsRow") Modifier.focusRequester(restoredRow) else Modifier)
+                            .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "NewTvShowsRow" },
                         showItemTitle = false,
                         showList = newTvShows,
                         title = stringResource(R.string.new_tv_shows),

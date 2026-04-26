@@ -10,13 +10,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,7 +74,9 @@ private fun FavoritesScreenContent(
 ) {
     val childPadding = rememberChildPadding()
     val lazyListState = rememberLazyListState()
-    val (lazyColumn, firstItem) = remember { FocusRequester.createRefs() }
+    val lazyColumn = remember { FocusRequester() }
+    val restoredRow = remember { FocusRequester() }
+    var lastFocusedRowKey by rememberSaveable { mutableStateOf("WatchingRow") }
 
     LaunchedEffect(Unit) {
         runCatching { lazyColumn.requestFocus() }
@@ -82,7 +86,7 @@ private fun FavoritesScreenContent(
         state = lazyListState,
         modifier = Modifier
             .focusRequester(lazyColumn)
-            .focusRestorer(firstItem)
+            .focusProperties { onEnter = { runCatching { restoredRow.requestFocus() } } }
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -101,11 +105,10 @@ private fun FavoritesScreenContent(
         item {
             ShowsRow(
                 title = "Я смотрю",
-                modifier = Modifier.focusRequester(firstItem),
+                modifier = Modifier
+                    .then(if (lastFocusedRowKey == "WatchingRow") Modifier.focusRequester(restoredRow) else Modifier)
+                    .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "WatchingRow" },
                 showList = watchingList,
-                onShowFocused = {
-                    lazyColumn.saveFocusedChild()
-                },
                 onShowSelected = { show ->
                     navigateToShowDetails(show.id)
                 },
@@ -117,11 +120,11 @@ private fun FavoritesScreenContent(
         item {
             HistoryShowsRow(
                 title = stringResource(R.string.history),
-                modifier = Modifier.padding(bottom = childPadding.bottom),
+                modifier = Modifier
+                    .padding(bottom = childPadding.bottom)
+                    .then(if (lastFocusedRowKey == "HistoryRow") Modifier.focusRequester(restoredRow) else Modifier)
+                    .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "HistoryRow" },
                 historyList = historyList,
-                onShowFocused = {
-                    lazyColumn.saveFocusedChild()
-                },
                 onShowSelected = { show ->
                     navigateToPlayer(show.id, show.seasonNumber ?: -1, show.episodeNumber ?: -1)
                 },
