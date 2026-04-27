@@ -97,4 +97,11 @@
     <string name="explore">Поиск</string>
     <string name="favorite_nav">Избранное</string>
     <string name="profile">Профиль</string>
+    <string name="read_more">Читать полностью</string>
+    <string name="cast_label">В ролях</string>
+    <string name="director_label">Режиссёр</string>
+    <string name="voice_label">Озвучка</string>
+    <string name="audio_count">%1$d дорожек</string>
+    <string name="subtitles_count">%1$d субтитров</string>
+    <string name="more_details">Подробнее</string>
 </resources>

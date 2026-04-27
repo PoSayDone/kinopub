@@ -4,21 +4,35 @@ package io.github.posaydone.filmix.tv.ui.screen.showDetailsScreen
 
 import android.util.Log
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BookmarkAdd
 import androidx.compose.material.icons.rounded.BookmarkRemove
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.runtime.Composable
@@ -28,9 +42,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -91,7 +107,6 @@ fun ShowDetailsScreen(
         }
 
         is ShowDetailsScreenUiState.Done -> {
-            
             val playProgress = if (s.showDetails.isSeries) {
                 s.showProgress.latestSeriesProgress()
             } else {
@@ -140,8 +155,17 @@ private fun Details(
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
-    val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
+    val hasExtraInfo = !showDetails.cast.isNullOrBlank()
+        || !showDetails.director.isNullOrBlank()
+        || !showDetails.voice.isNullOrBlank()
+        || (showDetails.langs ?: 0) > 0
+        || (showDetails.subtitlesCount ?: 0) > 0
+        || formatQualityBadge(showDetails.quality) != null
+        || showDetails.hasAc3 == true
 
     Box(
         modifier = Modifier
@@ -152,157 +176,204 @@ private fun Details(
         if (showDetails.backdropUrl != null) {
             ImmersiveBackground(imageUrl = showDetails.backdropUrl)
         }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    start = childPadding.start,
-                    top = childPadding.top + 24.dp,
-                    end = childPadding.end + 48.dp,
-                    bottom = childPadding.bottom + 24.dp
-                ), verticalArrangement = Arrangement.SpaceBetween
+                .verticalScroll(scrollState),
         ) {
-            ImmersiveDetails(
-                logoUrl = null,
-                title = showDetails.title,
-                originalTitle = showDetails.originalTitle,
-                description = showDetails.description,
-                rating = Rating(
-                    kp = showDetails.ratingKp,
-                    imdb = showDetails.ratingImdb,
-                    filmCritics = .0,
-                    russianFilmCritics = .0,
-                    await = .0
-                ),
-                votes = Votes(
-                    kp = showDetails.votesKp,
-                    imdb = showDetails.votesImdb,
-                    filmCritics = 0,
-                    russianFilmCritics = 0,
-                    await = 0
-                ),
-                genres = showDetails.genres.map { KinopoiskGenre(it.name) },
-                countries = showDetails.countries.map { KinopoiskCountry(it.name) },
-                year = showDetails.year,
-                seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
-                movieLength = if (!showDetails.isSeries) showDetails.duration else null,
-                ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
-            )
-            ShowDetailsButtons(
-                modifier = Modifier.onFocusChanged {
-                    if (it.isFocused) {
-                        coroutineScope.launch { bringIntoViewRequester.bringIntoView() }
+            // Main content — fills the screen height
+            Column(
+                modifier = Modifier
+                    .height(screenHeight)
+                    .fillMaxWidth()
+                    .padding(
+                        start = childPadding.start,
+                        top = childPadding.top + 24.dp,
+                        end = childPadding.end + 48.dp,
+                        bottom = childPadding.bottom + 24.dp,
+                    ),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                ImmersiveDetails(
+                    logoUrl = null,
+                    title = showDetails.title,
+                    originalTitle = showDetails.originalTitle,
+                    description = showDetails.description,
+                    rating = Rating(
+                        kp = showDetails.ratingKp,
+                        imdb = showDetails.ratingImdb,
+                        filmCritics = .0,
+                        russianFilmCritics = .0,
+                        await = .0
+                    ),
+                    votes = Votes(
+                        kp = showDetails.votesKp,
+                        imdb = showDetails.votesImdb,
+                        filmCritics = 0,
+                        russianFilmCritics = 0,
+                        await = 0
+                    ),
+                    genres = showDetails.genres.map { KinopoiskGenre(it.name) },
+                    countries = showDetails.countries.map { KinopoiskCountry(it.name) },
+                    year = showDetails.year,
+                    seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
+                    movieLength = if (!showDetails.isSeries) showDetails.duration else null,
+                    ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ShowDetailsButtons(
+                        modifier = Modifier.onFocusChanged {
+                            if (it.isFocused) {
+                                coroutineScope.launch { scrollState.animateScrollTo(0) }
+                            }
+                        },
+                        goToMoviePlayer = goToMoviePlayer,
+                        playButtonText = playButtonText,
+                        goToEpisodes = goToEpisodes,
+                        toggleFavorites = toggleFavorites,
+                        isFavorite = showDetails.isFavorite == true,
+                    )
+
+                    if (hasExtraInfo) {
+                        ScrollHintChevron()
                     }
-                },
-                goToMoviePlayer = goToMoviePlayer,
-                playButtonText = playButtonText,
-                goToEpisodes = goToEpisodes,
-                toggleFavorites = toggleFavorites,
-                isFavorite = showDetails.isFavorite == true
-            )
+                }
+            }
+
+            // Extra info section — revealed by scrolling down
+            if (hasExtraInfo) {
+                ShowExtraDetails(
+                    show = showDetails,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = childPadding.start,
+                            end = childPadding.end + 48.dp,
+                            top = 32.dp,
+                            bottom = 48.dp,
+                        ),
+                )
+            }
         }
     }
-
 }
 
-//@Preview(device = "id:tv_4k")
-//@Composable
-//private fun ShowDetailsScreenPreview() {
-//
-//    Details(
-//        showDetails = ShowDetails(
-//            id = 1,
-//            category = "TV Show",
-//            title = "Mock Show",
-//            originalTitle = "Mock Show Original",
-//            year = 2023,
-//            updated = "2024-01-18",
-//            actors = arrayListOf(
-//                KinopoiskPerson(id = "1", name = "John Doe", poster = "https://example.com/john_doe.jpg"),
-//                KinopoiskPerson(id = "2", name = "Jane Doe", poster = "https://example.com/jane_doe.jpg")
-//            ),
-//            directors = arrayListOf(
-//                KinopoiskPerson(
-//                    id = "3", name = "Director One", poster = "https://example.com/director_one.jpg"
-//                ), KinopoiskPerson(
-//                    id = "4", name = "Director Two", poster = "https://example.com/director_two.jpg"
-//                )
-//            ),
-//            lastEpisode = LastEpisode(
-//                season = 2, episode = "10", translation = "Dub", date = "2024-01-15"
-//            ),
-//            maxEpisode = MaxEpisode(season = 2, episode = 10),
-//            countries = arrayListOf(
-//                Country(id = 1, name = "USA"), Country(id = 2, name = "UK")
-//            ),
-//            genres = arrayListOf(
-//                Genre(id = 1, name = "Drama", alt_name = "drama"),
-//                Genre(id = 2, name = "Sci-Fi", alt_name = "sci-fi")
-//            ),
-//            poster = "https://example.com/mock_show_poster.jpg",
-//            rip = "WEBRip",
-//            quality = "1080p",
-//            votesPos = 5000,
-//            votesNeg = 200,
-//            ratingImdb = 8.5,
-//            ratingKinopoisk = 8.2,
-//            url = "https://example.com/mock_show",
-//            duration = 120,
-//            votesIMDB = 10000,
-//            votesKinopoisk = 8000,
-//            idKinopoisk = 123456,
-//            mpaa = "PG-13",
-//            slogan = "A mock show for testing",
-//            shortStory = "This is a mock show created for testing purposes.",
-//            status = null,
-//            isFavorite = true,
-//            isDeferred = false,
-//            isHdr = true
-//        ),
-//        fullShow = FullShow(
-//            id = 1,
-//            title = "Mock Show",
-//            originalTitle = "Mock Show Original",
-//            year = 2023,
-//            posterUrl = "https://example.com/mock_show_poster.jpg",
-//            backdropUrl = "https://example.com/mock_show_backdrop.jpg",
-//            logoUrl = null,
-//            description = "This is a mock show created for testing purposes.",
-//            shortDescription = "Test description",
-//            ratingKp = 8.2,
-//            ratingImdb = 8.5,
-//            votesKp = 8000,
-//            votesImdb = 10000,
-//            isSeries = false,
-//            isShow = false,
-//            genres = listOf("Drama", "Sci-Fi"),
-//            countries = listOf("USA", "UK"),
-//            ageRating = 13,
-//            movieLength = 120,
-//            seriesLength = null,
-//            quality = "1080p",
-//            status = "Completed",
-//            votesPos = 5000,
-//            votesNeg = 200,
-//            tmdbPosterPaths = emptyList(),
-//            tmdbBackdropPaths = emptyList(),
-//            tmdbLogoPaths = emptyList()
-//        ),
-//        showProgress = null,
-//        showImages = ShowImages(
-//            frames = listOf(
-//                ShowImage(size = 1920, title = "Frame 1", url = "https://example.com/frame1.jpg"),
-//                ShowImage(size = 1920, title = "Frame 2", url = "https://example.com/frame2.jpg")
-//            ), posters = listOf(
-//                ShowImage(size = 1080, title = "Poster 1", url = "https://example.com/poster1.jpg"),
-//                ShowImage(size = 1080, title = "Poster 2", url = "https://example.com/poster2.jpg")
-//            )
-//        ),
-//        showTrailers = null,
-//        toggleFavorites = {},
-//        goToMoviePlayer = {},
-//    )
-//}
+@Composable
+private fun ScrollHintChevron() {
+    val infiniteTransition = rememberInfiniteTransition(label = "chevron")
+    val offsetY by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "chevronOffset",
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.KeyboardArrowDown,
+            contentDescription = null,
+            modifier = Modifier
+                .size(28.dp)
+                .offset(y = offsetY.dp)
+                .alpha(0.6f),
+            tint = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ShowExtraDetails(
+    show: Show,
+    modifier: Modifier = Modifier,
+) {
+    val qualityBadge = formatQualityBadge(show.quality)
+    val hasAc3 = show.hasAc3 == true
+    val hasBadges = qualityBadge != null || hasAc3
+    val hasAudio = (show.langs ?: 0) > 0
+    val hasSubtitles = (show.subtitlesCount ?: 0) > 0
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        if (hasBadges || hasAudio || hasSubtitles) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (qualityBadge != null) TvInfoBadge(text = qualityBadge)
+                if (hasAc3) TvInfoBadge(text = "AC-3")
+                if (hasAudio) TvInfoBadge(text = stringResource(R.string.audio_count, show.langs!!))
+                if (hasSubtitles) TvInfoBadge(text = stringResource(R.string.subtitles_count, show.subtitlesCount!!))
+            }
+        }
+
+        if (!show.voice.isNullOrBlank()) {
+            TvInfoRow(label = stringResource(R.string.voice_label), value = show.voice!!)
+        }
+        if (!show.director.isNullOrBlank()) {
+            TvInfoRow(label = stringResource(R.string.director_label), value = show.director!!)
+        }
+        if (!show.cast.isNullOrBlank()) {
+            TvInfoRow(label = stringResource(R.string.cast_label), value = show.cast!!)
+        }
+    }
+}
+
+@Composable
+private fun TvInfoBadge(text: String) {
+    Box(
+        modifier = Modifier
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
+                RoundedCornerShape(6.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun TvInfoRow(label: String, value: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+private fun formatQualityBadge(quality: String?): String? {
+    val q = quality?.filter(Char::isDigit)?.toIntOrNull() ?: return null
+    return when {
+        q >= 2160 -> "4K"
+        q >= 1080 -> "1080p"
+        q >= 720 -> "720p"
+        q >= 480 -> "480p"
+        q > 0 -> "${q}p"
+        else -> null
+    }
+}
 
 @Composable
 private fun InfoItem(

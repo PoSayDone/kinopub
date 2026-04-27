@@ -27,7 +27,6 @@ import io.github.posaydone.filmix.core.model.KinopoiskCountry
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
 import io.github.posaydone.filmix.core.model.Rating
 import io.github.posaydone.filmix.core.model.Votes
-import kotlin.math.max
 
 /**
  * A reusable composable that displays the main details of a movie or show,
@@ -91,7 +90,8 @@ fun ImmersiveDetails(
             votes = votes,
             year = year,
             genres = genres,
-            totalMinutes = max(movieLength ?: 0, seriesLength ?: 0),
+            movieLength = movieLength ?: 0,
+            seriesLength = seriesLength,
             countries = countries,
             ageRating = ageRating
         )
@@ -115,12 +115,13 @@ private fun MetadataRow(
     votes: Votes?,
     year: Int?,
     genres: List<KinopoiskGenre>?,
-    totalMinutes: Int,
+    movieLength: Int,
+    seriesLength: Int?,
     countries: List<KinopoiskCountry>?,
     ageRating: String,
 ) {
     val context = LocalContext.current
-    val metadataParts = remember(rating, votes, year, genres, totalMinutes, countries, ageRating) {
+    val metadataParts = remember(rating, votes, year, genres, movieLength, seriesLength, countries, ageRating) {
         buildList {
             val ratingText = rating?.kp?.let { "%.1f".format(it) }
             val votesText = votes?.kp?.let { formatVoteCount(it) }
@@ -130,8 +131,9 @@ private fun MetadataRow(
             year?.let { add(it.toString()) }
             genres?.mapNotNull { it.name }?.take(2)?.joinToString(", ")
                 ?.let { if (it.isNotEmpty()) add(it) }
-            val durationText = formatDuration(context, totalMinutes)
+            val durationText = formatDuration(context, movieLength)
             if (durationText.isNotEmpty()) add(durationText)
+            seriesLength?.takeIf { it > 0 }?.let { add("$it ep.") }
             countries?.mapNotNull { it.name }?.take(2)?.joinToString(", ")
                 ?.let { if (it.isNotEmpty()) add(it) }
             if (ageRating.isNotEmpty()) add("$ageRating+")

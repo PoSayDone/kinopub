@@ -26,6 +26,10 @@ data class Show(
     val maxEpisode: MaxEpisode? = null,
     val cast: String? = null,
     val director: String? = null,
+    val voice: String? = null,
+    val langs: Int? = null,
+    val hasAc3: Boolean? = null,
+    val subtitlesCount: Int? = null,
 )
 
 data class ShowStatus(

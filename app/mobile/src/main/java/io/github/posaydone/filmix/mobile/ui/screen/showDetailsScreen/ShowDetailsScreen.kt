@@ -7,8 +7,12 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
@@ -20,6 +24,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,17 +36,22 @@ import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -179,11 +189,7 @@ private fun Details(
                     year = showDetails.year,
                     genres = showDetails.genres.map { it.name },
                     countries = showDetails.countries.map { it.name },
-                    totalMinutes = if (showDetails.isSeries) {
-                        showDetails.maxEpisode?.episode?.takeIf { it > 0 }
-                    } else {
-                        showDetails.duration?.takeIf { it > 0 }
-                    },
+                    totalMinutes = showDetails.duration?.takeIf { it > 0 },
                     ageRating = showDetails.ageRating.takeIf { it > 0 },
                     isFavorite = showDetails.isFavorite,
                     onPlayClick = navigateToMoviePlayer,
@@ -201,10 +207,12 @@ private fun Details(
 
                     Column(
                         modifier = Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
                         if (!showDetails.description.isNullOrBlank()) {
                             DescriptionSection(description = showDetails.description!!)
                         }
+                        ExtraInfoSection(show = showDetails)
                     }
                 }
             }
@@ -218,11 +226,122 @@ private fun Details(
 
 @Composable
 private fun DescriptionSection(description: String) {
-    Text(
-        text = description,
-        style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
+    var expanded by remember { mutableStateOf(false) }
+
+    Column {
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = if (expanded) Int.MAX_VALUE else 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (!expanded) {
+            TextButton(
+                onClick = { expanded = true },
+                modifier = Modifier.padding(top = 2.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.read_more),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ExtraInfoSection(
+    show: Show,
+    modifier: Modifier = Modifier,
+) {
+    val qualityBadge = formatQualityBadge(show.quality)
+    val hasAc3 = show.hasAc3 == true
+    val hasBadges = qualityBadge != null || hasAc3
+    val hasAudio = (show.langs ?: 0) > 0
+    val hasSubtitles = (show.subtitlesCount ?: 0) > 0
+    val hasVoice = !show.voice.isNullOrBlank()
+    val hasDirector = !show.director.isNullOrBlank()
+    val hasCast = !show.cast.isNullOrBlank()
+
+    if (!hasBadges && !hasAudio && !hasSubtitles && !hasVoice && !hasDirector && !hasCast) return
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (hasBadges || hasAudio || hasSubtitles) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (qualityBadge != null) {
+                    InfoBadge(text = qualityBadge)
+                }
+                if (hasAc3) {
+                    InfoBadge(text = "AC-3")
+                }
+                if (hasAudio) {
+                    InfoBadge(text = stringResource(R.string.audio_count, show.langs!!))
+                }
+                if (hasSubtitles) {
+                    InfoBadge(text = stringResource(R.string.subtitles_count, show.subtitlesCount!!))
+                }
+            }
+        }
+
+        if (hasVoice) {
+            InfoRow(label = stringResource(R.string.voice_label), value = show.voice!!)
+        }
+        if (hasDirector) {
+            InfoRow(label = stringResource(R.string.director_label), value = show.director!!)
+        }
+        if (hasCast) {
+            InfoRow(label = stringResource(R.string.cast_label), value = show.cast!!)
+        }
+    }
+}
+
+@Composable
+private fun InfoBadge(text: String) {
+    Box(
+        modifier = Modifier
+            .background(
+                MaterialTheme.colorScheme.secondaryContainer,
+                RoundedCornerShape(6.dp),
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(letterSpacing = 0.sp),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+private fun formatQualityBadge(quality: String?): String? {
+    val q = quality?.filter(Char::isDigit)?.toIntOrNull() ?: return null
+    return when {
+        q >= 2160 -> "4K"
+        q >= 1080 -> "1080p"
+        q >= 720 -> "720p"
+        q >= 480 -> "480p"
+        q > 0 -> "${q}p"
+        else -> null
+    }
 }
 
 @Composable

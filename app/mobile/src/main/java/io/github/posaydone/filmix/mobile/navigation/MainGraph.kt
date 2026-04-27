@@ -86,21 +86,26 @@ fun MainGraph() {
             ),
             entryProvider = entryProvider {
                 entry<NavBarGraphData.Home> {
-                    HomeScreen(navigateToMoviePlayer = { showId, startSeason, startEpisode ->
-                        topLevelBackStack.add(
-                            MainGraphData.Player(
-                                showId,
-                                startSeason = startSeason,
-                                startEpisode = startEpisode,
+                    HomeScreen(
+                        navigateToMoviePlayer = { showId, startSeason, startEpisode ->
+                            topLevelBackStack.add(
+                                MainGraphData.Player(
+                                    showId,
+                                    startSeason = startSeason,
+                                    startEpisode = startEpisode,
+                                )
                             )
-                        )
-                    }, navigateToShowDetails = { showId ->
-                        topLevelBackStack.add(
-                            MainGraphData.ShowDetails(
-                                showId
+                        },
+                        navigateToShowsGrid = { grid ->
+                            topLevelBackStack.add(grid)
+                        },
+                        navigateToShowDetails = { showId ->
+                            topLevelBackStack.add(
+                                MainGraphData.ShowDetails(
+                                    showId
+                                )
                             )
-                        )
-                    })
+                        })
                 }
                 entry<NavBarGraphData.Explore> {
                     ExploreScreen({ query -> topLevelBackStack.add(MainGraphData.SearchResults(query)) })
@@ -166,28 +171,34 @@ fun MainGraph() {
                         navigateBack = { topLevelBackStack.removeLast() },
                         navigateToPlayer = { showId, season, episode ->
                             topLevelBackStack.add(
-                                MainGraphData.Player(showId, startSeason = season, startEpisode = episode)
+                                MainGraphData.Player(
+                                    showId,
+                                    startSeason = season,
+                                    startEpisode = episode
+                                )
                             )
                         },
                         viewModel = viewModel,
                     )
                 }
                 entry<MainGraphData.ShowsGrid> { key ->
-                    val viewModel = hiltViewModel<ShowsGridScreenViewModel, ShowsGridScreenViewModel.Factory>(
-                        creationCallback = { factory ->
-                            factory.create(
-                                ShowsGridNavKey(
-                                    queryType = runCatching { ShowsGridQueryType.valueOf(key.queryType) }
-                                        .getOrDefault(ShowsGridQueryType.HISTORY),
-                                    title = key.title,
-                                    contentType = key.contentType,
-                                    sort = key.sort,
-                                    period = key.period,
+                    val viewModel =
+                        hiltViewModel<ShowsGridScreenViewModel, ShowsGridScreenViewModel.Factory>(
+                            creationCallback = { factory ->
+                                factory.create(
+                                    ShowsGridNavKey(
+                                        queryType = runCatching { ShowsGridQueryType.valueOf(key.queryType) }
+                                            .getOrDefault(ShowsGridQueryType.HISTORY),
+                                        title = key.title,
+                                        contentType = key.contentType,
+                                        sort = key.sort,
+                                        period = key.period,
+                                    )
                                 )
-                            )
-                        }
-                    )
+                            }
+                        )
                     ShowsGridScreen(
+                        navigateBack = { topLevelBackStack.removeLast() },
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
                         },
@@ -228,7 +239,9 @@ fun MainGraph() {
                 }
             })
         AnimatedVisibility(visible = !isPlayerScreen) {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ) {
                 navBarScreenItems.forEach { destination ->
                     val isSelected = destination == topLevelBackStack.topLevelKey
                     NavigationBarItem(selected = isSelected, icon = {

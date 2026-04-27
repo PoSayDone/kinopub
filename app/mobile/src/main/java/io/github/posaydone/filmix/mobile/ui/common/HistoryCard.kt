@@ -23,13 +23,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import io.github.posaydone.filmix.core.model.HistoryShow
 
-private val HistoryCardWidth = 220.dp
+private val HistoryCardWidth = 260.dp
 
 @Composable
 fun HistoryCard(
     show: HistoryShow,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.width(HistoryCardWidth),
     showOriginalTitle: Boolean = true,
     showYear: Boolean = true,
 ) {
@@ -43,7 +43,7 @@ fun HistoryCard(
 
     BaseCard(
         onClick = onClick,
-        modifier = modifier.width(HistoryCardWidth),
+        modifier = modifier,
         title = {
             ShowCardInfo(
                 title = show.title,

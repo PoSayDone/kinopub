@@ -3,11 +3,11 @@ package io.github.posaydone.filmix.core.network.service
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkActionResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkFoldersResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubBookmarkItemsResponse
-import io.github.posaydone.filmix.core.model.kinopub.KinoPubCountry
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubCountriesResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubCreateFolderResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubDeviceSettingsResponse
-import io.github.posaydone.filmix.core.model.kinopub.KinoPubGenre
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubGenresResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubHistoryResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubItemDetailResponse
 import io.github.posaydone.filmix.core.model.kinopub.KinoPubItemsResponse
@@ -32,10 +32,10 @@ interface KinoPubApiService {
     @GET("v1/genres")
     suspend fun getGenres(
         @Query("type") type: String? = null,
-    ): List<KinoPubGenre>
+    ): KinoPubGenresResponse
 
     @GET("v1/countries")
-    suspend fun getCountries(): List<KinoPubCountry>
+    suspend fun getCountries(): KinoPubCountriesResponse
 
     @GET("v1/items")
     suspend fun listItems(
@@ -87,6 +87,11 @@ interface KinoPubApiService {
         @Query("file") file: String,
         @Query("type") type: String,
     ): KinoPubMediaVideoLinkResponse
+
+    @GET("v1/watching/togglewatchlist")
+    suspend fun toggleWatchlist(
+        @Query("id") id: Int,
+    ): KinoPubStatusResponse
 
     @GET("v1/watching")
     suspend fun getWatchingInfo(

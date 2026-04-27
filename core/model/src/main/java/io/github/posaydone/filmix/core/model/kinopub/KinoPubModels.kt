@@ -23,6 +23,16 @@ data class KinoPubCountry(
     val title: String,
 )
 
+data class KinoPubGenresResponse(
+    val status: Int,
+    val items: List<KinoPubGenre> = emptyList(),
+)
+
+data class KinoPubCountriesResponse(
+    val status: Int,
+    val items: List<KinoPubCountry> = emptyList(),
+)
+
 data class KinoPubPosters(
     val small: String? = null,
     val medium: String? = null,

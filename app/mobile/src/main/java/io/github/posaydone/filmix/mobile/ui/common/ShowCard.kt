@@ -106,7 +106,13 @@ fun ShowCardInfo(
 }
 
 @Composable
-fun ShowCard(show: Show, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun ShowCard(
+    show: Show,
+    modifier: Modifier = Modifier,
+    showOriginalTitle: Boolean = false,
+    showYear: Boolean = false,
+    onClick: () -> Unit
+) {
     BaseCard(
         onClick = onClick,
         modifier = modifier.width(ShowCardWidth),
@@ -115,8 +121,8 @@ fun ShowCard(show: Show, modifier: Modifier = Modifier, onClick: () -> Unit) {
                 title = show.title,
                 originalTitle = show.originalTitle,
                 year = show.year,
-                showOriginalTitle = false,
-                showYear = false,
+                showOriginalTitle = showOriginalTitle,
+                showYear = showYear,
             )
         },
     ) {

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
@@ -20,8 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.posaydone.filmix.core.model.HistoryShow
-
-private val HistoryCardWidth = 220.dp
 
 @Composable
 fun HistoryShowsRow(
@@ -64,7 +61,6 @@ fun HistoryShowsRow(
                         showOriginalTitle = showItemOriginalTitle,
                         showYear = showItemYear,
                         onClick = { onShowClick(show) },
-                        modifier = Modifier.width(HistoryCardWidth),
                     )
                 }
             }

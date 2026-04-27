@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.core.common.sharedViewModel
 
+import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,8 @@ import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+private const val TAG = "ShowsGridVM"
 
 enum class ShowsGridQueryType { FAVORITES, HISTORY, CATALOG, WATCHING }
 
@@ -138,12 +141,23 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
         _queryType.value = internalQueryType
         screenTitle = navKey.title
 
+        Log.d(
+            TAG,
+            "init: queryType=$internalQueryType title=$screenTitle contentType=${navKey.contentType} sort=${navKey.sort} period=${navKey.period}"
+        )
+
         if (internalQueryType == ShowsGridQueryType.CATALOG) {
             _catalogContentType.value = navKey.contentType
             _catalogSort.value = CatalogSort.entries.firstOrNull { it.apiValue == navKey.sort }
                 ?: CatalogSort.UPDATED
             _catalogPeriod.value = CatalogPeriod.entries.firstOrNull { it.apiValue == navKey.period }
                 ?: CatalogPeriod.MONTH
+
+            Log.d(
+                TAG,
+                "init catalog filters: contentType=${_catalogContentType.value} sort=${_catalogSort.value.apiValue} period=${_catalogPeriod.value.apiValue}"
+            )
+
             loadGenresForContentType(navKey.contentType)
             loadCountries()
         }
@@ -189,6 +203,10 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
 
     fun setCatalogContentType(contentType: String?) {
         if (_catalogContentType.value == contentType) return
+        Log.d(
+            TAG,
+            "setCatalogContentType: old=${_catalogContentType.value} new=$contentType, clearing selected genres"
+        )
         _catalogContentType.value = contentType
         _selectedGenreIds.value = emptySet()
         loadGenresForContentType(contentType)
@@ -235,14 +253,39 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
 
     private fun loadGenresForContentType(contentType: String?) {
         val genreType = genreTypeForContentType(contentType)
-        genresCache[genreType]?.let { _genres.value = it; return }
+
+        Log.d(
+            TAG,
+            "loadGenresForContentType: contentType=$contentType genreType=$genreType cacheHit=${genresCache.containsKey(genreType)}"
+        )
+
+        genresCache[genreType]?.let { cachedGenres ->
+            _genres.value = cachedGenres
+            Log.d(
+                TAG,
+                "loadGenresForContentType: using cached genres count=${cachedGenres.size} preview=${cachedGenres.take(5).joinToString { "${it.id}:${it.title}" }}"
+            )
+            return
+        }
+
         viewModelScope.launch {
             try {
+                Log.d(TAG, "loadGenresForContentType: requesting genres for genreType=$genreType")
                 val loaded = repository.getGenres(genreType)
                 genresCache[genreType] = loaded
                 _genres.value = loaded
-            } catch (_: Exception) {
+
+                Log.d(
+                    TAG,
+                    "loadGenresForContentType: loaded genres count=${loaded.size} preview=${loaded.take(5).joinToString { "${it.id}:${it.title}" }}"
+                )
+            } catch (error: Exception) {
                 _genres.value = emptyList()
+                Log.e(
+                    TAG,
+                    "loadGenresForContentType: failed for contentType=$contentType genreType=$genreType",
+                    error
+                )
             }
         }
     }
@@ -250,9 +293,17 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
     private fun loadCountries() {
         viewModelScope.launch {
             try {
-                _countries.value = repository.getCountries()
-            } catch (_: Exception) {
+                Log.d(TAG, "loadCountries: requesting countries")
+                val loaded = repository.getCountries()
+                _countries.value = loaded
+
+                Log.d(
+                    TAG,
+                    "loadCountries: loaded countries count=${loaded.size} preview=${loaded.take(5).joinToString { "${it.id}:${it.title}" }}"
+                )
+            } catch (error: Exception) {
                 _countries.value = emptyList()
+                Log.e(TAG, "loadCountries: failed", error)
             }
         }
     }
@@ -395,6 +446,7 @@ class ShowsGridScreenViewModel @AssistedInject constructor(
                 page = page,
             )
         }
+
         ShowsGridQueryType.WATCHING -> emptyList()
     }
 
@@ -411,6 +463,7 @@ sealed interface ShowsGridUiState {
         val shows: ShowList,
         val hasNextPage: Boolean,
     ) : ShowsGridUiState
+
     data class HistorySuccess(
         val historyShows: List<HistoryShow>,
         val hasNextPage: Boolean,

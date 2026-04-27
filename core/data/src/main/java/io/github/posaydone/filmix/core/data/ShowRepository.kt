@@ -94,10 +94,10 @@ class ShowRepository @Inject constructor(
     ).items.map { it.toShow() }
 
     suspend fun getGenres(genreType: String?): List<KinoPubGenre> =
-        kinoPubApiService.getGenres(genreType)
+        kinoPubApiService.getGenres(genreType).items
 
     suspend fun getCountries(): List<KinoPubCountry> =
-        kinoPubApiService.getCountries()
+        kinoPubApiService.getCountries().items
 
     suspend fun getWatchingMovies(): List<Show> =
         kinoPubApiService.listWatchingMovies().items.map { it.toShow() }
@@ -255,12 +255,7 @@ class ShowRepository @Inject constructor(
 
     suspend fun toggleFavorite(showId: Int, isFavorite: Boolean): Boolean =
         runCatching {
-            val folderId = ensureFavoritesFolderId()
-            if (isFavorite) {
-                kinoPubApiService.addBookmarkItem(folderId, showId).status == 200
-            } else {
-                kinoPubApiService.removeBookmarkItem(folderId, showId).status == 200
-            }
+            kinoPubApiService.toggleWatchlist(showId).status == 200
         }.getOrDefault(false)
 
     private fun periodToCondition(period: String?): String? {
@@ -474,6 +469,10 @@ class ShowRepository @Inject constructor(
             isDeferred = if (withDetails) in_watchlist else null,
             cast = if (withDetails) cast?.takeIf { it.isNotBlank() } else null,
             director = if (withDetails) director?.takeIf { it.isNotBlank() } else null,
+            voice = if (withDetails) voice?.takeIf { it.isNotBlank() } else null,
+            langs = if (withDetails) langs else null,
+            hasAc3 = if (withDetails) (ac3 == 1) else null,
+            subtitlesCount = if (withDetails) subtitles else null,
         )
     }
 

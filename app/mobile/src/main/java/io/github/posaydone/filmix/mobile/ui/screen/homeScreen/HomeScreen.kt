@@ -33,15 +33,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
+import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.ShowProgress
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubContentType
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubPeriod
+import io.github.posaydone.filmix.core.model.kinopub.KinoPubSort
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.HistoryShowsRow
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowsRow
 import io.github.posaydone.filmix.mobile.ui.screen.homeScreen.components.HomeBanner
+import io.github.posaydone.filmix.shared.graphData.MainGraphData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -52,6 +57,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
+    navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -115,6 +121,7 @@ fun HomeScreen(
                     newTvShows = s.newTvShows,
                     navigateToMoviePlayer = navigateToMoviePlayer,
                     navigateToShowDetails = navigateToShowDetails,
+                    navigateToShowsGrid = navigateToShowsGrid,
                     reload = { viewModel.retry() })
             }
         }
@@ -139,6 +146,7 @@ private fun Body(
     newTvShows: ShowList,
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToShowDetails: (Int) -> Unit,
+    navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
     reload: () -> Unit,
 ) {
     val refreshState = rememberPullToRefreshState()
@@ -177,43 +185,154 @@ private fun Body(
                         show.seasonNumber ?: -1,
                         show.episodeNumber ?: -1,
                     )
-                })
+                },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.HISTORY.name,
+                            title = "История просмотра"
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = popularMovies,
                 title = stringResource(R.string.popular_movies),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Популярные фильмы",
+                            KinoPubContentType.MOVIE,
+                            KinoPubSort.VIEWS,
+                            KinoPubPeriod.MONTH
+                        )
+                    )
+                }
+            )
             ShowsRow(
                 showList = newMovies,
                 title = stringResource(R.string.new_movies),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Новые фильмы",
+                            KinoPubContentType.MOVIE,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
+
             ShowsRow(
                 showList = popularSeries,
                 title = stringResource(R.string.popular_series),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Популярные сериалы",
+                            KinoPubContentType.SERIAL,
+                            KinoPubSort.WATCHERS,
+                            KinoPubPeriod.THREE_MONTHS
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = newSeries,
                 title = stringResource(R.string.new_series),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Новые сериалы",
+                            KinoPubContentType.SERIAL,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = newConcerts,
                 title = stringResource(R.string.new_concerts),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Концерты",
+                            KinoPubContentType.CONCERT,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = new3d,
                 title = stringResource(R.string.new_3d),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "3D фильмы",
+                            KinoPubContentType.FILM_3D,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = newDocumentaryFilms,
                 title = stringResource(R.string.new_documentary_films),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Документальные фильмы",
+                            KinoPubContentType.DOCUMOVIE,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = newDocumentarySeries,
                 title = stringResource(R.string.new_documentary_series),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "Документальные сериалы",
+                            KinoPubContentType.DOCUSERIAL,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
             ShowsRow(
                 showList = newTvShows,
                 title = stringResource(R.string.new_tv_shows),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                onShowClick = { show -> navigateToShowDetails(show.id) },
+                onViewAll = {
+                    navigateToShowsGrid(
+                        MainGraphData.ShowsGrid(
+                            ShowsGridQueryType.CATALOG.name,
+                            "ТВ Шоу",
+                            KinoPubContentType.TVSHOW,
+                            KinoPubSort.CREATED
+                        )
+                    )
+                },
+            )
         }
     }
 }
