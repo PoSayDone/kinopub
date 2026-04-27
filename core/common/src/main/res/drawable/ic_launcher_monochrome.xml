@@ -18,15 +18,12 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-  <group android:scaleX="0.55"
-      android:scaleY="0.55"
-      android:translateX="24.3"
-      android:translateY="24.3">
+  <group android:scaleX="0.9"
+      android:scaleY="0.9"
+      android:translateX="5.4"
+      android:translateY="5.4">
     <path
-        android:pathData="M26,20C28.76,20 31,17.76 31,15C31,12.24 28.76,10 26,10C23.24,10 21,12.24 21,15C21,17.76 23.24,20 26,20Z"
-        android:fillColor="#ffffff"/>
-    <path
-        android:pathData="M54,46.67C49.53,46.67 45.9,50.25 45.9,54.67C45.9,57.8 47.72,60.51 50.38,61.82C51.47,62.36 52.7,62.67 54,62.67C58.47,62.67 62.1,59.08 62.1,54.67C62.1,50.25 58.47,46.67 54,46.67ZM41.92,78.52C45.56,80.32 49.66,81.33 54,81.33C68.91,81.33 81,69.39 81,54.67C81,39.94 68.91,28 54,28C39.09,28 27,39.94 27,54.67V108L41.92,78.52Z"
+        android:pathData="M70.65,53.7C70.65,62.9 63.2,70.35 54,70.35C51.32,70.35 48.79,69.72 46.55,68.6L37.35,87V53.7C37.35,44.51 44.81,37.05 54,37.05C63.2,37.05 70.65,44.51 70.65,53.7ZM58.99,53.7C58.99,56.46 56.76,58.7 54,58.7C51.24,58.7 49.01,56.46 49.01,53.7C49.01,50.94 51.24,48.71 54,48.71C56.76,48.71 58.99,50.94 58.99,53.7Z"
         android:fillColor="#ffffff"
         android:fillType="evenOdd"/>
   </group>
