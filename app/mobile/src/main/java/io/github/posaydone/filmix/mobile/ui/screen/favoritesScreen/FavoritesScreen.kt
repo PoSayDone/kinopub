@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -26,6 +25,7 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.FavoritesScreenVie
 import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.mobile.ui.common.Error
+import io.github.posaydone.filmix.mobile.ui.common.HistoryShowsRow
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowsRow
 import androidx.compose.ui.res.stringResource
@@ -36,6 +36,7 @@ import io.github.posaydone.filmix.core.common.R
 fun FavoritesScreen(
     navigateToShowsGrid: (queryType: String) -> Unit,
     navigateToShowDetails: (showId: Int) -> Unit,
+    navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     viewModel: FavoritesScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -62,6 +63,7 @@ fun FavoritesScreen(
                     modifier = Modifier.padding(paddingValues),
                     navigateToShowDetails = navigateToShowDetails,
                     navigateToShowsGrid = navigateToShowsGrid,
+                    navigateToPlayer = navigateToPlayer,
                     watchingList = s.watchingList,
                     historyList = s.historyList,
                 )
@@ -75,16 +77,15 @@ fun FavoritesScreenContent(
     modifier: Modifier = Modifier,
     navigateToShowDetails: (showId: Int) -> Unit,
     navigateToShowsGrid: (queryType: String) -> Unit,
+    navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     watchingList: List<Show>,
     historyList: List<HistoryShow>,
 ) {
-    val historyShows = remember(historyList) { historyList.map { it.toShow() } }
-
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         ShowsRow(
             title = "Я смотрю",
@@ -97,25 +98,18 @@ fun FavoritesScreenContent(
                 navigateToShowsGrid("WATCHING")
             })
 
-        ShowsRow(
+        HistoryShowsRow(
             title = stringResource(R.string.history),
-            modifier = Modifier.padding(top = 16.dp),
-            showList = historyShows,
+            historyList = historyList,
             onShowClick = { show ->
-                navigateToShowDetails(show.id)
+                navigateToPlayer(
+                    show.id,
+                    show.seasonNumber ?: -1,
+                    show.episodeNumber ?: -1,
+                )
             },
             onViewAll = {
                 navigateToShowsGrid("HISTORY")
             })
     }
 }
-
-private fun HistoryShow.toShow(): Show = Show(
-    id = id,
-    title = title,
-    originalTitle = title,
-    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
-    year = 0,
-    description = description,
-    isSeries = isSeries,
-)

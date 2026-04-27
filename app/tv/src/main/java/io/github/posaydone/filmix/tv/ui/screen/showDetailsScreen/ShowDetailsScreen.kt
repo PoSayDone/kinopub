@@ -165,6 +165,7 @@ private fun Details(
             ImmersiveDetails(
                 logoUrl = null,
                 title = showDetails.title,
+                originalTitle = showDetails.originalTitle,
                 description = showDetails.description,
                 rating = Rating(
                     kp = showDetails.ratingKp,

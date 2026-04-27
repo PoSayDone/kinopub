@@ -3,6 +3,7 @@ package io.github.posaydone.filmix.core.model
 data class HistoryShow(
     val id: Int,
     val title: String,
+    val originalTitle: String = "",
     val poster: String,
     val isSeries: Boolean,
     val description: String,
@@ -26,7 +27,7 @@ data class HistoryShow(
 fun HistoryShow.toShow(): Show = Show(
     id = id,
     title = title,
-    originalTitle = title,
+    originalTitle = originalTitle,
     poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
     backdropUrl = backdropUrl,
     year = year,

@@ -34,6 +34,7 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridUiState
 import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
+import io.github.posaydone.filmix.core.model.toShow
 import io.github.posaydone.filmix.mobile.ui.common.Error
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowCard
@@ -156,13 +157,3 @@ fun ShowsGridContent(
         }
     }
 }
-
-private fun HistoryShow.toShow(): Show = Show(
-    id = id,
-    title = title,
-    originalTitle = title,
-    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
-    year = 0,
-    description = description,
-    isSeries = isSeries,
-)

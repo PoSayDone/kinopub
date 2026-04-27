@@ -94,7 +94,7 @@ fun ShowCard(
                 CardTitleMode.ON_FOCUS -> ShowsRowItemText(
                     showItemTitle = showTitle,
                     isItemFocused = isFocused,
-                    title = show.title.substringBefore('/').trim(),
+                    title = show.title,
                     titleMode = titleMode,
                 )
             }
@@ -125,13 +125,10 @@ fun ShowCardInfo(
 ) {
     if (!showTitle && !showOriginalTitle && !showYear) return
 
-    val primaryTitle = show.title.substringBefore('/').trim()
-    val originalTitle = show.title.substringAfter('/', missingDelimiterValue = "")
+    val primaryTitle = show.title.trim()
+    val originalTitle = show.originalTitle
         .trim()
-        .takeIf { it.isNotEmpty() }
-        ?: show.originalTitle
-            .trim()
-            .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
+        .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
 
     Column(
         modifier = modifier,

@@ -418,14 +418,39 @@ class ShowRepository @Inject constructor(
         else -> false
     }
 
+    private data class SplitTitle(
+        val title: String,
+        val originalTitle: String,
+    )
+
+    private fun String?.splitTitle(): SplitTitle {
+        val rawTitle = this.orEmpty().trim()
+        val separatorIndex = rawTitle.indexOf('/')
+
+        if (separatorIndex == -1) {
+            return SplitTitle(title = rawTitle, originalTitle = "")
+        }
+
+        val primaryTitle = rawTitle.substring(0, separatorIndex).trim()
+        val originalTitle = rawTitle.substring(separatorIndex + 1).trim()
+
+        return SplitTitle(
+            title = primaryTitle.ifEmpty { rawTitle },
+            originalTitle = originalTitle
+                .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
+                .orEmpty(),
+        )
+    }
+
     private fun KinoPubItem.toShow(withDetails: Boolean = false): Show {
         val isSeries = isSeries()
         val maxSeasonNumber = maxSeasonNumber()
         val maxEpisodeNumber = maxEpisodeNumber()
+        val splitTitle = title.splitTitle()
         return Show(
             id = id,
-            title = title,
-            originalTitle = title,
+            title = splitTitle.title,
+            originalTitle = splitTitle.originalTitle,
             poster = bestPosterUrl(),
             backdropUrl = posters?.wide ?: bestPosterUrl(),
             year = year ?: 0,
@@ -455,9 +480,11 @@ class ShowRepository @Inject constructor(
     private fun KinoPubHistoryEntry.toHistoryShow(): HistoryShow? {
         val historyItem = item ?: return null
         val isSeries = historyItem.isSeries()
+        val splitTitle = historyItem.title.splitTitle()
         return HistoryShow(
             id = historyItem.id,
-            title = historyItem.title,
+            title = splitTitle.title,
+            originalTitle = splitTitle.originalTitle,
             poster = historyItem.bestPosterUrl(),
             isSeries = isSeries,
             description = historyItem.plot.orEmpty(),
@@ -481,10 +508,11 @@ class ShowRepository @Inject constructor(
 
     private fun KinoPubWatchingListItem.toShow(): Show {
         val posterUrl = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
+        val splitTitle = title.splitTitle()
         return Show(
             id = id,
-            title = title,
-            originalTitle = title,
+            title = splitTitle.title,
+            originalTitle = splitTitle.originalTitle,
             poster = posterUrl,
             backdropUrl = posters?.wide ?: posterUrl,
             year = 0,
@@ -493,10 +521,11 @@ class ShowRepository @Inject constructor(
 
     private fun KinoPubWatchingSerialItem.toShow(): Show {
         val posterUrl = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
+        val splitTitle = title.splitTitle()
         return Show(
             id = id,
-            title = title,
-            originalTitle = title,
+            title = splitTitle.title,
+            originalTitle = splitTitle.originalTitle,
             poster = posterUrl,
             backdropUrl = posters?.wide ?: posterUrl,
             year = 0,

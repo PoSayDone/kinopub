@@ -127,9 +127,10 @@ private fun HistoryShowCardInfo(
 ) {
     if (!showTitle && !showOriginalTitle && !showYear) return
 
-    val primaryTitle = show.title.substringBefore('/').trim()
-    val originalTitle = show.title.substringAfter('/', missingDelimiterValue = "")
-        .trim().takeIf { it.isNotEmpty() }
+    val primaryTitle = show.title.trim()
+    val originalTitle = show.originalTitle
+        .trim()
+        .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
 
     val alpha by animateFloatAsState(
         targetValue = if (titleMode == CardTitleMode.ALWAYS || isFocused) 1f else 0f,

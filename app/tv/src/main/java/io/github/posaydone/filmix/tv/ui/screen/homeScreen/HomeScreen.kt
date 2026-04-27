@@ -175,7 +175,7 @@ private fun previewShow(
 ) = Show(
     id = id,
     title = title,
-    originalTitle = title,
+    originalTitle = "",
     poster = "",
     year = year,
     quality = "4K",
@@ -600,6 +600,7 @@ private fun Body(
                         .fillMaxWidth(),
                     logoUrl = null,
                     title = show.title,
+                    originalTitle = show.originalTitle,
                     description = show.description,
                     rating = Rating(
                         kp = show.ratingKp,

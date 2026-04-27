@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -87,7 +88,7 @@ import io.github.posaydone.filmix.mobile.ui.common.LargeButton
 import io.github.posaydone.filmix.mobile.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 
-val TAG = "ShowDetailsScreen"
+const val TAG = "ShowDetailsScreen"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -276,7 +277,9 @@ fun ShowBannerContent(
         modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         TitleSection(
-            title = title, logoUrl = logoUrl
+            title = title,
+            originalTitle = originalTitle,
+            logoUrl = logoUrl,
         )
         Column(
             modifier = Modifier
@@ -289,8 +292,6 @@ fun ShowBannerContent(
             MetadataColumn(
                 ratingKp = ratingKp,
                 votesKp = votesKp,
-                originalTitle = originalTitle,
-                title = title,
                 year = year,
                 genres = genres,
                 countries = countries,
@@ -315,17 +316,21 @@ fun TitleSection(
     modifier: Modifier = Modifier,
     height: Dp = 80.dp,
     title: String,
+    originalTitle: String? = null,
     logoUrl: String?,
     forceTextTitle: Boolean = false,
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
+    val secondaryTitle = originalTitle
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() && !it.equals(title, ignoreCase = true) }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(height)
+            .heightIn(min = height)
             .background(
                 Brush.verticalGradient(
                     colorStops = arrayOf(
@@ -352,20 +357,46 @@ fun TitleSection(
     ) {
 
         if (logoUrl != null && !forceTextTitle) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(logoUrl).build(),
-                contentDescription = title,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.sizeIn(
-                    maxWidth = screenWidth * 0.6f, maxHeight = screenHeight * 0.32f
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current).data(logoUrl).build(),
+                    contentDescription = title,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.sizeIn(
+                        maxWidth = screenWidth * 0.6f, maxHeight = screenHeight * 0.32f
+                    )
                 )
-            )
+                if (secondaryTitle != null) {
+                    Text(
+                        text = secondaryTitle,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         } else {
-            Text(
-                text = title,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                Text(
+                    text = title,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                )
+                if (secondaryTitle != null) {
+                    Text(
+                        text = secondaryTitle,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 }
@@ -374,8 +405,6 @@ fun TitleSection(
 private fun MetadataColumn(
     ratingKp: Double?,
     votesKp: Int?,
-    originalTitle: String?,
-    title: String,
     year: Int?,
     genres: List<String>,
     countries: List<String>,
@@ -388,27 +417,13 @@ private fun MetadataColumn(
     Column(
         modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "%.1f".format(
-                    ratingKp ?: 0.0
-                ) + " (${formatVoteCount(votesKp ?: 0)})",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            if (originalTitle != null && originalTitle.isNotBlank() && originalTitle != title) {
-                Text("•", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(
-                    text = originalTitle!!,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        Text(
+            text = "%.1f".format(
+                ratingKp ?: 0.0
+            ) + " (${formatVoteCount(votesKp ?: 0)})",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         Row(
             verticalAlignment = Alignment.CenterVertically,

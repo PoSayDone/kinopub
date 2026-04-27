@@ -118,6 +118,14 @@ fun MainGraph() {
                                 queryType
                             )
                         )
+                    }, navigateToPlayer = { showId, startSeason, startEpisode ->
+                        topLevelBackStack.add(
+                            MainGraphData.Player(
+                                showId,
+                                startSeason = startSeason,
+                                startEpisode = startEpisode,
+                            )
+                        )
                     })
                 }
                 entry<NavBarGraphData.ProfileGraph> {

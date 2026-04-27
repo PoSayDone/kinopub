@@ -197,7 +197,7 @@ private fun ShowsRowItem(
             ShowsRowItemText(
                 showItemTitle = showItemTitle,
                 isItemFocused = isFocused,
-                title = show.title.substringBefore('/').trim(),
+                title = show.title,
             )
         },
     ) {

@@ -37,6 +37,7 @@ import kotlin.math.max
 fun ImmersiveDetails(
     logoUrl: String?,
     title: String,
+    originalTitle: String? = null,
     description: String?,
     rating: Rating?,
     votes: Votes?,
@@ -52,10 +53,10 @@ fun ImmersiveDetails(
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
     val context = LocalContext.current
-
-    val slashIndex = title.indexOf('/')
-    val primaryTitle = if (slashIndex != -1) title.substring(0, slashIndex).trim() else title
-    val originalTitle = if (slashIndex != -1) title.substring(slashIndex + 1).trim().takeIf { it.isNotEmpty() } else null
+    val primaryTitle = title.trim()
+    val secondaryTitle = originalTitle
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
 
     Column(
         modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -76,9 +77,9 @@ fun ImmersiveDetails(
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Medium),
                 )
             }
-            if (originalTitle != null) {
+            if (secondaryTitle != null) {
                 Text(
-                    text = originalTitle,
+                    text = secondaryTitle,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )

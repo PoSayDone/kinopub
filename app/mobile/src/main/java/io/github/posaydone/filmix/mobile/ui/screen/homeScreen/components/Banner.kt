@@ -38,9 +38,12 @@ fun HomeBanner(
     featuredShow: Show,
     featuredShowProgress: ShowProgress,
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
-    onClick: (Int) -> Unit,
 ) {
     val headerHeight = 420.dp
+    val primaryTitle = featuredShow.title.trim()
+    val originalTitle = featuredShow.originalTitle
+        .trim()
+        .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
     val playProgress = if (featuredShow.isSeries) {
         featuredShowProgress.latestSeriesProgress()
     } else {
@@ -52,6 +55,7 @@ fun HomeBanner(
             playProgress.season,
             playProgress.episode,
         )
+
         !featuredShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
         else -> stringResource(R.string.playString)
     }
@@ -75,7 +79,8 @@ fun HomeBanner(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TitleSection(
-                    title = featuredShow.title,
+                    title = primaryTitle,
+                    originalTitle = originalTitle,
                     logoUrl = null,
                     height = 80.dp,
                 )

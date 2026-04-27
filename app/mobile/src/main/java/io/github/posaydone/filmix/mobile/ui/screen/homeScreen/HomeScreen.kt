@@ -165,11 +165,19 @@ private fun Body(
                 featuredShow = featuredShow,
                 featuredShowProgress = featuredShowProgress,
                 navigateToMoviePlayer = navigateToMoviePlayer,
-            ) { }
+            )
             HistoryShowsRow(
                 historyList = lastSeenShows,
                 title = stringResource(R.string.continue_watching),
-                onShowClick = { show -> navigateToShowDetails(show.id) })
+                showItemOriginalTitle = false,
+                showItemYear = false,
+                onShowClick = { show ->
+                    navigateToMoviePlayer(
+                        show.id,
+                        show.seasonNumber ?: -1,
+                        show.episodeNumber ?: -1,
+                    )
+                })
             ShowsRow(
                 showList = popularMovies,
                 title = stringResource(R.string.popular_movies),

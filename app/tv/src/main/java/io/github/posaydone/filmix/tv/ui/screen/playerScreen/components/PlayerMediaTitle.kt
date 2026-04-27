@@ -20,9 +20,10 @@ fun PlayerMediaTitle(
     currentEpisode: String?,
     modifier: Modifier = Modifier,
 ) {
-    val slashIndex = showDetails.title.indexOf('/')
-    val primaryTitle = if (slashIndex != -1) showDetails.title.substring(0, slashIndex).trim() else showDetails.title
-    val originalTitle = if (slashIndex != -1) showDetails.title.substring(slashIndex + 1).trim().takeIf { it.isNotEmpty() } else null
+    val primaryTitle = showDetails.title.trim()
+    val originalTitle = showDetails.originalTitle
+        .trim()
+        .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
 
     Column(
         modifier = modifier,
