@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep Hilt-exposed and consumer-facing classes during library minification.
+-keep class io.github.posaydone.filmix.core.common.** { *; }
+-keep class hilt_aggregated_deps.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

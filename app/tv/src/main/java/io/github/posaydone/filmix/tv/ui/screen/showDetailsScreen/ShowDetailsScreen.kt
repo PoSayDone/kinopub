@@ -11,6 +11,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -36,16 +41,22 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +86,8 @@ import io.github.posaydone.filmix.tv.ui.common.LargeButton
 import io.github.posaydone.filmix.tv.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
+import io.github.posaydone.filmix.tv.ui.theme.FilmixBorderWidth
+import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import kotlinx.coroutines.launch
 
 private const val TAG = "ShowDetailsScreen"
@@ -158,103 +171,110 @@ private fun Details(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
 
     val hasExtraInfo = !showDetails.cast.isNullOrBlank()
-        || !showDetails.director.isNullOrBlank()
-        || !showDetails.voice.isNullOrBlank()
-        || (showDetails.langs ?: 0) > 0
-        || (showDetails.subtitlesCount ?: 0) > 0
-        || formatQualityBadge(showDetails.quality) != null
-        || showDetails.hasAc3 == true
+            || !showDetails.director.isNullOrBlank()
+            || !showDetails.voice.isNullOrBlank()
+            || (showDetails.langs ?: 0) > 0
+            || (showDetails.subtitlesCount ?: 0) > 0
+            || formatQualityBadge(showDetails.quality) != null
+            || showDetails.hasAc3 == true
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .padding(start = 80.dp)
             .fillMaxWidth()
             .fillMaxHeight()
     ) {
-        if (showDetails.backdropUrl != null) {
-            ImmersiveBackground(imageUrl = showDetails.backdropUrl)
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState),
-        ) {
-            // Main content — fills the screen height
+        CompositionLocalProvider(LocalBringIntoViewSpec provides verticalBivs) {
             Column(
                 modifier = Modifier
-                    .height(screenHeight)
-                    .fillMaxWidth()
-                    .padding(
-                        start = childPadding.start,
-                        top = childPadding.top + 24.dp,
-                        end = childPadding.end + 48.dp,
-                        bottom = childPadding.bottom + 24.dp,
-                    ),
-                verticalArrangement = Arrangement.SpaceBetween,
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
             ) {
-                ImmersiveDetails(
-                    logoUrl = null,
-                    title = showDetails.title,
-                    originalTitle = showDetails.originalTitle,
-                    description = showDetails.description,
-                    rating = Rating(
-                        kp = showDetails.ratingKp,
-                        imdb = showDetails.ratingImdb,
-                        filmCritics = .0,
-                        russianFilmCritics = .0,
-                        await = .0
-                    ),
-                    votes = Votes(
-                        kp = showDetails.votesKp,
-                        imdb = showDetails.votesImdb,
-                        filmCritics = 0,
-                        russianFilmCritics = 0,
-                        await = 0
-                    ),
-                    genres = showDetails.genres.map { KinopoiskGenre(it.name) },
-                    countries = showDetails.countries.map { KinopoiskCountry(it.name) },
-                    year = showDetails.year,
-                    seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
-                    movieLength = if (!showDetails.isSeries) showDetails.duration else null,
-                    ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
-                )
+                Box(
+                    modifier = Modifier
+                        .height(screenHeight)
+                        .fillMaxWidth(),
+                ) {
+                    if (showDetails.backdropUrl != null) {
+                        ImmersiveBackground(imageUrl = showDetails.backdropUrl)
+                    }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ShowDetailsButtons(
-                        modifier = Modifier.onFocusChanged {
-                            if (it.isFocused) {
-                                coroutineScope.launch { scrollState.animateScrollTo(0) }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                start = childPadding.start,
+                                top = childPadding.top + 24.dp,
+                                end = childPadding.end + 48.dp,
+                                bottom = childPadding.bottom + 24.dp,
+                            ),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        ImmersiveDetails(
+                            logoUrl = null,
+                            title = showDetails.title,
+                            originalTitle = showDetails.originalTitle,
+                            description = showDetails.description,
+                            rating = Rating(
+                                kp = showDetails.ratingKp,
+                                imdb = showDetails.ratingImdb,
+                                filmCritics = .0,
+                                russianFilmCritics = .0,
+                                await = .0
+                            ),
+                            votes = Votes(
+                                kp = showDetails.votesKp,
+                                imdb = showDetails.votesImdb,
+                                filmCritics = 0,
+                                russianFilmCritics = 0,
+                                await = 0
+                            ),
+                            genres = showDetails.genres.map { KinopoiskGenre(it.name) },
+                            countries = showDetails.countries.map { KinopoiskCountry(it.name) },
+                            year = showDetails.year,
+                            seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
+                            movieLength = if (!showDetails.isSeries) showDetails.duration else null,
+                            ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ShowDetailsButtons(
+                                modifier = Modifier
+                                    .onFocusChanged {
+                                        if (it.isFocused) {
+                                            coroutineScope.launch { scrollState.animateScrollTo(0) }
+                                        }
+                                    },
+                                goToMoviePlayer = goToMoviePlayer,
+                                playButtonText = playButtonText,
+                                goToEpisodes = goToEpisodes,
+                                toggleFavorites = toggleFavorites,
+                                isFavorite = showDetails.isFavorite == true,
+                            )
+
+                            if (hasExtraInfo) {
+                                ScrollHintChevron()
                             }
-                        },
-                        goToMoviePlayer = goToMoviePlayer,
-                        playButtonText = playButtonText,
-                        goToEpisodes = goToEpisodes,
-                        toggleFavorites = toggleFavorites,
-                        isFavorite = showDetails.isFavorite == true,
-                    )
-
-                    if (hasExtraInfo) {
-                        ScrollHintChevron()
+                        }
                     }
                 }
-            }
 
-            // Extra info section — revealed by scrolling down
-            if (hasExtraInfo) {
-                ShowExtraDetails(
-                    show = showDetails,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = childPadding.start,
-                            end = childPadding.end + 48.dp,
-                            top = 32.dp,
-                            bottom = 48.dp,
-                        ),
-                )
+                if (hasExtraInfo) {
+                    ShowExtraDetails(
+                        show = showDetails,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = childPadding.start,
+                                end = childPadding.end + 48.dp,
+                                top = 32.dp,
+                                bottom = 48.dp,
+                            ),
+                    )
+                }
             }
         }
     }
@@ -295,13 +315,27 @@ private fun ShowExtraDetails(
     show: Show,
     modifier: Modifier = Modifier,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
     val qualityBadge = formatQualityBadge(show.quality)
     val hasAc3 = show.hasAc3 == true
     val hasBadges = qualityBadge != null || hasAc3
     val hasAudio = (show.langs ?: 0) > 0
     val hasSubtitles = (show.subtitlesCount ?: 0) > 0
+    val containerShape = RoundedCornerShape(20.dp)
 
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    Column(
+        modifier = modifier
+            .onFocusChanged { isFocused = it.hasFocus }
+            .clip(containerShape)
+            .border(
+                width = FilmixBorderWidth,
+                color = if (isFocused) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                shape = containerShape,
+            )
+            .padding(24.dp)
+            .focusable(),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
         if (hasBadges || hasAudio || hasSubtitles) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -310,7 +344,12 @@ private fun ShowExtraDetails(
                 if (qualityBadge != null) TvInfoBadge(text = qualityBadge)
                 if (hasAc3) TvInfoBadge(text = "AC-3")
                 if (hasAudio) TvInfoBadge(text = stringResource(R.string.audio_count, show.langs!!))
-                if (hasSubtitles) TvInfoBadge(text = stringResource(R.string.subtitles_count, show.subtitlesCount!!))
+                if (hasSubtitles) TvInfoBadge(
+                    text = stringResource(
+                        R.string.subtitles_count,
+                        show.subtitlesCount!!
+                    )
+                )
             }
         }
 
@@ -416,55 +455,67 @@ private fun ShowDetailsButtons(
     toggleFavorites: () -> Unit,
     isFavorite: Boolean,
 ) {
-    val focusRequester = remember { FocusRequester() }
+    val (focusRequester, firstItem) = remember { FocusRequester.createRefs() }
 
-    Row(
-        modifier = modifier, horizontalArrangement = Arrangement.spacedBy(16.dp)
+    LazyRow(
+        contentPadding = PaddingValues(16.dp),
+        modifier = Modifier
+            .offset(x = (-16).dp)
+            .focusRequester(focusRequester)
+            .focusRestorer(firstItem),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        LargeButton(
-            onClick = goToMoviePlayer,
-            style = LargeButtonStyle.FILLED,
-            modifier = Modifier.focusRequester(focusRequester)
-        ) {
-            Icon(
-                modifier = Modifier.size(28.dp),
-                imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = null
-            )
-            Spacer(Modifier.size(12.dp))
-            Text(
-                text = playButtonText,
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-
-        if (goToEpisodes != null) {
+        item {
             LargeButton(
-                onClick = goToEpisodes,
-                style = LargeButtonStyle.OUTLINED,
+                modifier = Modifier.focusRequester(firstItem),
+                onClick = goToMoviePlayer,
+                style = LargeButtonStyle.FILLED,
             ) {
                 Icon(
                     modifier = Modifier.size(28.dp),
-                    imageVector = Icons.Rounded.ViewList,
+                    imageVector = Icons.Rounded.PlayArrow,
                     contentDescription = null
                 )
                 Spacer(Modifier.size(12.dp))
                 Text(
-                    text = stringResource(R.string.episodesString),
+                    text = playButtonText,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
         }
 
-        LargeButton(
-            onClick = toggleFavorites,
-            style = if (isFavorite) LargeButtonStyle.FILLED else LargeButtonStyle.OUTLINED
-        ) {
-            Icon(
-                modifier = Modifier.size(28.dp),
-                imageVector = if (isFavorite) Icons.Rounded.BookmarkRemove else Icons.Rounded.BookmarkAdd,
-                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites"
-            )
+
+        if (goToEpisodes != null) {
+            item {
+                LargeButton(
+                    onClick = goToEpisodes,
+                    style = LargeButtonStyle.OUTLINED,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(28.dp),
+                        imageVector = Icons.Rounded.ViewList,
+                        contentDescription = null
+                    )
+                    Spacer(Modifier.size(12.dp))
+                    Text(
+                        text = stringResource(R.string.episodesString),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+
+        item {
+            LargeButton(
+                onClick = toggleFavorites,
+                style = if (isFavorite) LargeButtonStyle.FILLED else LargeButtonStyle.OUTLINED
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = if (isFavorite) Icons.Rounded.BookmarkRemove else Icons.Rounded.BookmarkAdd,
+                    contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites"
+                )
+            }
         }
     }
 

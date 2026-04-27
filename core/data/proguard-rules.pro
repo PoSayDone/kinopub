@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep repository and DI types during library minification.
+-keep class io.github.posaydone.filmix.core.data.** { *; }
+-keep class hilt_aggregated_deps.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

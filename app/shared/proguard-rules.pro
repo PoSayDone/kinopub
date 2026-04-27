@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep shared library classes during library minification.
+-keep class io.github.posaydone.filmix.shared.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

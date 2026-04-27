@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep DI, Retrofit, and config types during library minification.
+-keep class io.github.posaydone.filmix.core.network.** { *; }
+-keep interface io.github.posaydone.filmix.core.network.** { *; }
+-keep class hilt_aggregated_deps.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn retrofit2.**
