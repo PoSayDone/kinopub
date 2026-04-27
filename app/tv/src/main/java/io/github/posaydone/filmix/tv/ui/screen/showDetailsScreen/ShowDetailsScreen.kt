@@ -2,6 +2,7 @@
 
 package io.github.posaydone.filmix.tv.ui.screen.showDetailsScreen
 
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -47,10 +48,7 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenV
 import io.github.posaydone.filmix.core.model.KinopoiskCountry
 import io.github.posaydone.filmix.core.model.KinopoiskGenre
 import io.github.posaydone.filmix.core.model.Rating
-import io.github.posaydone.filmix.core.model.ShowDetails
-import io.github.posaydone.filmix.core.model.ShowImages
-import io.github.posaydone.filmix.core.model.ShowProgress
-import io.github.posaydone.filmix.core.model.ShowTrailers
+import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.Votes
 import io.github.posaydone.filmix.core.model.latestProgressItem
 import io.github.posaydone.filmix.core.model.latestSeriesProgress
@@ -60,7 +58,6 @@ import io.github.posaydone.filmix.tv.ui.common.ImmersiveDetails
 import io.github.posaydone.filmix.tv.ui.common.LargeButton
 import io.github.posaydone.filmix.tv.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.tv.ui.common.Loading
-import io.github.posaydone.filmix.tv.ui.common.gradientOverlay
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 import kotlinx.coroutines.launch
 
@@ -83,23 +80,18 @@ fun ShowDetailsScreen(
         }
     }
 
-    val backdropUrl = (uiState as? ShowDetailsScreenUiState.Done)?.let { state ->
-        resolveImmersiveImageUrl(
-            showDetails = state.showDetails,
-            showImages = state.showImages,
-        )
-    }
-
     when (val s = uiState) {
         is ShowDetailsScreenUiState.Loading -> {
             Loading(modifier = Modifier.fillMaxSize())
         }
 
         is ShowDetailsScreenUiState.Error -> {
+            Log.d(TAG, "ShowDetailsScreen: ${s.message}")
             Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
         }
 
         is ShowDetailsScreenUiState.Done -> {
+            
             val playProgress = if (s.showDetails.isSeries) {
                 s.showProgress.latestSeriesProgress()
             } else {
@@ -117,9 +109,6 @@ fun ShowDetailsScreen(
             }
             Details(
                 showDetails = s.showDetails,
-                showProgress = s.showProgress,
-                showImages = s.showImages,
-                showTrailers = s.showTrailers,
                 toggleFavorites = s.toggleFavorites,
                 goToMoviePlayer = {
                     navigateToMoviePlayer(
@@ -143,10 +132,7 @@ fun ShowDetailsScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Details(
-    showDetails: ShowDetails,
-    showProgress: ShowProgress?,
-    showImages: ShowImages,
-    showTrailers: ShowTrailers?,
+    showDetails: Show,
     toggleFavorites: () -> Unit,
     goToMoviePlayer: () -> Unit,
     playButtonText: String,
@@ -163,12 +149,9 @@ private fun Details(
             .fillMaxWidth()
             .fillMaxHeight()
     ) {
-        ImmersiveBackground(
-            imageUrl = resolveImmersiveImageUrl(
-                showDetails = showDetails,
-                showImages = showImages,
-            ),
-        )
+        if (showDetails.backdropUrl != null) {
+            ImmersiveBackground(imageUrl = showDetails.backdropUrl)
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -200,9 +183,9 @@ private fun Details(
                 genres = showDetails.genres.map { KinopoiskGenre(it.name) },
                 countries = showDetails.countries.map { KinopoiskCountry(it.name) },
                 year = showDetails.year,
-                movieLength = if (!showDetails.isSeries) showDetails.duration else null,
                 seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
-                ageRating = showDetails.ageRating.toString()
+                movieLength = if (!showDetails.isSeries) showDetails.duration else null,
+                ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
             )
             ShowDetailsButtons(
                 modifier = Modifier.onFocusChanged {
@@ -219,16 +202,6 @@ private fun Details(
         }
     }
 
-}
-
-private fun resolveImmersiveImageUrl(
-    showDetails: ShowDetails,
-    showImages: ShowImages,
-): String? {
-    return showDetails.backdropUrl?.takeUnless(String::isBlank)
-        ?: showImages.frames.firstOrNull()?.url?.takeUnless(String::isBlank)
-        ?: showImages.posters.firstOrNull()?.url?.takeUnless(String::isBlank)
-        ?: showDetails.poster.takeUnless(String::isBlank)
 }
 
 //@Preview(device = "id:tv_4k")

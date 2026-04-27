@@ -7,14 +7,12 @@ import io.github.posaydone.filmix.core.model.Episode as AppEpisode
 import io.github.posaydone.filmix.core.model.File
 import io.github.posaydone.filmix.core.model.Genre
 import io.github.posaydone.filmix.core.model.HistoryShow
-import io.github.posaydone.filmix.core.model.LastEpisode
 import io.github.posaydone.filmix.core.model.MaxEpisode
 import io.github.posaydone.filmix.core.model.Season
 import io.github.posaydone.filmix.core.model.Series
 import io.github.posaydone.filmix.core.model.ServerLocationResponse
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.model.Show
-import io.github.posaydone.filmix.core.model.ShowDetails
 import io.github.posaydone.filmix.core.model.ShowImage
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowList
@@ -118,8 +116,8 @@ class ShowRepository @Inject constructor(
     suspend fun getShowsListWithQuery(query: String, limit: Int = 48): List<Show> =
         kinoPubApiService.searchItems(query = query, perPage = limit).items.map { it.toShow() }
 
-    suspend fun getShowDetails(movieId: Int): ShowDetails =
-        kinoPubApiService.getItemDetails(movieId).item.toShowDetails()
+    suspend fun getShowDetails(movieId: Int): Show =
+        kinoPubApiService.getItemDetails(movieId).item.toShow(withDetails = true)
 
     suspend fun getShowImages(movieId: Int): ShowImages {
         val item = kinoPubApiService.getItemDetails(movieId, noLinks = 1).item
@@ -420,70 +418,37 @@ class ShowRepository @Inject constructor(
         else -> false
     }
 
-    private fun KinoPubItem.toShow(): Show {
+    private fun KinoPubItem.toShow(withDetails: Boolean = false): Show {
         val isSeries = isSeries()
+        val maxSeasonNumber = maxSeasonNumber()
+        val maxEpisodeNumber = maxEpisodeNumber()
         return Show(
             id = id,
-            last_episode = maxEpisodeNumber(),
-            last_season = maxSeasonNumber(),
-            original_name = title,
+            title = title,
+            originalTitle = title,
             poster = bestPosterUrl(),
             backdropUrl = posters?.wide ?: bestPosterUrl(),
+            year = year ?: 0,
             quality = qualityLabel(),
             status = toShowStatus(),
-            title = title,
-            votesNeg = negativeVotes(),
-            votesPos = positiveVotes(),
-            year = year ?: 0,
-            url = "",
             description = plot?.takeIf { it.isNotBlank() },
-            genres = genres.map { it.title },
-            countries = countries.map { it.title },
+            isSeries = isSeries,
+            genres = genres.map { Genre(it.id, it.title.slug(), it.title) },
+            countries = countries.map { Country(it.id, it.title) },
             ratingKp = kinopoisk_rating?.takeIf { it > 0.0 },
             ratingImdb = imdb_rating?.takeIf { it > 0.0 },
             votesKp = kinopoisk_votes,
             votesImdb = imdb_votes,
-            movieLength = if (!isSeries) durationMinutes() else null,
-            seriesLength = if (isSeries) maxEpisodeNumber() else null,
-            ageRating = 0,
-        )
-    }
-
-    private fun KinoPubItem.toShowDetails(): ShowDetails {
-        val isSeries = isSeries()
-        val maxSeasonNumber = maxSeasonNumber()
-        val maxEpisodeNumber = maxEpisodeNumber()
-        return ShowDetails(
-            id = id,
-            category = subtype ?: type,
-            title = title,
-            originalTitle = title,
-            year = year ?: 0,
-            poster = bestPosterUrl(),
-            backdropUrl = posters?.wide,
-            isSeries = isSeries,
-            lastEpisode = if (isSeries && maxSeasonNumber != null && maxEpisodeNumber != null) {
-                LastEpisode(season = maxSeasonNumber, episode = maxEpisodeNumber.toString())
-            } else null,
+            votesPos = positiveVotes(),
+            votesNeg = negativeVotes(),
+            duration = if (!isSeries) durationMinutes() else null,
             maxEpisode = if (isSeries && maxSeasonNumber != null && maxEpisodeNumber != null) {
                 MaxEpisode(season = maxSeasonNumber, episode = maxEpisodeNumber)
             } else null,
-            countries = countries.map { Country(it.id, it.title) },
-            genres = genres.map { Genre(it.id, it.title.slug(), it.title) },
-            quality = qualityLabel(),
-            votesPos = positiveVotes(),
-            votesNeg = negativeVotes(),
-            ratingImdb = imdb_rating ?: 0.0,
-            ratingKp = kinopoisk_rating ?: 0.0,
-            duration = durationMinutes(),
-            votesImdb = imdb_votes,
-            votesKp = kinopoisk_votes,
-            idKinopoisk = kinopoisk,
-            description = plot.orEmpty(),
-            status = toShowStatus(),
-            isFavorite = in_watchlist == true,
-            isDeferred = in_watchlist,
-            isHdr = false,
+            isFavorite = if (withDetails) in_watchlist == true else null,
+            isDeferred = if (withDetails) in_watchlist else null,
+            cast = if (withDetails) cast?.takeIf { it.isNotBlank() } else null,
+            director = if (withDetails) director?.takeIf { it.isNotBlank() } else null,
         )
     }
 
@@ -517,20 +482,26 @@ class ShowRepository @Inject constructor(
     private fun KinoPubWatchingListItem.toShow(): Show {
         val posterUrl = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
         return Show(
-            id = id, last_episode = null, last_season = null, original_name = title,
-            poster = posterUrl, backdropUrl = posters?.wide ?: posterUrl,
-            quality = "N/A", status = null, title = title,
-            votesNeg = 0, votesPos = 0, year = 0, url = "",
+            id = id,
+            title = title,
+            originalTitle = title,
+            poster = posterUrl,
+            backdropUrl = posters?.wide ?: posterUrl,
+            year = 0,
         )
     }
 
     private fun KinoPubWatchingSerialItem.toShow(): Show {
         val posterUrl = posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
         return Show(
-            id = id, last_episode = new, last_season = null, original_name = title,
-            poster = posterUrl, backdropUrl = posters?.wide ?: posterUrl,
-            quality = "N/A", status = null, title = title,
-            votesNeg = 0, votesPos = 0, year = 0, url = "",
+            id = id,
+            title = title,
+            originalTitle = title,
+            poster = posterUrl,
+            backdropUrl = posters?.wide ?: posterUrl,
+            year = 0,
+            isSeries = true,
+            maxEpisode = new?.let { MaxEpisode(episode = it) },
         )
     }
 

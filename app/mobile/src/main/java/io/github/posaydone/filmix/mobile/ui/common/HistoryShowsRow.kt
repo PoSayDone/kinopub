@@ -1,7 +1,6 @@
 package io.github.posaydone.filmix.mobile.ui.common
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,15 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.core.model.Show
-import io.github.posaydone.filmix.core.model.ShowList
 
 @Composable
-fun ShowsRow(
-    showList: ShowList,
+fun HistoryShowsRow(
+    historyList: List<HistoryShow>,
     modifier: Modifier = Modifier,
     title: String,
-    onShowClick: (Show) -> Unit = { },
+    onShowClick: (HistoryShow) -> Unit = { },
     onViewAll: (() -> Unit)? = null,
 ) {
     Column(
@@ -61,16 +60,16 @@ fun ShowsRow(
         }
 
         AnimatedContent(
-            targetState = showList,
+            targetState = historyList,
             label = "",
-        ) { showList ->
+        ) { historyList ->
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
 
-                itemsIndexed(showList, key = { _, show -> show.id }) { _, show ->
-                    ShowsRowItem(
+                itemsIndexed(historyList, key = { _, show -> show.id }) { _, show ->
+                    HistoryShowsRowItem(
                         modifier = modifier.weight(1f),
                         onMovieSelected = {
                             onShowClick(show)
@@ -85,13 +84,13 @@ fun ShowsRow(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun ShowsRowItem(
-    show: Show,
-    onMovieSelected: (Show) -> Unit,
+private fun HistoryShowsRowItem(
+    show: HistoryShow,
+    onMovieSelected: (HistoryShow) -> Unit,
     modifier: Modifier = Modifier,
 ) {
 
-    ShowCard(
+    HistoryCard(
         show = show, onClick = { onMovieSelected(show) }, modifier = Modifier.then(modifier)
     )
 }

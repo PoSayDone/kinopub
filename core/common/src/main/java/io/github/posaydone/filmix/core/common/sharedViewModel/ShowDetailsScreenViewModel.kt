@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.core.common.sharedViewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -9,9 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.filmix.core.data.ShowRepository
 import io.github.posaydone.filmix.core.model.SessionManager
 import io.github.posaydone.filmix.core.model.ShowDetails
-import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
-import io.github.posaydone.filmix.core.model.ShowTrailers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,20 +21,37 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private const val TAG = "ShowDetailsVM"
+
 sealed class ShowDetailsScreenUiState {
     data object Loading : ShowDetailsScreenUiState()
     data class Error(val message: String, val onRetry: () -> Unit) : ShowDetailsScreenUiState()
     data class Done(
         val sessionManager: SessionManager,
         val showDetails: ShowDetails,
-        val showImages: ShowImages,
-        val showTrailers: ShowTrailers,
         val showProgress: ShowProgress,
         val toggleFavorites: () -> Unit,
     ) : ShowDetailsScreenUiState()
 }
 
 data class ShowDetailsNavKey(val showId: Int)
+
+private suspend inline fun <T> runLoggedRequest(
+    requestName: String,
+    showId: Int,
+    crossinline block: suspend () -> T,
+): T {
+    Log.d(TAG, "Request started: $requestName, showId=$showId")
+
+    return try {
+        val result = block()
+        Log.d(TAG, "Request completed: $requestName, showId=$showId")
+        result
+    } catch (error: Exception) {
+        Log.e(TAG, "Request failed: $requestName, showId=$showId", error)
+        throw error
+    }
+}
 
 @HiltViewModel(assistedFactory = ShowDetailsScreenViewModel.Factory::class)
 class ShowDetailsScreenViewModel @AssistedInject constructor(
@@ -53,31 +69,36 @@ class ShowDetailsScreenViewModel @AssistedInject constructor(
     val uiState = retryChannel.receiveAsFlow()
         .flatMapLatest {
             flow {
-                try {
-                    val showId = navKey.showId
-                    val showDetails = showRepository.getShowDetails(showId)
-                    val images = showRepository.getShowImages(showId)
-                    val trailers = showRepository.getShowTrailers(showId)
-                    val progress = showRepository.getShowProgress(showId)
+                val showId = navKey.showId
 
-                    val backdropUrl = images.frames.firstOrNull()?.url
-                        ?: images.posters.firstOrNull()?.url
-                        ?: showDetails.backdropUrl
-                        ?: showDetails.poster
-                    val enriched = showDetails.copy(backdropUrl = backdropUrl)
+                try {
+                    Log.d(TAG, "Loading show details screen. showId=$showId")
+
+                    val showDetails = runLoggedRequest("getShowDetails", showId) {
+                        showRepository.getShowDetails(showId)
+                    }
+
+                    val progress = runLoggedRequest("getShowProgress", showId) {
+                        showRepository.getShowProgress(showId)
+                    }
 
                     emit(
                         ShowDetailsScreenUiState.Done(
-                            showDetails = enriched,
-                            showImages = images,
-                            showTrailers = trailers,
+                            showDetails = showDetails,
                             showProgress = progress,
                             sessionManager = sessionManager,
-                            toggleFavorites = { toggleFavorites() },
+                            toggleFavorites = { toggleFavorites() }
                         )
                     )
                 } catch (error: Exception) {
-                    emit(ShowDetailsScreenUiState.Error(message = "Unknown error", onRetry = ::reload))
+                    Log.e(TAG, "Failed to load show details screen. showId=$showId", error)
+
+                    emit(
+                        ShowDetailsScreenUiState.Error(
+                            message = error.message ?: "Unknown error",
+                            onRetry = ::reload
+                        )
+                    )
                 }
             }
         }

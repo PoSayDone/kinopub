@@ -174,17 +174,14 @@ private fun previewShow(
     year: Int,
 ) = Show(
     id = id,
-    last_episode = null,
-    last_season = null,
-    original_name = title,
+    title = title,
+    originalTitle = title,
     poster = "",
+    year = year,
     quality = "4K",
     status = ShowStatus(status_text = "Released"),
-    title = title,
     votesNeg = 24,
     votesPos = 742,
-    year = year,
-    url = "",
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -605,24 +602,24 @@ private fun Body(
                     title = show.title,
                     description = show.description,
                     rating = Rating(
-                        kp = show.ratingKp ?: 0.0,
-                        imdb = show.ratingImdb ?: 0.0,
-                        filmCritics = 0.0,
-                        russianFilmCritics = 0.0,
-                        await = 0.0,
+                        kp = show.ratingKp,
+                        imdb = show.ratingImdb,
+                        filmCritics = .0,
+                        russianFilmCritics = .0,
+                        await = .0
                     ),
                     votes = Votes(
-                        kp = show.votesKp ?: 0,
-                        imdb = show.votesImdb ?: 0,
+                        kp = show.votesKp,
+                        imdb = show.votesImdb,
                         filmCritics = 0,
                         russianFilmCritics = 0,
-                        await = 0,
+                        await = 0
                     ),
-                    genres = show.genres.map { KinopoiskGenre(name = it) },
-                    countries = show.countries.map { KinopoiskCountry(name = it) },
+                    genres = show.genres.map { KinopoiskGenre(name = it.name) },
+                    countries = show.countries.map { KinopoiskCountry(name = it.name) },
                     year = show.year,
-                    seriesLength = show.seriesLength,
-                    movieLength = show.movieLength,
+                    seriesLength = if (show.isSeries) show.maxEpisode?.episode else null,
+                    movieLength = if (!show.isSeries) show.duration else null,
                     ageRating = show.ageRating.takeIf { it > 0 }?.toString() ?: "",
                 )
             }

@@ -76,7 +76,7 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenU
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowDetailsScreenViewModel
 import io.github.posaydone.filmix.core.common.utils.formatDuration
 import io.github.posaydone.filmix.core.common.utils.formatVoteCount
-import io.github.posaydone.filmix.core.model.ShowDetails
+import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowImages
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.ShowTrailers
@@ -128,14 +128,13 @@ fun ShowDetailsScreen(
                         playProgress.season,
                         playProgress.episode,
                     )
+
                     !s.showDetails.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
                     else -> stringResource(R.string.playString)
                 }
                 Details(
                     showDetails = s.showDetails,
                     showProgress = s.showProgress,
-                    showImages = s.showImages,
-                    showTrailers = s.showTrailers,
                     toggleFavorites = s.toggleFavorites,
                     navigateToMoviePlayer = {
                         navigateToMoviePlayer(
@@ -161,10 +160,8 @@ fun ShowDetailsScreen(
 
 @Composable
 private fun Details(
-    showDetails: ShowDetails,
+    showDetails: Show,
     showProgress: ShowProgress,
-    showImages: ShowImages,
-    showTrailers: ShowTrailers,
     toggleFavorites: () -> Unit,
     navigateToMoviePlayer: () -> Unit,
     playButtonText: String,
@@ -238,7 +235,9 @@ private fun Details(
                     Column(
                         modifier = Modifier.padding(24.dp),
                     ) {
-                        DescriptionSection(description = showDetails.description)
+                        if (!showDetails.description.isNullOrBlank()) {
+                            DescriptionSection(description = showDetails.description!!)
+                        }
                     }
                 }
             }
@@ -322,7 +321,7 @@ fun TitleSection(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
-   
+
     Column(
         modifier = modifier
             .fillMaxWidth()

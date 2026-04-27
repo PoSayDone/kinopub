@@ -60,7 +60,6 @@ fun ImmersiveDetails(
     Column(
         modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Logo or Title
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!logoUrl.isNullOrEmpty()) {
                 AsyncImage(

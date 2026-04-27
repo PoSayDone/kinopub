@@ -2,32 +2,50 @@ package io.github.posaydone.filmix.core.model
 
 data class Show(
     val id: Int,
-    val last_episode: Int?,
-    val last_season: Int?,
-    val original_name: String,
-    val poster: String,
-    val backdropUrl: String = "",
-    val quality: String,
-    val status: ShowStatus?,
     val title: String,
-    val votesNeg: Int,
-    val votesPos: Int,
+    val originalTitle: String,
+    val poster: String,
+    val backdropUrl: String? = null,
     val year: Int,
-    val url: String,
+    val quality: String? = null,
+    val status: ShowStatus? = null,
     val description: String? = null,
-    val genres: List<String> = emptyList(),
-    val countries: List<String> = emptyList(),
+    val isSeries: Boolean = false,
+    val genres: List<Genre> = emptyList(),
+    val countries: List<Country> = emptyList(),
     val ratingKp: Double? = null,
     val ratingImdb: Double? = null,
     val votesKp: Int? = null,
     val votesImdb: Int? = null,
-    val movieLength: Int? = null,
-    val seriesLength: Int? = null,
+    val votesPos: Int = 0,
+    val votesNeg: Int = 0,
     val ageRating: Int = 0,
+    val isFavorite: Boolean? = null,
+    val isDeferred: Boolean? = null,
+    val duration: Int? = null,
+    val maxEpisode: MaxEpisode? = null,
+    val cast: String? = null,
+    val director: String? = null,
 )
 
 data class ShowStatus(
     val comment: String? = null,
     val status: Int? = null,
     val status_text: String? = null,
+)
+
+data class Genre(
+    val id: Int,
+    val slug: String,
+    val name: String,
+)
+
+data class Country(
+    val id: Int,
+    val name: String,
+)
+
+data class MaxEpisode(
+    val season: Int? = null,
+    val episode: Int? = null,
 )

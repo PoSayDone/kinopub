@@ -33,9 +33,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenUiState
 import io.github.posaydone.filmix.core.common.sharedViewModel.HomeScreenViewModel
+import io.github.posaydone.filmix.core.model.HistoryShow
+import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.mobile.ui.common.Error
+import io.github.posaydone.filmix.mobile.ui.common.HistoryShowsRow
 import io.github.posaydone.filmix.mobile.ui.common.Loading
 import io.github.posaydone.filmix.mobile.ui.common.ShowsRow
 import io.github.posaydone.filmix.mobile.ui.screen.homeScreen.components.HomeBanner
@@ -122,9 +125,9 @@ fun HomeScreen(
 @Composable
 private fun Body(
     modifier: Modifier = Modifier,
-    featuredShow: io.github.posaydone.filmix.core.model.ShowDetails,
+    featuredShow: Show,
     featuredShowProgress: ShowProgress,
-    lastSeenShows: ShowList,
+    lastSeenShows: List<HistoryShow>,
     popularMovies: ShowList,
     newMovies: ShowList,
     popularSeries: ShowList,
@@ -163,8 +166,8 @@ private fun Body(
                 featuredShowProgress = featuredShowProgress,
                 navigateToMoviePlayer = navigateToMoviePlayer,
             ) { }
-            ShowsRow(
-                showList = lastSeenShows,
+            HistoryShowsRow(
+                historyList = lastSeenShows,
                 title = stringResource(R.string.continue_watching),
                 onShowClick = { show -> navigateToShowDetails(show.id) })
             ShowsRow(

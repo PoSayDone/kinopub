@@ -129,7 +129,7 @@ fun ShowCardInfo(
     val originalTitle = show.title.substringAfter('/', missingDelimiterValue = "")
         .trim()
         .takeIf { it.isNotEmpty() }
-        ?: show.original_name
+        ?: show.originalTitle
             .trim()
             .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
 

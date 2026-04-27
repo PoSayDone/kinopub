@@ -24,8 +24,9 @@ import coil.request.ImageRequest
 import io.github.posaydone.filmix.core.model.HistoryShow
 
 @Composable
-fun HistoryCard(show: HistoryShow, onClick: () -> Unit) {
+fun HistoryCard(modifier: Modifier, show: HistoryShow, onClick: () -> Unit) {
     Card(
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = Color(android.graphics.Color.TRANSPARENT)
         ),

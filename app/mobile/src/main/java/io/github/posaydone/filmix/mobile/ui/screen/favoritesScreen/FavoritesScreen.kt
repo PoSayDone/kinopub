@@ -112,16 +112,10 @@ fun FavoritesScreenContent(
 
 private fun HistoryShow.toShow(): Show = Show(
     id = id,
-    last_episode = null,
-    last_season = null,
-    original_name = title,
-    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
-    quality = "",
-    status = null,
     title = title,
-    votesNeg = 0,
-    votesPos = 0,
+    originalTitle = title,
+    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
     year = 0,
-    url = "",
     description = description,
+    isSeries = isSeries,
 )

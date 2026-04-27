@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import io.github.posaydone.filmix.core.common.R
-import io.github.posaydone.filmix.core.model.ShowDetails
+import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.latestProgressItem
 import io.github.posaydone.filmix.core.model.latestSeriesProgress
@@ -35,7 +35,7 @@ import io.github.posaydone.filmix.mobile.ui.utils.bottomBorder
 @Composable
 fun HomeBanner(
     modifier: Modifier = Modifier,
-    featuredShow: ShowDetails,
+    featuredShow: Show,
     featuredShowProgress: ShowProgress,
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     onClick: (Int) -> Unit,
@@ -88,7 +88,7 @@ fun HomeBanner(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = featuredShow.description.takeIf { it.isNotBlank() } ?: "",
+                        text = featuredShow.description.takeIf { !it.isNullOrBlank() } ?: "",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
