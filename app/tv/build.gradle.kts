@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "io.github.posaydone.filmix.tv"
+    namespace = "io.github.posaydone.kinopub.tv"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "io.github.posaydone.filmix.tv"
+        applicationId = "io.github.posaydone.kinopub.tv"
         minSdk = 24
         targetSdk = 34
         versionCode = (System.currentTimeMillis() / 1000).toInt()

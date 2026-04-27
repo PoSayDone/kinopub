@@ -1,0 +1,42 @@
+package io.github.posaydone.kinopub.core.model
+
+data class HistoryShow(
+    val id: Int,
+    val title: String,
+    val originalTitle: String = "",
+    val poster: String,
+    val isSeries: Boolean,
+    val description: String,
+    val thumbnail: String?,
+    val watchedSeconds: Int?,
+    val durationSeconds: Int?,
+    val seasonNumber: Int?,
+    val episodeNumber: Int?,
+    val episodeTitle: String?,
+    val watchedAtSeconds: Long? = null,
+    val backdropUrl: String? = null,
+    val genres: List<String> = emptyList(),
+    val countries: List<String> = emptyList(),
+    val ratingKp: Double? = null,
+    val ratingImdb: Double? = null,
+    val votesKp: Int? = null,
+    val year: Int = 0,
+    val movieLengthSeconds: Int? = null,
+)
+
+fun HistoryShow.toShow(): Show = Show(
+    id = id,
+    title = title,
+    originalTitle = originalTitle,
+    poster = thumbnail?.takeIf { it.isNotBlank() } ?: poster,
+    backdropUrl = backdropUrl,
+    year = year,
+    description = description,
+    isSeries = isSeries,
+    genres = genres.map { Genre(id = 0, slug = "", name = it) },
+    countries = countries.map { Country(id = 0, name = it) },
+    ratingKp = ratingKp,
+    ratingImdb = ratingImdb,
+    votesKp = votesKp,
+    durationSeconds = movieLengthSeconds,
+)

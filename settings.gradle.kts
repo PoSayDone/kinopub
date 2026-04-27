@@ -22,7 +22,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Filmix"
+rootProject.name = "Kinopub"
 include(":app:tv")
 include(":app:mobile")
 include(":core:model")

@@ -21,8 +21,8 @@
 #-renamesourcefileattribute SourceFile
 
 # Keep DI, Retrofit, and config types during library minification.
--keep class io.github.posaydone.filmix.core.network.** { *; }
--keep interface io.github.posaydone.filmix.core.network.** { *; }
+-keep class io.github.posaydone.kinopub.core.network.** { *; }
+-keep interface io.github.posaydone.kinopub.core.network.** { *; }
 -keep class hilt_aggregated_deps.** { *; }
 -keepattributes Signature
 -keepattributes *Annotation*

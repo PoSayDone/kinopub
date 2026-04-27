@@ -8,13 +8,13 @@
 
 
     <application
-        android:name=".Filmix"
+        android:name=".Kinopub"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Filmix.SplashScreen"
+        android:theme="@style/Theme.Kinopub.SplashScreen"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
@@ -22,14 +22,14 @@
             android:exported="true"
             android:label="@string/app_name"
             android:supportsPictureInPicture="true"
-            android:theme="@style/Theme.Filmix.SplashScreen">
+            android:theme="@style/Theme.Kinopub.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <service
-            android:name="io.github.posaydone.filmix.core.common.services.PlaybackService"
+            android:name="io.github.posaydone.kinopub.core.common.services.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>

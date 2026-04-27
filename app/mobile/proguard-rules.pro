@@ -35,8 +35,8 @@
 -dontobfuscate
 
 # Keep model and network DTO classes so Gson reflection finds the right fields.
--keep class io.github.posaydone.filmix.core.model.** { *; }
--keep class io.github.posaydone.filmix.core.network.** { *; }
+-keep class io.github.posaydone.kinopub.core.model.** { *; }
+-keep class io.github.posaydone.kinopub.core.network.** { *; }
 
 # Preserve generic type signatures needed by Gson TypeToken / TypeAdapters.
 -keepattributes Signature

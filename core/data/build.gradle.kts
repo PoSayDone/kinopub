@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.posaydone.filmix.core.data"
+    namespace = "io.github.posaydone.kinopub.core.data"
     compileSdk = 36
 
     defaultConfig {

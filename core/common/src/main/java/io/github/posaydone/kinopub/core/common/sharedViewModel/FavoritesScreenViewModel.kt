@@ -1,0 +1,64 @@
+package io.github.posaydone.kinopub.core.common.sharedViewModel
+
+import androidx.compose.runtime.Immutable
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.posaydone.kinopub.core.data.ShowRepository
+import io.github.posaydone.kinopub.core.model.HistoryShow
+import io.github.posaydone.kinopub.core.model.ShowList
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@Immutable
+sealed interface FavoritesScreenUiState {
+    data object Loading : FavoritesScreenUiState
+    data class Error(val message: String, val onRetry: () -> Unit) : FavoritesScreenUiState
+    data class Done(
+        val watchingList: ShowList,
+        val historyList: List<HistoryShow>,
+    ) : FavoritesScreenUiState
+}
+
+@HiltViewModel
+class FavoritesScreenViewModel @Inject constructor(
+    private val repository: ShowRepository,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<FavoritesScreenUiState>(FavoritesScreenUiState.Loading)
+    val uiState: StateFlow<FavoritesScreenUiState> = _uiState
+
+    init {
+        load()
+    }
+
+    private fun load() {
+        _uiState.value = FavoritesScreenUiState.Loading
+        viewModelScope.launch {
+            combine(
+                flow {
+                    emit(
+                        (repository.getWatchingSerials() + repository.getWatchingMovies())
+                            .distinctBy { it.id }
+                            .take(20)
+                    )
+                },
+                flow { emit(repository.getHistoryList(limit = 20)) },
+            ) { watching, history ->
+                FavoritesScreenUiState.Done(watchingList = watching, historyList = history)
+            }.catch { e ->
+                _uiState.value = FavoritesScreenUiState.Error(
+                    message = e.message ?: "Unknown error",
+                    onRetry = ::load,
+                )
+            }.collect { state ->
+                _uiState.value = state
+            }
+        }
+    }
+}

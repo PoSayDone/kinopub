@@ -32,6 +32,7 @@ local.properties
 app/build/
 app/*/build/
 app/*/outputs/
+app/*/release/
 
 # Generated files
 generated/

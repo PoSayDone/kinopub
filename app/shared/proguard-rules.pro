@@ -21,6 +21,6 @@
 #-renamesourcefileattribute SourceFile
 
 # Keep shared library classes during library minification.
--keep class io.github.posaydone.filmix.shared.** { *; }
+-keep class io.github.posaydone.kinopub.shared.** { *; }
 -keepattributes Signature
 -keepattributes *Annotation*

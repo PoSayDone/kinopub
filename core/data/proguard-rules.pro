@@ -21,7 +21,7 @@
 #-renamesourcefileattribute SourceFile
 
 # Keep repository and DI types during library minification.
--keep class io.github.posaydone.filmix.core.data.** { *; }
+-keep class io.github.posaydone.kinopub.core.data.** { *; }
 -keep class hilt_aggregated_deps.** { *; }
 -keepattributes Signature
 -keepattributes *Annotation*

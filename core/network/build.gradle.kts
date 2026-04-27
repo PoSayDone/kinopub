@@ -22,7 +22,7 @@ fun resolveSecret(name: String): String {
 }
 
 android {
-    namespace = "io.github.posaydone.filmix.core.network"
+    namespace = "io.github.posaydone.kinopub.core.network"
     compileSdk = 36
 
     defaultConfig {

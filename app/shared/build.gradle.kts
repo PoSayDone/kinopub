@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.posaydone.filmix.shared"
+    namespace = "io.github.posaydone.kinopub.shared"
     compileSdk = 36
 
     defaultConfig {

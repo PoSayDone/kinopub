@@ -1,0 +1,25 @@
+package io.github.posaydone.kinopub.mobile.ui.utils
+
+import android.app.Activity
+import android.app.PictureInPictureParams
+import android.content.Context
+import android.os.Build
+import android.util.Rational
+
+fun isPipSupported(context: Context): Boolean {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && context.packageManager.hasSystemFeature(
+        "android.software.picture_in_picture"
+    )
+}
+
+fun enterPipMode(context: Context) {
+    val activity = context as? Activity
+
+    if (activity != null && isPipSupported(context)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val params = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
+
+            activity.enterPictureInPictureMode(params)
+        }
+    }
+}

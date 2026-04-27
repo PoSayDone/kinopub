@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "io.github.posaydone.filmix.mobile"
+    namespace = "io.github.posaydone.kinopub.mobile"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.posaydone.filmix.mobile"
+        applicationId = "io.github.posaydone.kinopub.mobile"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

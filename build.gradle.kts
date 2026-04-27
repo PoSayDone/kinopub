@@ -9,4 +9,4 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
     alias(libs.plugins.android.library) apply false
 }
-val defaultApplicationId by extra("io.github.posaydone.filmix")
+val defaultApplicationId by extra("io.github.posaydone.kinopub")
