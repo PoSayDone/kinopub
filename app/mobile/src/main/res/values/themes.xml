@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.Kinopub.SplashScreen" parent="Theme.Kinopub">
         <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/ic_launcher_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_launcher_monochrome</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@mipmap/ic_launcher</item>
     </style>
     <style name="Theme.Kinopub" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
