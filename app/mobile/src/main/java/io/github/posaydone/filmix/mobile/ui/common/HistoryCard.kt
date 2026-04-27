@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import io.github.posaydone.filmix.core.model.HistoryShow
+
+private val HistoryCardWidth = 220.dp
 
 @Composable
 fun HistoryCard(
@@ -40,7 +43,7 @@ fun HistoryCard(
 
     BaseCard(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.width(HistoryCardWidth),
         title = {
             ShowCardInfo(
                 title = show.title,
@@ -53,8 +56,8 @@ fun HistoryCard(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
                 .aspectRatio(16f / 9f)
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
@@ -66,7 +69,8 @@ fun HistoryCard(
                     .build(),
                 contentDescription = show.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxWidth(),
             )
 
             if (show.isSeries && seasonNumber != null && episodeNumber != null) {

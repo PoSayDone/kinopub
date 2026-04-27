@@ -1,35 +1,27 @@
 package io.github.posaydone.filmix.mobile.ui.screen.homeScreen.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowProgress
 import io.github.posaydone.filmix.core.model.latestProgressItem
 import io.github.posaydone.filmix.core.model.latestSeriesProgress
-import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.ActionButtons
-import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.ShowPoster
-import io.github.posaydone.filmix.mobile.ui.screen.showDetailsScreen.TitleSection
+import io.github.posaydone.filmix.mobile.ui.common.ShowBannerContent
+import io.github.posaydone.filmix.mobile.ui.common.ShowPoster
 import io.github.posaydone.filmix.mobile.ui.utils.bottomBorder
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,10 +32,6 @@ fun HomeBanner(
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
 ) {
     val headerHeight = 420.dp
-    val primaryTitle = featuredShow.title.trim()
-    val originalTitle = featuredShow.originalTitle
-        .trim()
-        .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
     val playProgress = if (featuredShow.isSeries) {
         featuredShowProgress.latestSeriesProgress()
     } else {
@@ -55,7 +43,6 @@ fun HomeBanner(
             playProgress.season,
             playProgress.episode,
         )
-
         !featuredShow.isSeries && playProgress != null -> stringResource(R.string.continueWatchingMovie)
         else -> stringResource(R.string.playString)
     }
@@ -64,7 +51,7 @@ fun HomeBanner(
         ShowPoster(
             backdropUrl = featuredShow.backdropUrl,
             posterUrl = featuredShow.poster,
-            height = headerHeight
+            height = headerHeight,
         )
 
         Column(
@@ -75,41 +62,39 @@ fun HomeBanner(
             Spacer(modifier = Modifier.height(headerHeight - 100.dp))
 
             Column(
-                modifier = modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                TitleSection(
-                    title = primaryTitle,
-                    originalTitle = originalTitle,
+                ShowBannerContent(
+                    title = featuredShow.title.trim(),
+                    originalTitle = featuredShow.originalTitle
+                        .trim()
+                        .takeIf { it.isNotEmpty() && !it.equals(featuredShow.title.trim(), ignoreCase = true) },
                     logoUrl = null,
-                    height = 80.dp,
+                    ratingKp = featuredShow.ratingKp,
+                    votesKp = featuredShow.votesKp,
+                    year = featuredShow.year,
+                    genres = featuredShow.genres.map { it.name },
+                    countries = featuredShow.countries.map { it.name },
+                    totalMinutes = if (featuredShow.isSeries) {
+                        featuredShow.maxEpisode?.episode?.takeIf { it > 0 }
+                    } else {
+                        featuredShow.duration?.takeIf { it > 0 }
+                    },
+                    ageRating = featuredShow.ageRating.takeIf { it > 0 },
+                    description = featuredShow.description,
+                    maxDescriptionLines = 3,
+                    onPlayClick = {
+                        navigateToMoviePlayer(
+                            featuredShow.id,
+                            playProgress?.season ?: -1,
+                            playProgress?.episode ?: -1,
+                        )
+                    },
+                    playButtonText = playButtonText,
+                    showMetadata = false,
+                    showDescription = true,
                 )
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = featuredShow.description.takeIf { !it.isNullOrBlank() } ?: "",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3
-                    )
-                    ActionButtons(
-                        playButtonText = playButtonText,
-                        navigateToMoviePlayer = {
-                            navigateToMoviePlayer(
-                                featuredShow.id,
-                                playProgress?.season ?: -1,
-                                playProgress?.episode ?: -1,
-                            )
-                        },
-                    )
-                }
             }
             HorizontalDivider()
         }

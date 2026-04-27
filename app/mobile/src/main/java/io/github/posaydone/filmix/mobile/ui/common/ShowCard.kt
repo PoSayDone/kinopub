@@ -27,8 +27,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import io.github.posaydone.filmix.core.model.Show
 
-private val ShowCardWidth = 124.dp
-private val ShowCardInfoTopPadding = 8.dp
+private val ShowCardWidth = 140.dp
+private val ShowCardInfoTopPadding = 4.dp
 
 @Composable
 fun BaseCard(
@@ -80,7 +80,7 @@ fun ShowCardInfo(
         if (showTitle) {
             Text(
                 text = primaryTitle,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
