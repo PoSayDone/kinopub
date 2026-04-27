@@ -76,11 +76,7 @@ fun HomeBanner(
                     year = featuredShow.year,
                     genres = featuredShow.genres.map { it.name },
                     countries = featuredShow.countries.map { it.name },
-                    totalMinutes = if (featuredShow.isSeries) {
-                        featuredShow.maxEpisode?.episode?.takeIf { it > 0 }
-                    } else {
-                        featuredShow.duration?.takeIf { it > 0 }
-                    },
+                    durationSeconds = featuredShow.durationSeconds?.takeIf { !featuredShow.isSeries && it > 0 },
                     ageRating = featuredShow.ageRating.takeIf { it > 0 },
                     description = featuredShow.description,
                     maxDescriptionLines = 3,

@@ -35,14 +35,16 @@ fun formatVoteCount(count: Int): String {
 
 
 /**
- * Formats a duration in minutes into a localized string like "2 hours 5 minutes".
+ * Formats a duration in seconds into a localized string like "2 hours 5 minutes".
  * Uses Android's plural string resources to handle localization correctly.
  */
-fun formatDuration(context: Context, totalMinutes: Int): String {
-    if (totalMinutes <= 0) return ""
+fun formatDuration(context: Context, totalSeconds: Int): String {
+    if (totalSeconds <= 0) return ""
 
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
+    val displayMinutes = (totalSeconds / 60).coerceAtLeast(1)
+
+    val hours = displayMinutes / 60
+    val minutes = displayMinutes % 60
 
     val parts = mutableListOf<String>()
 

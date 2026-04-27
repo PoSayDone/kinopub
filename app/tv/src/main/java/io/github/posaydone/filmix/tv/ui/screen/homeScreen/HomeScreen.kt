@@ -620,7 +620,7 @@ private fun Body(
                     countries = show.countries.map { KinopoiskCountry(name = it.name) },
                     year = show.year,
                     seriesLength = if (show.isSeries) show.maxEpisode?.episode else null,
-                    movieLength = if (!show.isSeries) show.duration else null,
+                    movieLengthSeconds = if (!show.isSeries) show.durationSeconds else null,
                     ageRating = show.ageRating.takeIf { it > 0 }?.toString() ?: "",
                 )
             }

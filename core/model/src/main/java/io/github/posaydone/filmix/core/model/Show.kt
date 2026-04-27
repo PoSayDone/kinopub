@@ -22,7 +22,7 @@ data class Show(
     val ageRating: Int = 0,
     val isFavorite: Boolean? = null,
     val isDeferred: Boolean? = null,
-    val duration: Int? = null,
+    val durationSeconds: Int? = null,
     val maxEpisode: MaxEpisode? = null,
     val cast: String? = null,
     val director: String? = null,

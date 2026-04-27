@@ -189,7 +189,7 @@ private fun Details(
                     year = showDetails.year,
                     genres = showDetails.genres.map { it.name },
                     countries = showDetails.countries.map { it.name },
-                    totalMinutes = showDetails.duration?.takeIf { it > 0 },
+                    durationSeconds = showDetails.durationSeconds?.takeIf { it > 0 },
                     ageRating = showDetails.ageRating.takeIf { it > 0 },
                     isFavorite = showDetails.isFavorite,
                     onPlayClick = navigateToMoviePlayer,

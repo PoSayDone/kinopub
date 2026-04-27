@@ -11,7 +11,7 @@ val FilmixCardShape = ShapeDefaults.ExtraSmall
 @OptIn(ExperimentalTvMaterial3Api::class)
 val FilmixButtonShape = ShapeDefaults.ExtraSmall
 val IconSize = 20.dp
-val FilmixBorderWidth = 3.dp
+val DefaultBorderSize = 3.dp
 
 /**
  * Space to be given below every Lazy (or scrollable) vertical list throughout the app

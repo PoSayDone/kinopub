@@ -86,7 +86,7 @@ import io.github.posaydone.filmix.tv.ui.common.LargeButton
 import io.github.posaydone.filmix.tv.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
-import io.github.posaydone.filmix.tv.ui.theme.FilmixBorderWidth
+import io.github.posaydone.filmix.tv.ui.theme.DefaultBorderSize
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import kotlinx.coroutines.launch
 
@@ -236,7 +236,7 @@ private fun Details(
                             countries = showDetails.countries.map { KinopoiskCountry(it.name) },
                             year = showDetails.year,
                             seriesLength = if (showDetails.isSeries) showDetails.maxEpisode?.episode else null,
-                            movieLength = if (!showDetails.isSeries) showDetails.duration else null,
+                            movieLengthSeconds = if (!showDetails.isSeries) showDetails.durationSeconds else null,
                             ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
                         )
 
@@ -328,7 +328,7 @@ private fun ShowExtraDetails(
             .onFocusChanged { isFocused = it.hasFocus }
             .clip(containerShape)
             .border(
-                width = FilmixBorderWidth,
+                width = DefaultBorderSize,
                 color = if (isFocused) MaterialTheme.colorScheme.onSurface else Color.Transparent,
                 shape = containerShape,
             )

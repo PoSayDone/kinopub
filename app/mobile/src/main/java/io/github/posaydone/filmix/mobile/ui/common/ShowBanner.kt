@@ -55,7 +55,7 @@ fun ShowBannerContent(
     year: Int?,
     genres: List<String>,
     countries: List<String>,
-    totalMinutes: Int? = null,
+    durationSeconds: Int? = null,
     ageRating: Int?,
     description: String? = null,
     maxDescriptionLines: Int = Int.MAX_VALUE,
@@ -88,7 +88,7 @@ fun ShowBannerContent(
                 year = year,
                 genres = genres,
                 countries = countries,
-                totalMinutes = totalMinutes,
+                durationSeconds = durationSeconds,
                 ageRating = ageRating,
             )
         }
@@ -310,7 +310,7 @@ private fun MetadataColumn(
     year: Int?,
     genres: List<String>,
     countries: List<String>,
-    totalMinutes: Int?,
+    durationSeconds: Int?,
     ageRating: Int?,
     modifier: Modifier = Modifier,
 ) {
@@ -353,9 +353,9 @@ private fun MetadataColumn(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text("•", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (totalMinutes != null) {
+            if (durationSeconds != null) {
                 Text(
-                    text = formatDuration(context, totalMinutes),
+                    text = formatDuration(context, durationSeconds),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

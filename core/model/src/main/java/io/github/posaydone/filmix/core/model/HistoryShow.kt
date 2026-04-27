@@ -21,7 +21,7 @@ data class HistoryShow(
     val ratingImdb: Double? = null,
     val votesKp: Int? = null,
     val year: Int = 0,
-    val movieLength: Int? = null,
+    val movieLengthSeconds: Int? = null,
 )
 
 fun HistoryShow.toShow(): Show = Show(
@@ -38,5 +38,5 @@ fun HistoryShow.toShow(): Show = Show(
     ratingKp = ratingKp,
     ratingImdb = ratingImdb,
     votesKp = votesKp,
-    duration = movieLength,
+    durationSeconds = movieLengthSeconds,
 )

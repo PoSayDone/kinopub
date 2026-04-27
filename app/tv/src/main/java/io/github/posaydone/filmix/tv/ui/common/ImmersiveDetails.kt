@@ -44,7 +44,7 @@ fun ImmersiveDetails(
     countries: List<KinopoiskCountry>?,
     year: Int?,
     seriesLength: Int?,
-    movieLength: Int?,
+    movieLengthSeconds: Int?,
     ageRating: String,
     modifier: Modifier = Modifier.Companion,
 ) {
@@ -90,7 +90,7 @@ fun ImmersiveDetails(
             votes = votes,
             year = year,
             genres = genres,
-            movieLength = movieLength ?: 0,
+            movieLengthSeconds = movieLengthSeconds,
             seriesLength = seriesLength,
             countries = countries,
             ageRating = ageRating
@@ -115,13 +115,13 @@ private fun MetadataRow(
     votes: Votes?,
     year: Int?,
     genres: List<KinopoiskGenre>?,
-    movieLength: Int,
+    movieLengthSeconds: Int?,
     seriesLength: Int?,
     countries: List<KinopoiskCountry>?,
     ageRating: String,
 ) {
     val context = LocalContext.current
-    val metadataParts = remember(rating, votes, year, genres, movieLength, seriesLength, countries, ageRating) {
+    val metadataParts = remember(rating, votes, year, genres, movieLengthSeconds, seriesLength, countries, ageRating) {
         buildList {
             val ratingText = rating?.kp?.let { "%.1f".format(it) }
             val votesText = votes?.kp?.let { formatVoteCount(it) }
@@ -131,8 +131,10 @@ private fun MetadataRow(
             year?.let { add(it.toString()) }
             genres?.mapNotNull { it.name }?.take(2)?.joinToString(", ")
                 ?.let { if (it.isNotEmpty()) add(it) }
-            val durationText = formatDuration(context, movieLength)
-            if (durationText.isNotEmpty()) add(durationText)
+            movieLengthSeconds?.takeIf { it > 0 }?.let { durationSeconds ->
+                val durationText = formatDuration(context, durationSeconds)
+                if (durationText.isNotEmpty()) add(durationText)
+            }
             seriesLength?.takeIf { it > 0 }?.let { add("$it ep.") }
             countries?.mapNotNull { it.name }?.take(2)?.joinToString(", ")
                 ?.let { if (it.isNotEmpty()) add(it) }

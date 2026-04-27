@@ -165,8 +165,10 @@ fun CinematicBackground(modifier: Modifier = Modifier) {
     Spacer(
         modifier.background(
             Brush.verticalGradient(
-                listOf(
-                    Color.Black.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.9f)
+                colorStops = arrayOf(
+                    0.0f to Color.Black.copy(alpha = 0.18f),
+                    0.45f to Color.Black.copy(alpha = 0.58f),
+                    1.0f to Color.Black.copy(alpha = 0.96f),
                 )
             )
         )

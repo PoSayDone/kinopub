@@ -1,29 +1,22 @@
 package io.github.posaydone.filmix.tv.ui.common
 
 import android.view.KeyEvent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -38,11 +31,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
-import androidx.tv.material3.Icon
 import androidx.tv.material3.LocalTextStyle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import io.github.posaydone.filmix.tv.ui.theme.DefaultBorderSize
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -63,12 +56,10 @@ fun TextField(
     maxLines: Int = 1,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    shape: Shape = MaterialTheme.shapes.small, // Use shapes from TV theme
+    shape: Shape = MaterialTheme.shapes.large,
 ) {
     val focusManager = LocalFocusManager.current
-    val tfInteractionSource = remember { MutableInteractionSource() }
     val tfFocusRequester = remember { FocusRequester() }
-    val isTfFocused by tfInteractionSource.collectIsFocusedAsState()
 
     Surface(
         shape = ClickableSurfaceDefaults.shape(shape = shape),
@@ -80,19 +71,16 @@ fun TextField(
             focusedContentColor = MaterialTheme.colorScheme.onSurface,
             pressedContentColor = MaterialTheme.colorScheme.onSurface
         ),
-
         border = ClickableSurfaceDefaults.border(
             focusedBorder = Border(
                 border = BorderStroke(
-                    width = if (isTfFocused) 2.dp else 2.dp, color = animateColorAsState(
-                        targetValue = if (isTfFocused) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.border, label = ""
-                    ).value
-                ), shape = RoundedCornerShape(50)
+                    width = DefaultBorderSize,
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         ),
         tonalElevation = 2.dp,
-        modifier = modifier.clip(RoundedCornerShape(50)),
+        modifier = modifier,
         onClick = { tfFocusRequester.requestFocus() }) {
         BasicTextField(
             value = value,
@@ -125,8 +113,8 @@ fun TextField(
             singleLine = singleLine,
             maxLines = maxLines,
             visualTransformation = visualTransformation,
-            interactionSource = interactionSource, // Pass the interactionSource here
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary), // Use theme color for cursor
+            interactionSource = interactionSource,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             decorationBox = { innerTextField ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -134,7 +122,6 @@ fun TextField(
                         .padding(contentPadding)
                         .fillMaxWidth()
                 ) {
-                    // Leading icon
                     if (leadingIcon != null) {
                         Box(
                             modifier = Modifier.padding(end = 8.dp),
@@ -143,12 +130,11 @@ fun TextField(
                             leadingIcon()
                         }
                     }
-                    
-                    // Main text field content (placeholder and input)
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(vertical = 2.dp), // Add slight vertical padding for better alignment
+                            .padding(vertical = 2.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         if (value.isEmpty()) {
@@ -158,10 +144,9 @@ fun TextField(
                                 style = textStyle
                             )
                         }
-                        innerTextField() // Renders the actual text field input area
+                        innerTextField()
                     }
-                    
-                    // Trailing icon
+
                     if (trailingIcon != null) {
                         Box(
                             modifier = Modifier.padding(start = 8.dp),

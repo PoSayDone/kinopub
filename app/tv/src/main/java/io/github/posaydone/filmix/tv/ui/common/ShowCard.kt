@@ -29,7 +29,7 @@ import androidx.tv.material3.StandardCardContainer
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.model.Show
-import io.github.posaydone.filmix.tv.ui.theme.FilmixBorderWidth
+import io.github.posaydone.filmix.tv.ui.theme.DefaultBorderSize
 
 enum class CardTitleMode {
     ON_FOCUS,
@@ -52,7 +52,7 @@ fun BaseCard(
                 border = ClickableSurfaceDefaults.border(
                     focusedBorder = Border(
                         border = BorderStroke(
-                            width = FilmixBorderWidth,
+                            width = DefaultBorderSize,
                             color = MaterialTheme.colorScheme.onSurface,
                         ),
                     )

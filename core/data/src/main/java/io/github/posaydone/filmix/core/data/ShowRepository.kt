@@ -461,7 +461,7 @@ class ShowRepository @Inject constructor(
             votesImdb = imdb_votes,
             votesPos = positiveVotes(),
             votesNeg = negativeVotes(),
-            duration = if (!isSeries) durationMinutes() else null,
+            durationSeconds = if (!isSeries) durationSeconds() else null,
             maxEpisode = if (isSeries && maxSeasonNumber != null && maxEpisodeNumber != null) {
                 MaxEpisode(season = maxSeasonNumber, episode = maxEpisodeNumber)
             } else null,
@@ -489,7 +489,7 @@ class ShowRepository @Inject constructor(
             description = historyItem.plot.orEmpty(),
             thumbnail = media?.thumbnail,
             watchedSeconds = media?.time ?: time,
-            durationSeconds = media?.duration ?: historyItem.durationMinutes()?.let { it * 60 },
+            durationSeconds = media?.duration ?: historyItem.durationSeconds(),
             seasonNumber = media?.snumber?.takeIf { isSeries && it > 0 },
             episodeNumber = media?.number?.takeIf { isSeries },
             episodeTitle = media?.title?.takeIf { it.isNotBlank() && isSeries },
@@ -501,7 +501,7 @@ class ShowRepository @Inject constructor(
             ratingImdb = historyItem.imdb_rating?.takeIf { it > 0.0 },
             votesKp = historyItem.kinopoisk_votes,
             year = historyItem.year ?: 0,
-            movieLength = if (!isSeries) historyItem.durationMinutes() else null,
+            movieLengthSeconds = if (!isSeries) historyItem.durationSeconds() else null,
         )
     }
 
@@ -652,7 +652,7 @@ class ShowRepository @Inject constructor(
     private fun KinoPubItem.bestPosterUrl(): String =
         posters?.big ?: posters?.medium ?: posters?.small ?: posters?.wide.orEmpty()
 
-    private fun KinoPubItem.durationMinutes(): Int? =
+    private fun KinoPubItem.durationSeconds(): Int? =
         duration?.average?.roundToInt() ?: duration?.total
 
     private fun KinoPubItem.qualityLabel(): String = quality?.toString() ?: "N/A"
