@@ -1,5 +1,6 @@
 package io.github.posaydone.filmix.tv.ui.screen.profileScreen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,6 +61,8 @@ import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenUiSta
 import io.github.posaydone.filmix.core.common.sharedViewModel.ProfileScreenViewModel
 import io.github.posaydone.filmix.core.model.UserProfileInfo
 import androidx.compose.ui.res.stringResource
+import androidx.tv.material3.Border
+import androidx.tv.material3.ClickableSurfaceDefaults
 import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.tv.ui.common.Error
 import io.github.posaydone.filmix.tv.ui.common.LargeButton
@@ -67,6 +70,7 @@ import io.github.posaydone.filmix.tv.ui.common.LargeButtonStyle
 import io.github.posaydone.filmix.tv.ui.common.Loading
 import io.github.posaydone.filmix.tv.ui.common.SideDialog
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
+import io.github.posaydone.filmix.tv.ui.theme.DefaultBorderSize
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
 import kotlinx.coroutines.launch
 
@@ -221,9 +225,14 @@ fun ProfileScreenContent(
             }
 
             item {
-                SettingsGroup(modifier = Modifier.focusRequester(firstItem), title = stringResource(R.string.account)) {
+                SettingsGroup(
+                    modifier = Modifier.focusRequester(firstItem),
+                    title = stringResource(R.string.account)
+                ) {
                     SettingItem(
-                        title = stringResource(R.string.username), currentValue = userProfile.login, onClick = {})
+                        title = stringResource(R.string.username),
+                        currentValue = userProfile.login,
+                        onClick = {})
                     if (userProfile.email.isNotBlank()) {
                         SettingItem(
                             title = stringResource(R.string.email),
@@ -232,7 +241,9 @@ fun ProfileScreenContent(
                         )
                     }
                     SettingItem(
-                        title = stringResource(R.string.subscription), currentValue = proStatus, onClick = {})
+                        title = stringResource(R.string.subscription),
+                        currentValue = proStatus,
+                        onClick = {})
                 }
             }
 
@@ -308,7 +319,8 @@ fun ProfileScreenContent(
                     )
                     Spacer(Modifier.size(12.dp))
                     Text(
-                        text = stringResource(R.string.logout), style = MaterialTheme.typography.titleMedium
+                        text = stringResource(R.string.logout),
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
@@ -344,9 +356,16 @@ fun SettingItem(
         Card(
             onClick = onClick,
             scale = CardDefaults.scale(focusedScale = 1.05f),
+            border = CardDefaults.border(
+                focusedBorder = Border(
+                    border = BorderStroke(
+                        width = DefaultBorderSize,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
+                )
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .bringIntoViewRequester(bringIntoViewRequester)
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .onFocusChanged {
                     if (it.isFocused) {
@@ -427,13 +446,21 @@ fun SettingDialog(
         showDialog = opened, onDismissRequest = onDismiss, title = title, description = description
     ) {
         LazyColumn(
-            contentPadding = PaddingValues(0.dp),
+            contentPadding = PaddingValues(vertical = 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(values.toList()) { (key, label) ->
                 Card(
                     onClick = { onValueSelected(key) },
                     modifier = Modifier.fillMaxWidth(),
+                    border = CardDefaults.border(
+                        focusedBorder = Border(
+                            border = BorderStroke(
+                                width = DefaultBorderSize,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
+                        )
+                    ),
                     scale = CardDefaults.scale(focusedScale = 1.05f)
                 ) {
                     Row(
