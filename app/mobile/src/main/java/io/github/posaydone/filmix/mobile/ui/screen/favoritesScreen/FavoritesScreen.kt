@@ -88,7 +88,7 @@ fun FavoritesScreenContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         ShowsRow(
-            title = "Я смотрю",
+            title = stringResource(R.string.watching_list),
             modifier = Modifier.fillMaxWidth(),
             showList = watchingList,
             onShowClick = { show ->

@@ -97,14 +97,14 @@ private fun FavoritesScreenContent(
                     bottom = 24.dp,
                     start = childPadding.start,
                 ),
-                text = "Я смотрю",
+                text = stringResource(R.string.watching_list),
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
         item {
             ShowsRow(
-                title = "Я смотрю",
+                title = stringResource(R.string.watching_list),
                 modifier = Modifier
                     .then(if (lastFocusedRowKey == "WatchingRow") Modifier.focusRequester(restoredRow) else Modifier)
                     .onFocusChanged { if (it.hasFocus) lastFocusedRowKey = "WatchingRow" },

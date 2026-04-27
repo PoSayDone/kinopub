@@ -59,7 +59,7 @@ fun PlayerBottomControls(
                     PlayerControlsButton(
                         icon = Icons.Rounded.AutoAwesomeMotion,
                         contentDescription = stringResource(R.string.all_episodes),
-                        text = "Episodes",
+                        text = stringResource(R.string.episodesString),
                         onClick = openEpisodeDialog,
                     )
                 }
@@ -67,7 +67,7 @@ fun PlayerBottomControls(
                     PlayerControlsButton(
                         icon = Icons.Default.Audiotrack,
                         contentDescription = stringResource(R.string.audio_tracks),
-                        text = "Audio",
+                        text = stringResource(R.string.audioString),
                         onClick = openAudioDialog,
                     )
                 }

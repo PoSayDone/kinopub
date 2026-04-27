@@ -26,6 +26,8 @@ import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.tv.ui.common.CircularProgressIndicator
 import io.github.posaydone.filmix.tv.ui.common.ShowCard
 import io.github.posaydone.filmix.tv.ui.common.ShowCardBadge
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.tv.ui.common.primaryRating
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 import java.util.Locale
@@ -77,7 +79,7 @@ fun ShowsCollectionGridScreen(
 
                 if (hasFilters) {
                     Button(onClick = onShowFilterDialog) {
-                        Text("Фильтры")
+                        Text(stringResource(R.string.filter_title))
                     }
                 }
             }

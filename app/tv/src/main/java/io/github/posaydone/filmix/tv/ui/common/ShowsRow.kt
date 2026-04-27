@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.posaydone.filmix.core.model.Show
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.model.ShowList
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
@@ -126,7 +128,7 @@ fun ShowsRow(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "View All",
+                                        text = stringResource(R.string.view_all),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center

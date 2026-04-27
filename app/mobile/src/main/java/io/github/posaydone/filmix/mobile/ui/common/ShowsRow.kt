@@ -17,9 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.model.Show
 import io.github.posaydone.filmix.core.model.ShowList
 
@@ -53,7 +55,7 @@ fun ShowsRow(
                 )
 
                 if (onViewAll != null) Text(
-                    text = "View All", style = MaterialTheme.typography.titleSmall.copy(
+                    text = stringResource(R.string.view_all), style = MaterialTheme.typography.titleSmall.copy(
                         letterSpacing = 0.sp, fontWeight = FontWeight.SemiBold
                     ), color = MaterialTheme.colorScheme.primary
                 )

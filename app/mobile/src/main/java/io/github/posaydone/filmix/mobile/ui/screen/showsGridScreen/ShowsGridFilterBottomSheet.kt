@@ -31,7 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.CatalogPeriod
 import io.github.posaydone.filmix.core.common.sharedViewModel.CatalogSort
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
@@ -81,28 +83,35 @@ internal fun FilterBottomSheet(
         AnimatedContent(
             targetState = filterPage,
             transitionSpec = {
-                // Если мы переходим вглубь меню — слайд справа налево
                 if (targetState != FilterPage.MAIN) {
                     (slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left) + fadeIn()) togetherWith
                             (slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left) + fadeOut())
                 } else {
-                    // Если возвращаемся на главный экран — слайд слева направо
                     (slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right) + fadeIn()) togetherWith
                             (slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right) + fadeOut())
                 }
             },
             label = "FilterPageTransition"
         ) { targetPage ->
-            // Важно использовать targetPage (а не filterPage) внутри этого блока,
-            // чтобы во время анимации отображалось корректное состояние экранов
             val sheetTitle = when (targetPage) {
-                FilterPage.MAIN -> "Фильтры"
-                FilterPage.CONTENT_TYPE -> "Тип контента"
-                FilterPage.SORT -> "Сортировка"
-                FilterPage.PERIOD -> "Период"
-                FilterPage.GENRE -> "Жанр"
-                FilterPage.COUNTRY -> "Страна"
+                FilterPage.MAIN -> stringResource(R.string.filter_title)
+                FilterPage.CONTENT_TYPE -> stringResource(R.string.filter_content_type)
+                FilterPage.SORT -> stringResource(R.string.filter_sort)
+                FilterPage.PERIOD -> stringResource(R.string.filter_period)
+                FilterPage.GENRE -> stringResource(R.string.filter_genre)
+                FilterPage.COUNTRY -> stringResource(R.string.filter_country)
             }
+            val filterAll = stringResource(R.string.filter_all)
+            val allGenres = stringResource(R.string.filter_all_genres)
+            val allCountries = stringResource(R.string.filter_all_countries)
+            val genreSelectedOne = stringResource(R.string.filter_genre_selected_one)
+            val countrySelectedOne = stringResource(R.string.filter_country_selected_one)
+            val selectedCount = stringResource(R.string.filter_selected_count)
+            val contentTypeLabel = stringResource(R.string.filter_content_type)
+            val sortLabel = stringResource(R.string.filter_sort)
+            val periodLabel = stringResource(R.string.filter_period)
+            val genreLabel = stringResource(R.string.filter_genre)
+            val countryLabel = stringResource(R.string.filter_country)
 
             Column {
                 Row(
@@ -147,15 +156,15 @@ internal fun FilterBottomSheet(
                                 val menuItems = buildList {
                                     add(
                                         FilterMenuEntry(
-                                            label = "Тип контента",
+                                            label = contentTypeLabel,
                                             summary = allContentTypes.find { it.apiValue == catalogContentType }?.label
-                                                ?: "Все",
+                                                ?: filterAll,
                                             page = FilterPage.CONTENT_TYPE,
                                         )
                                     )
                                     add(
                                         FilterMenuEntry(
-                                            label = "Сортировка",
+                                            label = sortLabel,
                                             summary = catalogSort.label,
                                             page = FilterPage.SORT,
                                         )
@@ -163,7 +172,7 @@ internal fun FilterBottomSheet(
                                     if (showPeriod) {
                                         add(
                                             FilterMenuEntry(
-                                                label = "Период",
+                                                label = periodLabel,
                                                 summary = catalogPeriod.label,
                                                 page = FilterPage.PERIOD,
                                             )
@@ -171,16 +180,16 @@ internal fun FilterBottomSheet(
                                     }
                                     if (genres.isNotEmpty()) {
                                         val genreSummary = when {
-                                            selectedGenreIds.isEmpty() -> "Все"
+                                            selectedGenreIds.isEmpty() -> filterAll
                                             selectedGenreIds.size == 1 ->
                                                 genres.firstOrNull { it.id in selectedGenreIds }?.title
-                                                    ?: "1 выбран"
+                                                    ?: genreSelectedOne
 
-                                            else -> "${selectedGenreIds.size} выбрано"
+                                            else -> String.format(selectedCount, selectedGenreIds.size)
                                         }
                                         add(
                                             FilterMenuEntry(
-                                                label = "Жанр",
+                                                label = genreLabel,
                                                 summary = genreSummary,
                                                 page = FilterPage.GENRE,
                                             )
@@ -188,16 +197,16 @@ internal fun FilterBottomSheet(
                                     }
                                     if (countries.isNotEmpty()) {
                                         val countrySummary = when {
-                                            selectedCountryIds.isEmpty() -> "Все"
+                                            selectedCountryIds.isEmpty() -> filterAll
                                             selectedCountryIds.size == 1 ->
                                                 countries.firstOrNull { it.id in selectedCountryIds }?.title
-                                                    ?: "1 выбрана"
+                                                    ?: countrySelectedOne
 
-                                            else -> "${selectedCountryIds.size} выбрано"
+                                            else -> String.format(selectedCount, selectedCountryIds.size)
                                         }
                                         add(
                                             FilterMenuEntry(
-                                                label = "Страна",
+                                                label = countryLabel,
                                                 summary = countrySummary,
                                                 page = FilterPage.COUNTRY,
                                             )
@@ -246,7 +255,7 @@ internal fun FilterBottomSheet(
                             FilterPage.GENRE -> {
                                 item {
                                     FilterOption(
-                                        label = "Все жанры",
+                                        label = allGenres,
                                         selected = selectedGenreIds.isEmpty(),
                                         onClick = { onGenreChange(null) },
                                     )
@@ -263,7 +272,7 @@ internal fun FilterBottomSheet(
                             FilterPage.COUNTRY -> {
                                 item {
                                     FilterOption(
-                                        label = "Все страны",
+                                        label = allCountries,
                                         selected = selectedCountryIds.isEmpty(),
                                         onClick = { onCountryChange(null) },
                                     )

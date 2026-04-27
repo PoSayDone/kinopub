@@ -9,7 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.posaydone.filmix.core.common.R
 
 @Composable
 fun Error(
@@ -24,16 +26,16 @@ fun Error(
         ),
     ) {
         Text(
-            text = "Error", style = MaterialTheme.typography.headlineLarge
+            text = stringResource(R.string.error_title), style = MaterialTheme.typography.headlineLarge
         )
         Text(
-            text = "Filmix service is unavailable or you don't have internet connection. Try again later.",
+            text = stringResource(R.string.error_message),
             style = MaterialTheme.typography.bodyLarge,
         )
         Button(
             onClick = onRetry,
         ) {
-            Text("Retry")
+            Text(stringResource(R.string.retry))
         }
         children?.invoke()
     }

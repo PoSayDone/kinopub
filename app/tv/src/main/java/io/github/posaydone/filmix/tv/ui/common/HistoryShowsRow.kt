@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.compose.ui.res.stringResource
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.model.HistoryShow
 import io.github.posaydone.filmix.tv.ui.screen.homeScreen.rememberChildPadding
 import io.github.posaydone.filmix.tv.ui.utils.CustomBringIntoViewSpec
@@ -86,7 +88,7 @@ fun HistoryShowsRow(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = "View All",
+                                    text = stringResource(R.string.view_all),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center,

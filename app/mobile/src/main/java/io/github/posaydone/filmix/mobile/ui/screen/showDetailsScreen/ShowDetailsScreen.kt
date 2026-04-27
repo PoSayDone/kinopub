@@ -363,7 +363,7 @@ private fun DynamicTopAppBar(
         ), navigationIcon = {
             IconButton(onClick = navigateBack) {
                 Icon(
-                    contentDescription = "Back", imageVector = Icons.AutoMirrored.Filled.ArrowBack
+                    contentDescription = stringResource(R.string.back), imageVector = Icons.AutoMirrored.Filled.ArrowBack
                 )
             }
         })

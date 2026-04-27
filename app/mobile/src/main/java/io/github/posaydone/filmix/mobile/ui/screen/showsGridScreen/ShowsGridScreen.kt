@@ -21,7 +21,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridUiState
@@ -53,9 +55,9 @@ fun ShowsGridScreen(
         queryType == ShowsGridQueryType.CATALOG || queryType == ShowsGridQueryType.WATCHING
     val title = viewModel.screenTitle.ifBlank {
         when (queryType) {
-            ShowsGridQueryType.FAVORITES -> "Избранное"
-            ShowsGridQueryType.HISTORY -> "История"
-            ShowsGridQueryType.WATCHING -> "Я смотрю"
+            ShowsGridQueryType.FAVORITES -> stringResource(R.string.favorites)
+            ShowsGridQueryType.HISTORY -> stringResource(R.string.history)
+            ShowsGridQueryType.WATCHING -> stringResource(R.string.watching_list)
             ShowsGridQueryType.CATALOG -> ""
         }
     }
@@ -108,7 +110,7 @@ fun ShowsGridScreen(
                         IconButton(onClick = { showFilterSheet = true }) {
                             Icon(
                                 imageVector = Icons.Default.FilterList,
-                                contentDescription = "Фильтры",
+                                contentDescription = stringResource(R.string.filter_title),
                             )
                         }
                     }
@@ -116,7 +118,7 @@ fun ShowsGridScreen(
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
                         Icon(
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack
                         )
                     }

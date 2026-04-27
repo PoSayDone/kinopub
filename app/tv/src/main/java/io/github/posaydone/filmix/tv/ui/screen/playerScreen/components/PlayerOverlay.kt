@@ -42,10 +42,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
+import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.Icon
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.PlayerState
 
 
@@ -190,7 +192,7 @@ fun Pill() {
                     .offset(x = offsetX.dp - 32.dp)
             )
         }
-        Text("2x", color = Color.White)
+        Text(stringResource(R.string.speed_2x), color = Color.White)
     }
 }
 

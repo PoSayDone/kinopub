@@ -15,10 +15,12 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import io.github.posaydone.filmix.core.common.R
 
 @Composable
 fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
@@ -34,10 +36,10 @@ fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
         ),
     ) {
         Text(
-            text = "Error", style = MaterialTheme.typography.headlineLarge,
+            text = stringResource(R.string.error_title), style = MaterialTheme.typography.headlineLarge,
         )
         Text(
-            text = "Filmix service is unavailable or you don't have internet connection. Try again later.",
+            text = stringResource(R.string.error_message),
             style = MaterialTheme.typography.bodyLarge,
         )
 
@@ -53,7 +55,7 @@ fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
                         .focusRequester(firstItem),
                     onClick = onRetry,
                 ) {
-                    Text("Retry")
+                    Text(stringResource(R.string.retry))
                 }
             }
         }

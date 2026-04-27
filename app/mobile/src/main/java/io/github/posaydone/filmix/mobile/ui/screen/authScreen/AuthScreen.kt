@@ -57,8 +57,8 @@ fun AuthScreen(
         ) {
             Icon(
                 modifier = Modifier.size(60.dp),
-                painter = painterResource(id = R.drawable.ic_filmix),
-                contentDescription = stringResource(R.string.filmix_icon),
+                painter = painterResource(id = R.drawable.ic_kinopub),
+                contentDescription = stringResource(R.string.kinopub_icon),
             )
 
             Spacer(modifier = Modifier.height(24.dp))

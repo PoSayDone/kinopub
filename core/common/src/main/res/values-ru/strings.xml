@@ -86,7 +86,7 @@
     <string name="check">Галочка</string>
     <string name="poster">Постер</string>
     <string name="visibility">Видимость</string>
-    <string name="filmix_icon">Значок Filmix</string>
+    <string name="kinopub_icon">Значок Kinopub</string>
     <string name="navback_icon">Значок навигации назад</string>
     <string name="play">Воспроизвести</string>
     <string name="pause">Пауза</string>
@@ -104,4 +104,48 @@
     <string name="audio_count">%1$d дорожек</string>
     <string name="subtitles_count">%1$d субтитров</string>
     <string name="more_details">Подробнее</string>
+
+    <!-- Missing category row titles -->
+    <string name="new_movies">Новые фильмы</string>
+    <string name="new_series">Новые сериалы</string>
+    <string name="new_concerts">Новые концерты</string>
+    <string name="new_3d">Новинки 3D</string>
+    <string name="new_documentary_films">Документальные фильмы</string>
+    <string name="new_documentary_series">Документальные сериалы</string>
+    <string name="new_tv_shows">ТВ шоу</string>
+
+    <!-- Error screen -->
+    <string name="error_title">Ошибка</string>
+    <string name="error_message">Сервис недоступен или нет подключения к интернету. Попробуйте позже.</string>
+
+    <!-- Shows row -->
+    <string name="view_all">Смотреть все</string>
+
+    <!-- Filter bottom sheet / dialog -->
+    <string name="filter_title">Фильтры</string>
+    <string name="filter_content_type">Тип контента</string>
+    <string name="filter_sort">Сортировка</string>
+    <string name="filter_period">Период</string>
+    <string name="filter_genre">Жанр</string>
+    <string name="filter_country">Страна</string>
+    <string name="filter_all">Все</string>
+    <string name="filter_all_genres">Все жанры</string>
+    <string name="filter_all_countries">Все страны</string>
+    <string name="filter_genre_selected_one">1 выбран</string>
+    <string name="filter_country_selected_one">1 выбрана</string>
+    <string name="filter_selected_count">%1$d выбрано</string>
+
+    <!-- Explore screen -->
+    <string name="explore_empty_title">Поиск фильмов и сериалов</string>
+    <string name="explore_empty_subtitle">Введите запрос для поиска</string>
+
+    <!-- Search results screen -->
+    <string name="search_error_title">Что-то пошло не так</string>
+    <string name="search_error_subtitle">Попробуйте снова позже</string>
+    <string name="search_no_results">Нет результатов для «%1$s»</string>
+    <string name="search_no_results_subtitle">Попробуйте другой запрос</string>
+
+    <!-- Navigation / screen titles -->
+    <string name="watch_history_title">История просмотра</string>
+    <string name="watching_list">Я смотрю</string>
 </resources>

@@ -7,7 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.posaydone.filmix.core.common.R
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridScreenViewModel
 import io.github.posaydone.filmix.core.common.sharedViewModel.ShowsGridUiState
@@ -37,21 +39,21 @@ fun ShowsGridScreen(
     val hasFilters = queryType == ShowsGridQueryType.CATALOG || queryType == ShowsGridQueryType.WATCHING
     val title = viewModel.screenTitle.ifBlank {
         when (queryType) {
-            ShowsGridQueryType.FAVORITES -> "Избранное"
-            ShowsGridQueryType.HISTORY -> "История просмотра"
-            ShowsGridQueryType.WATCHING -> "Я смотрю"
+            ShowsGridQueryType.FAVORITES -> stringResource(R.string.favorites)
+            ShowsGridQueryType.HISTORY -> stringResource(R.string.watch_history_title)
+            ShowsGridQueryType.WATCHING -> stringResource(R.string.watching_list)
             ShowsGridQueryType.CATALOG -> ""
         }
     }
 
     if (hasFilters) {
         val dialogTitle = when (filterPage) {
-            FilterPage.MAIN -> "Фильтры"
-            FilterPage.CONTENT_TYPE -> "Тип контента"
-            FilterPage.SORT -> "Сортировка"
-            FilterPage.PERIOD -> "Период"
-            FilterPage.GENRE -> "Жанр"
-            FilterPage.COUNTRY -> "Страна"
+            FilterPage.MAIN -> stringResource(R.string.filter_title)
+            FilterPage.CONTENT_TYPE -> stringResource(R.string.filter_content_type)
+            FilterPage.SORT -> stringResource(R.string.filter_sort)
+            FilterPage.PERIOD -> stringResource(R.string.filter_period)
+            FilterPage.GENRE -> stringResource(R.string.filter_genre)
+            FilterPage.COUNTRY -> stringResource(R.string.filter_country)
         }
         SideDialog(
             showDialog = showFilterDialog,

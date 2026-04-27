@@ -1,6 +1,5 @@
 package io.github.posaydone.filmix.mobile.ui.screen.playerScreen.components
 
-import android.R
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
@@ -42,8 +41,10 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.posaydone.filmix.core.common.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.ListenableFutureTask
@@ -219,7 +220,7 @@ fun Pill() {
                 modifier = Modifier.offset(x = offsetX.dp - 32.dp)
             )
         }
-        Text("2x", color = Color.White)
+        Text(stringResource(R.string.speed_2x), color = Color.White)
     }
 }
 

@@ -140,12 +140,12 @@ private fun SearchPlaceholder(modifier: Modifier = Modifier) {
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
         )
         Text(
-            text = "Search for movies & TV shows",
+            text = stringResource(R.string.explore_empty_title),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
         )
         Text(
-            text = "Type something to get started",
+            text = stringResource(R.string.explore_empty_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
         )
@@ -169,12 +169,12 @@ private fun EmptyResultsPlaceholder(
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
         )
         Text(
-            text = "No results for “$query”",
+            text = stringResource(R.string.search_no_results, query),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         Text(
-            text = "Try a different search term",
+            text = stringResource(R.string.search_no_results_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
         )

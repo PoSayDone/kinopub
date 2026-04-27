@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Filmix</string>
+    <string name="app_name" translatable="false">Kinopub</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="season">Season %1$d</string>
     <string name="seasonString">Season</string>
@@ -97,7 +97,7 @@
     <string name="check">Check</string>
     <string name="poster">Poster</string>
     <string name="visibility">Visibility</string>
-    <string name="filmix_icon">Filmix icon</string>
+    <string name="kinopub_icon">Kinopub icon</string>
     <string name="navback_icon">Navigation back icon</string>
     <string name="play">Play</string>
     <string name="pause">Pause</string>
@@ -115,4 +115,42 @@
     <string name="audio_count">%1$d audio tracks</string>
     <string name="subtitles_count">%1$d subtitles</string>
     <string name="more_details">More details</string>
+
+    <!-- Error screen -->
+    <string name="error_title">Error</string>
+    <string name="error_message">Service is unavailable or you don\'t have internet connection. Try again later.</string>
+
+    <!-- Shows row -->
+    <string name="view_all">View All</string>
+
+    <!-- Filter bottom sheet / dialog -->
+    <string name="filter_title">Filters</string>
+    <string name="filter_content_type">Content Type</string>
+    <string name="filter_sort">Sort</string>
+    <string name="filter_period">Period</string>
+    <string name="filter_genre">Genre</string>
+    <string name="filter_country">Country</string>
+    <string name="filter_all">All</string>
+    <string name="filter_all_genres">All Genres</string>
+    <string name="filter_all_countries">All Countries</string>
+    <string name="filter_genre_selected_one">1 selected</string>
+    <string name="filter_country_selected_one">1 selected</string>
+    <string name="filter_selected_count">%1$d selected</string>
+
+    <!-- Explore screen -->
+    <string name="explore_empty_title">Search for movies &amp; TV shows</string>
+    <string name="explore_empty_subtitle">Type something to get started</string>
+
+    <!-- Search results screen -->
+    <string name="search_error_title">Something went wrong</string>
+    <string name="search_error_subtitle">Please try again later</string>
+    <string name="search_no_results">No results for &quot;%1$s&quot;</string>
+    <string name="search_no_results_subtitle">Try a different search term</string>
+
+    <!-- Navigation / screen titles -->
+    <string name="watch_history_title">Watch history</string>
+    <string name="watching_list">Watching</string>
+
+    <!-- Player speed indicator -->
+    <string name="speed_2x" translatable="false">2×</string>
 </resources>

@@ -205,6 +205,17 @@ private fun Body(
     navigateToPlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToShowsGrid: (MainGraphData.ShowsGrid) -> Unit = {},
 ) {
+    val watchHistoryTitle = stringResource(R.string.watch_history_title)
+    val popularMoviesTitle = stringResource(R.string.popular_movies)
+    val newMoviesTitle = stringResource(R.string.new_movies)
+    val popularSeriesTitle = stringResource(R.string.popular_series)
+    val newSeriesTitle = stringResource(R.string.new_series)
+    val newConcertsTitle = stringResource(R.string.new_concerts)
+    val new3dTitle = stringResource(R.string.new_3d)
+    val newDocumentaryFilmsTitle = stringResource(R.string.new_documentary_films)
+    val newDocumentarySeriesTitle = stringResource(R.string.new_documentary_series)
+    val newTvShowsTitle = stringResource(R.string.new_tv_shows)
+
     val scope = rememberCoroutineScope()
     val debounceJob = remember { arrayOfNulls<Job>(1) }
     val availableShows = remember(
@@ -342,7 +353,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.HISTORY.name,
-                                    title = "История просмотра"
+                                    title = watchHistoryTitle
                                 )
                             )
                         },
@@ -366,7 +377,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Популярные фильмы",
+                                    popularMoviesTitle,
                                     KinoPubContentType.MOVIE,
                                     KinoPubSort.VIEWS,
                                     KinoPubPeriod.MONTH
@@ -393,7 +404,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Новые фильмы",
+                                    newMoviesTitle,
                                     KinoPubContentType.MOVIE,
                                     KinoPubSort.CREATED
                                 )
@@ -419,7 +430,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Популярные сериалы",
+                                    popularSeriesTitle,
                                     KinoPubContentType.SERIAL,
                                     KinoPubSort.WATCHERS,
                                     KinoPubPeriod.THREE_MONTHS
@@ -446,7 +457,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Новые сериалы",
+                                    newSeriesTitle,
                                     KinoPubContentType.SERIAL,
                                     KinoPubSort.CREATED
                                 )
@@ -472,7 +483,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Концерты",
+                                    newConcertsTitle,
                                     KinoPubContentType.CONCERT,
                                     KinoPubSort.CREATED
                                 )
@@ -498,7 +509,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "3D фильмы",
+                                    new3dTitle,
                                     KinoPubContentType.FILM_3D,
                                     KinoPubSort.CREATED
                                 )
@@ -524,7 +535,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Документальные фильмы",
+                                    newDocumentaryFilmsTitle,
                                     KinoPubContentType.DOCUMOVIE,
                                     KinoPubSort.CREATED
                                 )
@@ -550,7 +561,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "Документальные сериалы",
+                                    newDocumentarySeriesTitle,
                                     KinoPubContentType.DOCUSERIAL,
                                     KinoPubSort.CREATED
                                 )
@@ -576,7 +587,7 @@ private fun Body(
                             navigateToShowsGrid(
                                 MainGraphData.ShowsGrid(
                                     ShowsGridQueryType.CATALOG.name,
-                                    "ТВ Шоу",
+                                    newTvShowsTitle,
                                     KinoPubContentType.TVSHOW,
                                     KinoPubSort.CREATED
                                 )

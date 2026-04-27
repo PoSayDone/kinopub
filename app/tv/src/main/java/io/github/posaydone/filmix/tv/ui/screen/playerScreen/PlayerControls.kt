@@ -118,7 +118,7 @@ fun PlayerControls(
                         onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
                         contentDescription = stringResource(R.string.all_episodes),
-                        text = "Episodes",
+                        text = stringResource(R.string.episodesString),
                         onClick = openEpisodeSheet,
                     )
                 }
@@ -134,7 +134,7 @@ fun PlayerControls(
                         onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
                         contentDescription = stringResource(R.string.audio_tracks),
-                        text = "Audio",
+                        text = stringResource(R.string.audioString),
                         onClick = openAudioSheet,
                     )
                 }
