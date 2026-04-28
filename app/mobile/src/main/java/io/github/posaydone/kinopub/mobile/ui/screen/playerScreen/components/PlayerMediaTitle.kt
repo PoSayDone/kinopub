@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.posaydone.kinopub.core.model.ShowDetails
 
@@ -28,10 +29,11 @@ fun PlayerMediaTitle(
     modifier: Modifier = Modifier,
     openSettingsDialog: () -> Unit,
 ) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val screenHeight = configuration.screenHeightDp.dp
-
+    val primaryTitle = showDetails.title.trim()
+    val originalTitle = showDetails.originalTitle
+        .trim()
+        .takeIf { it.isNotEmpty() && !it.equals(primaryTitle, ignoreCase = true) }
+    
     CompositionLocalProvider(LocalContentColor provides Color.White) {
         Row(
             modifier = modifier.fillMaxWidth(),
@@ -46,20 +48,29 @@ fun PlayerMediaTitle(
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+                verticalArrangement = Arrangement.spacedBy(4.dp, alignment = Alignment.Top)
             ) {
+                if (originalTitle != null) {
+                    Text(
+                        text = originalTitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.6f),
+                        maxLines = 1,
+                    )
+                }
+                
                 Text(
                     text = showDetails.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
+                    color = Color.White.copy(alpha = 0.8f),
                     maxLines = 1,
-                    color = Color.White,
                 )
 
                 if (currentSeason != null && currentEpisode != null) {
-                    Spacer(Modifier.height(8.dp))
                     Text(
                         text = "$currentSeason • $currentEpisode",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.6f),
                         maxLines = 1,
                     )
                 }

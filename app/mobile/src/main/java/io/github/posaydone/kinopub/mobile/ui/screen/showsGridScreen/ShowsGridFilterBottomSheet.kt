@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,9 +69,14 @@ internal fun FilterBottomSheet(
 ) {
     if (!showSheet) return
 
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
     val isNestedFilterPage = filterPage != FilterPage.MAIN
 
     ModalBottomSheet(
+        sheetState = sheetState,
         onDismissRequest = onDismiss,
         properties = ModalBottomSheetProperties(
             shouldDismissOnBackPress = !isNestedFilterPage,
@@ -137,7 +143,8 @@ internal fun FilterBottomSheet(
                     )
                 }
 
-                val showPeriod = catalogSort == CatalogSort.WATCHERS || catalogSort == CatalogSort.VIEWS
+                val showPeriod =
+                    catalogSort == CatalogSort.WATCHERS || catalogSort == CatalogSort.VIEWS
 
                 LazyColumn {
                     when (queryType) {
@@ -185,7 +192,10 @@ internal fun FilterBottomSheet(
                                                 genres.firstOrNull { it.id in selectedGenreIds }?.title
                                                     ?: genreSelectedOne
 
-                                            else -> String.format(selectedCount, selectedGenreIds.size)
+                                            else -> String.format(
+                                                selectedCount,
+                                                selectedGenreIds.size
+                                            )
                                         }
                                         add(
                                             FilterMenuEntry(
@@ -202,7 +212,10 @@ internal fun FilterBottomSheet(
                                                 countries.firstOrNull { it.id in selectedCountryIds }?.title
                                                     ?: countrySelectedOne
 
-                                            else -> String.format(selectedCount, selectedCountryIds.size)
+                                            else -> String.format(
+                                                selectedCount,
+                                                selectedCountryIds.size
+                                            )
                                         }
                                         add(
                                             FilterMenuEntry(

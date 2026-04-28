@@ -112,7 +112,7 @@ fun PlayerOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 56.dp)
-                    .padding(top = 32.dp, bottom = 8.dp),
+                    .padding(top = 24.dp, bottom = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 header()
@@ -134,7 +134,7 @@ fun PlayerOverlay(
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 56.dp)
-                        .padding(bottom = 32.dp, top = 8.dp)
+                        .padding(bottom = 24.dp, top = 8.dp)
                 ) {
                     footer()
                 }

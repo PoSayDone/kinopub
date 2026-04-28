@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -28,27 +30,30 @@ fun PlayerMediaTitle(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.Top)
     ) {
-        Text(
-            text = primaryTitle,
-            style = MaterialTheme.typography.titleLarge,
-            maxLines = 1,
-        )
         if (originalTitle != null) {
             Text(
                 text = originalTitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = Color.White.copy(alpha = 0.6f),
                 maxLines = 1,
             )
         }
+        
+        
+        Text(
+            text = primaryTitle,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
+            color = Color.White.copy(alpha = 0.8f),
+            maxLines = 1,
+        )
 
         if (currentSeason != null && currentEpisode != null) {
-            Spacer(Modifier.height(8.dp))
             Text(
                 text = "$currentSeason • $currentEpisode",
                 style = MaterialTheme.typography.bodyLarge,
+                color = Color.White.copy(alpha = 0.6f),
                 maxLines = 1,
             )
         }

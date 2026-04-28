@@ -2,7 +2,6 @@ package io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
-import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,51 +23,42 @@ import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 @Composable
 fun PlayerEffects(playerState: PlayerState, saveProgress: () -> Unit, pause: () -> Unit) {
     val context = LocalContext.current
-    val activity = context as? Activity
+    val activity = context as? Activity ?: return
     val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
     val view = LocalView.current
-    val window = (view.context as Activity).window
-    val insetsController = WindowCompat.getInsetsController(window, view)
-    val previousOrientation = remember { activity?.requestedOrientation }
+    val window = activity.window
+    val insetsController = remember(view, window) {
+        WindowCompat.getInsetsController(window, view)
+    }
+    val previousOrientation = remember { activity.requestedOrientation }
 
-    if (!view.isInEditMode) {
+    LaunchedEffect(playerState.controlsVisible) {
         if (!playerState.controlsVisible) {
-            insetsController.apply {
-                hide(WindowInsetsCompat.Type.systemBars())
-                systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
+            insetsController.hide(WindowInsetsCompat.Type.systemBars())
+            insetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         } else {
-            insetsController.apply {
-                show(WindowInsetsCompat.Type.navigationBars())
-            }
+            insetsController.show(WindowInsetsCompat.Type.systemBars())
         }
     }
 
     DisposableEffect(Unit) {
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
         onDispose {
-            previousOrientation?.let {
-                activity?.requestedOrientation = it
-            }
+            activity.requestedOrientation = previousOrientation
+            insetsController.show(WindowInsetsCompat.Type.systemBars())
         }
     }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    saveProgress()
-                    pause()
-                }
-
-                else -> {}
+            if (event == Lifecycle.Event.ON_PAUSE) {
+                saveProgress()
+                pause()
             }
         }
-
         lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose {
             saveProgress()
             lifecycleOwner.lifecycle.removeObserver(observer)
