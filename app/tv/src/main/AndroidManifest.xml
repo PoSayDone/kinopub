@@ -26,7 +26,7 @@
         android:theme="@style/Theme.Kinopub.SplashScreen">
         <meta-data
             android:name="io.github.posaydone.kinopub.UPDATE_REPOSITORY"
-            android:value="posaydone/filmix" />
+            android:value="posaydone/kinopub" />
         <meta-data
             android:name="io.github.posaydone.kinopub.UPDATE_ASSET_KEYWORD"
             android:value="tv" />
