@@ -6,6 +6,7 @@ permissions:
 env:
     mobile_project_module: app:mobile
     tv_project_module: app:tv
+    RELEASE_KEYSTORE_FILE: ${{ secrets.RELEASE_KEYSTORE_FILE }}
     KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
     RELEASE_SIGN_KEY_ALIAS: ${{ secrets.RELEASE_SIGN_KEY_ALIAS }}
     RELEASE_SIGN_KEY_PASSWORD: ${{ secrets.RELEASE_SIGN_KEY_PASSWORD }}
@@ -72,16 +73,31 @@ jobs:
               run: |
                   mkdir -p release-assets
 
-                  mobile_apk=$(find app/mobile/build/outputs/apk/release -name '*.apk' | head -n 1)
-                  tv_apk=$(find app/tv/build/outputs/apk/release -name '*.apk' | head -n 1)
+                  mobile_apk=$(find app/mobile/build/outputs/apk/release -name '*.apk' ! -name '*-unsigned.apk' | head -n 1)
+                  tv_apk=$(find app/tv/build/outputs/apk/release -name '*.apk' ! -name '*-unsigned.apk' | head -n 1)
 
                   if [ -z "$mobile_apk" ] || [ -z "$tv_apk" ]; then
-                      echo "::error::Release APKs were not found after assembleRelease."
+                      echo "::error::Signed release APKs were not found after assembleRelease."
                       exit 1
                   fi
 
                   cp "$mobile_apk" "release-assets/${{ env.repository_name }}-mobile-v${{ env.release_version }}.apk"
                   cp "$tv_apk" "release-assets/${{ env.repository_name }}-tv-v${{ env.release_version }}.apk"
+
+            - name: Verify APK signatures
+              run: |
+                  build_tools_dir=$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+                  apksigner_bin="${build_tools_dir}/apksigner"
+
+                  if [ ! -x "$apksigner_bin" ]; then
+                      echo "::error::apksigner not found in ${build_tools_dir}."
+                      exit 1
+                  fi
+
+                  for apk in release-assets/*.apk; do
+                      echo "Verifying ${apk}"
+                      "$apksigner_bin" verify --print-certs "$apk"
+                  done
 
             # - name: Build apk release project (APK) - ${{ env.mobile_project_module }} module
             #   run: ./gradlew ${{ env.mobile_project_module }}:assembleRelease

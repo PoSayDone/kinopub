@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,9 +9,61 @@ plugins {
     alias(libs.plugins.google.dagger.hilt.android)
 }
 
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use(::load)
+    }
+}
+
+fun resolveSecret(name: String): String? {
+    return providers.gradleProperty(name).orNull
+        ?: localProperties.getProperty(name)
+        ?: System.getenv(name)
+}
+
+fun resolveReleaseKeystoreFile() = sequenceOf(
+    resolveSecret("RELEASE_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }?.let(::file),
+    rootProject.file("app/keystore")
+        .takeIf { it.exists() }
+        ?.walkTopDown()
+        ?.firstOrNull { candidate ->
+            candidate.isFile && candidate.extension.lowercase() in setOf("jks", "keystore")
+        },
+).filterNotNull().firstOrNull()
+
+val releaseKeystoreFile = resolveReleaseKeystoreFile()
+val releaseStorePassword = resolveSecret("KEYSTORE_PASSWORD")
+val releaseKeyAlias = resolveSecret("RELEASE_SIGN_KEY_ALIAS")
+val releaseKeyPassword = resolveSecret("RELEASE_SIGN_KEY_PASSWORD")
+val hasReleaseSigning = releaseKeystoreFile != null &&
+        !releaseStorePassword.isNullOrBlank() &&
+        !releaseKeyAlias.isNullOrBlank() &&
+        !releaseKeyPassword.isNullOrBlank()
+val isCiBuild = !System.getenv("GITHUB_ACTIONS").isNullOrBlank() || !System.getenv("CI").isNullOrBlank()
+
+if (isCiBuild && !hasReleaseSigning) {
+    error(
+        "Release signing is not configured for app/tv. " +
+            "Expected a keystore in app/keystore or RELEASE_KEYSTORE_FILE plus KEYSTORE_PASSWORD, " +
+            "RELEASE_SIGN_KEY_ALIAS and RELEASE_SIGN_KEY_PASSWORD.",
+    )
+}
+
 android {
     namespace = "io.github.posaydone.kinopub.tv"
     compileSdk = 37
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = releaseKeystoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "io.github.posaydone.kinopub.tv"
@@ -30,7 +83,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {
