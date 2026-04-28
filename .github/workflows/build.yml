@@ -6,7 +6,6 @@ permissions:
 env:
     mobile_project_module: app:mobile
     tv_project_module: app:tv
-    RELEASE_KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
     KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
     RELEASE_SIGN_KEY_ALIAS: ${{ secrets.KEYSTORE_SIGN_KEY_ALIAS }}
     RELEASE_SIGN_KEY_PASSWORD: ${{ secrets.KEYSTORE_SIGN_KEY_PASSWORD }}
