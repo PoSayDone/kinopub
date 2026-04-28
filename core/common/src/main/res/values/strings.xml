@@ -63,6 +63,8 @@
     <string name="email">Email</string>
     <string name="subscription">Subscription</string>
     <string name="player">Player</string>
+    <string name="app_updates">App Updates</string>
+    <string name="app_version_label">App Version</string>
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>
     <string name="logout">Logout</string>
@@ -72,6 +74,24 @@
     <string name="stream_type_description">Type of video stream, pick auto if unsure</string>
     <string name="server_location_description">Pick the nearest location for a better speed</string>
     <string name="video_quality_description">Choose the default video quality, which will be used in the player</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="checking_for_updates">Checking for updates...</string>
+    <string name="no_update_available">You are already using the latest version.</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_download">Download update</string>
+    <string name="update_install">Install update</string>
+    <string name="update_allow_installs">Allow app installs</string>
+    <string name="update_unknown_sources_required">Allow installs from this app, then return and continue the update.</string>
+    <string name="update_downloading">Downloading update...</string>
+    <string name="update_download_ready">The update has been downloaded and is ready to install.</string>
+    <string name="update_release_notes">Release notes</string>
+    <string name="update_current_version">Current version: %1$s</string>
+    <string name="update_latest_version">Latest version: %1$s</string>
+    <string name="update_file_size">Size: %1$s</string>
+    <string name="update_download_failed">Update download failed.</string>
+    <string name="update_download_not_found">The downloaded APK could not be found.</string>
+    <string name="update_not_configured">App updates are not configured for this build.</string>
+    <string name="close">Close</string>
     
     <!-- Player dialog related strings -->
     <string name="select_audio_track">Select Audio Track</string>

@@ -1,5 +1,8 @@
 name: Build TV and Mobile App
 
+permissions:
+    contents: write
+
 env:
     mobile_project_module: app:mobile
     tv_project_module: app:tv
@@ -15,7 +18,6 @@ on:
 
 jobs:
     build_apk_aab:
-        if: startsWith(github.head_ref, 'release/') == true || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         name: Build release artifacts
         runs-on: ubuntu-22.04
         steps:
@@ -26,6 +28,24 @@ jobs:
 
             - name: Set repository name as env variable
               run: echo "repository_name=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+
+            - name: Resolve release version
+              run: |
+                  mobile_version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/mobile/build.gradle.kts | head -n 1)
+                  tv_version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/tv/build.gradle.kts | head -n 1)
+
+                  if [ -z "$mobile_version" ] || [ -z "$tv_version" ]; then
+                      echo "::error::Unable to resolve versionName from app/mobile/build.gradle.kts or app/tv/build.gradle.kts."
+                      exit 1
+                  fi
+
+                  if [ "$mobile_version" != "$tv_version" ]; then
+                      echo "::error::Mobile versionName ($mobile_version) and TV versionName ($tv_version) must match before publishing a shared GitHub Release."
+                      exit 1
+                  fi
+
+                  echo "release_version=$mobile_version" >> $GITHUB_ENV
+                  echo "release_tag=v$mobile_version" >> $GITHUB_ENV
 
             - name: Set Up JDK
               uses: actions/setup-java@v4
@@ -44,13 +64,24 @@ jobs:
             - name: Change wrapper permissions
               run: chmod +x ./gradlew
 
-            # # Run Tests Build
-            # - name: Run gradle tests
-            #   run: ./gradlew test
-
             # Run Build Project
             - name: Build gradle project
               run: ./gradlew assembleRelease
+
+            - name: Collect release APKs
+              run: |
+                  mkdir -p release-assets
+
+                  mobile_apk=$(find app/mobile/build/outputs/apk/release -name '*.apk' | head -n 1)
+                  tv_apk=$(find app/tv/build/outputs/apk/release -name '*.apk' | head -n 1)
+
+                  if [ -z "$mobile_apk" ] || [ -z "$tv_apk" ]; then
+                      echo "::error::Release APKs were not found after assembleRelease."
+                      exit 1
+                  fi
+
+                  cp "$mobile_apk" "release-assets/${{ env.repository_name }}-mobile-v${{ env.release_version }}.apk"
+                  cp "$tv_apk" "release-assets/${{ env.repository_name }}-tv-v${{ env.release_version }}.apk"
 
             # - name: Build apk release project (APK) - ${{ env.mobile_project_module }} module
             #   run: ./gradlew ${{ env.mobile_project_module }}:assembleRelease
@@ -62,10 +93,38 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: mobile - ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
-                  path: app/mobile/build/outputs/apk/release/
+                  path: release-assets/*mobile*.apk
 
             - name: Upload TV APK Release - ${{ env.repository_name }}
               uses: actions/upload-artifact@v4
               with:
                   name: tv - ${{ env.date_today }} - ${{ env.repository_name }} - APK(s) release generated
-                  path: app/tv/build/outputs/apk/release/
+                  path: release-assets/*tv*.apk
+
+            - name: Create or update GitHub Release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  notes_file=$(mktemp)
+                  {
+                      echo "Automated release for commit ${GITHUB_SHA}."
+                      echo
+                      echo "Version: ${release_version}"
+                      echo
+                      echo "Artifacts:"
+                      echo "- mobile APK"
+                      echo "- tv APK"
+                  } > "$notes_file"
+
+                  if gh release view "${release_tag}" >/dev/null 2>&1; then
+                      gh release upload "${release_tag}" release-assets/*.apk --clobber
+                      gh release edit "${release_tag}" \
+                          --title "${release_tag}" \
+                          --target "${GITHUB_SHA}" \
+                          --notes-file "$notes_file"
+                  else
+                      gh release create "${release_tag}" release-assets/*.apk \
+                          --title "${release_tag}" \
+                          --target "${GITHUB_SHA}" \
+                          --notes-file "$notes_file"
+                  fi

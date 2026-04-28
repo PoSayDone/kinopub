@@ -52,6 +52,8 @@
     <string name="email">Email</string>
     <string name="subscription">Подписка</string>
     <string name="player">Плеер</string>
+    <string name="app_updates">Обновления приложения</string>
+    <string name="app_version_label">Версия приложения</string>
     <string name="enabled">Включено</string>
     <string name="disabled">Выключено</string>
     <string name="logout">Выйти</string>
@@ -61,6 +63,24 @@
     <string name="stream_type_description">Тип видеопотока, выберите автоматически, если не уверены</string>
     <string name="server_location_description">Выберите ближайшее расположение для лучшей скорости</string>
     <string name="video_quality_description">Выберите качество видео по умолчанию, которое будет использоваться в плеере</string>
+    <string name="check_for_updates">Проверить обновления</string>
+    <string name="checking_for_updates">Проверяем обновления...</string>
+    <string name="no_update_available">У вас уже установлена последняя версия.</string>
+    <string name="update_available_title">Доступно обновление</string>
+    <string name="update_download">Скачать обновление</string>
+    <string name="update_install">Установить обновление</string>
+    <string name="update_allow_installs">Разрешить установку</string>
+    <string name="update_unknown_sources_required">Разрешите установку из этого приложения, затем вернитесь и продолжите обновление.</string>
+    <string name="update_downloading">Скачиваем обновление...</string>
+    <string name="update_download_ready">Обновление скачано и готово к установке.</string>
+    <string name="update_release_notes">Что изменилось</string>
+    <string name="update_current_version">Текущая версия: %1$s</string>
+    <string name="update_latest_version">Новая версия: %1$s</string>
+    <string name="update_file_size">Размер: %1$s</string>
+    <string name="update_download_failed">Не удалось скачать обновление.</string>
+    <string name="update_download_not_found">Скачанный APK не найден.</string>
+    <string name="update_not_configured">Для этой сборки не настроены обновления приложения.</string>
+    <string name="close">Закрыть</string>
     
     <!-- Player dialog related strings -->
     <string name="select_audio_track">Выбрать аудиодорожку</string>

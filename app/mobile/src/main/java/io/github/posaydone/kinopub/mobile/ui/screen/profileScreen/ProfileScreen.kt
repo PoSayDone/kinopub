@@ -1,5 +1,6 @@
 package io.github.posaydone.kinopub.mobile.ui.screen.profileScreen
 
+import android.content.ActivityNotFoundException
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +23,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,8 +40,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import io.github.posaydone.kinopub.core.common.R
+import io.github.posaydone.kinopub.core.common.sharedViewModel.AppUpdateUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ProfileScreenUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ProfileScreenViewModel
+import io.github.posaydone.kinopub.core.common.utils.createInstallPackageIntent
+import io.github.posaydone.kinopub.core.common.utils.createUnknownSourcesSettingsIntent
 import io.github.posaydone.kinopub.core.model.UserProfileInfo
 import io.github.posaydone.kinopub.mobile.ui.common.Error
 import io.github.posaydone.kinopub.mobile.ui.common.LargeButton
@@ -54,6 +63,21 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val videoQuality by viewModel.videoQuality.collectAsStateWithLifecycle()
+    val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showAppUpdateDialog by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(appUpdateState.pendingInstallApkUri) {
+        val apkUri = appUpdateState.pendingInstallApkUri ?: return@LaunchedEffect
+        runCatching {
+            context.startActivity(context.createInstallPackageIntent(apkUri))
+        }.onFailure { throwable ->
+            if (throwable is ActivityNotFoundException) {
+                // Leave the install button available in the dialog if no installer is found.
+            }
+        }
+        viewModel.onInstallRequestHandled()
+    }
 
     Scaffold(
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(
@@ -84,8 +108,33 @@ fun ProfileScreen(
                     streamTypes = state.streamTypes,
                     currentServerLocation = state.currentServerLocation,
                     serverLocations = state.serverLocations,
+                    appUpdateState = appUpdateState,
+                    onAppUpdateClick = {
+                        showAppUpdateDialog = true
+                        viewModel.checkForAppUpdates()
+                    },
                 )
             }
+        }
+
+        if (showAppUpdateDialog) {
+            AppUpdateDialog(
+                state = appUpdateState,
+                onDismiss = { showAppUpdateDialog = false },
+                onDownload = { viewModel.downloadUpdate() },
+                onInstall = {
+                    appUpdateState.installApkUri?.let { apkUri ->
+                        runCatching {
+                            context.startActivity(context.createInstallPackageIntent(apkUri))
+                        }
+                    }
+                },
+                onAllowInstalls = {
+                    runCatching {
+                        context.startActivity(context.createUnknownSourcesSettingsIntent())
+                    }
+                },
+            )
         }
     }
 }
@@ -104,6 +153,8 @@ fun ProfileScreenContent(
     streamTypes: Map<String, String>,
     currentServerLocation: String,
     serverLocations: Map<String, String>,
+    appUpdateState: AppUpdateUiState,
+    onAppUpdateClick: () -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
 
@@ -171,6 +222,16 @@ fun ProfileScreenContent(
                 onClick = {
                     navigateToServerLocationScreen()
                 })
+        }
+        SettingsGroup(
+            title = stringResource(R.string.app_updates)
+        ) {
+            SettingItemLink(
+                title = stringResource(R.string.app_version_label),
+                currentValue = appUpdateState.currentVersionName,
+                description = stringResource(R.string.check_for_updates),
+                onClick = onAppUpdateClick,
+            )
         }
         LargeButton(
             style = LargeButtonStyle.TEXT, onClick = onLogout, modifier = Modifier.fillMaxWidth()

@@ -1,5 +1,6 @@
 package io.github.posaydone.kinopub.tv.ui.screen.profileScreen
 
+import android.content.ActivityNotFoundException
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -35,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +49,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -59,11 +62,14 @@ import androidx.tv.material3.Text
 import coil.compose.rememberAsyncImagePainter
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ProfileScreenUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ProfileScreenViewModel
+import io.github.posaydone.kinopub.core.common.sharedViewModel.AppUpdateUiState
 import io.github.posaydone.kinopub.core.model.UserProfileInfo
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import io.github.posaydone.kinopub.core.common.R
+import io.github.posaydone.kinopub.core.common.utils.createInstallPackageIntent
+import io.github.posaydone.kinopub.core.common.utils.createUnknownSourcesSettingsIntent
 import io.github.posaydone.kinopub.tv.ui.common.Error
 import io.github.posaydone.kinopub.tv.ui.common.LargeButton
 import io.github.posaydone.kinopub.tv.ui.common.LargeButtonStyle
@@ -83,6 +89,21 @@ fun ProfileScreen(
     val homeImmersiveBackgroundEnabled by viewModel.homeImmersiveBackgroundEnabled.collectAsStateWithLifecycle()
     val homeImmersiveGradientEnabled by viewModel.homeImmersiveGradientEnabled.collectAsStateWithLifecycle()
     val homeImmersiveDetailsEnabled by viewModel.homeImmersiveDetailsEnabled.collectAsStateWithLifecycle()
+    val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showAppUpdateDialog by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(appUpdateState.pendingInstallApkUri) {
+        val apkUri = appUpdateState.pendingInstallApkUri ?: return@LaunchedEffect
+        runCatching {
+            context.startActivity(context.createInstallPackageIntent(apkUri))
+        }.onFailure { throwable ->
+            if (throwable is ActivityNotFoundException) {
+                // Keep manual install available in the dialog if the installer app is missing.
+            }
+        }
+        viewModel.onInstallRequestHandled()
+    }
 
     when (val state = uiState) {
         is ProfileScreenUiState.Loading -> {
@@ -114,6 +135,26 @@ fun ProfileScreen(
                 },
                 onHomeImmersiveGradientChange = { viewModel.updateHomeImmersiveGradientEnabled(it) },
                 onHomeImmersiveDetailsChange = { viewModel.updateHomeImmersiveDetailsEnabled(it) },
+                appUpdateState = appUpdateState,
+                showAppUpdateDialog = showAppUpdateDialog,
+                onAppUpdateClick = {
+                    showAppUpdateDialog = true
+                    viewModel.checkForAppUpdates()
+                },
+                onDismissAppUpdateDialog = { showAppUpdateDialog = false },
+                onDownloadUpdate = { viewModel.downloadUpdate() },
+                onInstallUpdate = {
+                    appUpdateState.installApkUri?.let { apkUri ->
+                        runCatching {
+                            context.startActivity(context.createInstallPackageIntent(apkUri))
+                        }
+                    }
+                },
+                onAllowAppInstalls = {
+                    runCatching {
+                        context.startActivity(context.createUnknownSourcesSettingsIntent())
+                    }
+                },
             )
         }
     }
@@ -139,6 +180,13 @@ fun ProfileScreenContent(
     onHomeImmersiveBackgroundChange: (Boolean) -> Unit,
     onHomeImmersiveGradientChange: (Boolean) -> Unit,
     onHomeImmersiveDetailsChange: (Boolean) -> Unit,
+    appUpdateState: AppUpdateUiState,
+    showAppUpdateDialog: Boolean,
+    onAppUpdateClick: () -> Unit,
+    onDismissAppUpdateDialog: () -> Unit,
+    onDownloadUpdate: () -> Unit,
+    onInstallUpdate: () -> Unit,
+    onAllowAppInstalls: () -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
 
@@ -267,6 +315,16 @@ fun ProfileScreenContent(
             }
 
             item {
+                SettingsGroup(title = stringResource(R.string.app_updates)) {
+                    SettingItem(
+                        title = stringResource(R.string.app_version_label),
+                        currentValue = appUpdateState.currentVersionName,
+                        onClick = onAppUpdateClick,
+                    )
+                }
+            }
+
+            item {
                 SettingsGroup(title = stringResource(R.string.home_screen_settings)) {
                     SettingItem(
                         title = stringResource(R.string.home_screen_immersive_background),
@@ -337,6 +395,15 @@ fun ProfileScreenContent(
             },
             opened = showVideoQualityDialog,
             onDismiss = { showVideoQualityDialog = false })
+
+        AppUpdateDialog(
+            showDialog = showAppUpdateDialog,
+            state = appUpdateState,
+            onDismiss = onDismissAppUpdateDialog,
+            onDownload = onDownloadUpdate,
+            onInstall = onInstallUpdate,
+            onAllowInstalls = onAllowAppInstalls,
+        )
 
     }
 }
