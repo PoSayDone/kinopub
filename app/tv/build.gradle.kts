@@ -27,9 +27,7 @@ fun resolveReleaseKeystoreFile() = sequenceOf(
     rootProject.file("app/keystore")
         .takeIf { it.exists() }
         ?.walkTopDown()
-        ?.firstOrNull { candidate ->
-            candidate.isFile && candidate.extension.lowercase() in setOf("jks", "keystore")
-        },
+        ?.firstOrNull { candidate -> candidate.isFile },
 ).filterNotNull().firstOrNull()
 
 val releaseKeystoreFile = resolveReleaseKeystoreFile()
