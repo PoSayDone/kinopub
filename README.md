@@ -6,10 +6,10 @@
 ### Mobile
 
 <div align="center">
+  <img width="24%" alt="Mobile screenshot 4" src="https://github.com/user-attachments/assets/c0aa12ba-fd02-47c5-be06-4fc49737d5e7" />
+  <img width="24%" alt="Mobile screenshot 3" src="https://github.com/user-attachments/assets/9c04060d-9fdf-49be-a154-3067c6e0a621" />
   <img width="24%" alt="Mobile screenshot 1" src="https://github.com/user-attachments/assets/5153359f-b1e5-45a4-baf2-eaec0a7f1586" />
   <img width="24%" alt="Mobile screenshot 2" src="https://github.com/user-attachments/assets/3b282091-8f77-425e-aa49-9552a8757794" />
-  <img width="24%" alt="Mobile screenshot 3" src="https://github.com/user-attachments/assets/9c04060d-9fdf-49be-a154-3067c6e0a621" />
-  <img width="24%" alt="Mobile screenshot 4" src="https://github.com/user-attachments/assets/c0aa12ba-fd02-47c5-be06-4fc49737d5e7" />
 </div>
 <div align="center">
   <img width="49%" alt="Mobile landscape" src="https://github.com/user-attachments/assets/4ed4d14e-1586-4be3-b00d-292e51ee7237" />
@@ -19,11 +19,11 @@
 ### TV
 
 <div align="center">
-  <img width="49%" alt="TV screenshot 1" src="https://github.com/user-attachments/assets/b5b22190-ce99-4c99-abb0-efb3217eea7a" />
-  <img width="49%" alt="TV screenshot 2" src="https://github.com/user-attachments/assets/871ac0fe-8299-40d1-9815-85d712499891" />
-  <img width="49%" alt="TV screenshot 3" src="https://github.com/user-attachments/assets/9d9ff134-c0a6-436d-8af5-44e545401a15" />
-  <img width="49%" alt="TV screenshot 4" src="https://github.com/user-attachments/assets/23e7750d-581d-4bee-8c1c-b586363391bd" />
   <img width="49%" alt="TV screenshot 5" src="https://github.com/user-attachments/assets/944ad874-781c-47c3-8071-55cd82442bfa" />
+  <img width="49%" alt="TV screenshot 4" src="https://github.com/user-attachments/assets/23e7750d-581d-4bee-8c1c-b586363391bd" />
+  <img width="49%" alt="TV screenshot 3" src="https://github.com/user-attachments/assets/9d9ff134-c0a6-436d-8af5-44e545401a15" />
+  <img width="49%" alt="TV screenshot 2" src="https://github.com/user-attachments/assets/871ac0fe-8299-40d1-9815-85d712499891" />
+  <img width="49%" alt="TV screenshot 1" src="https://github.com/user-attachments/assets/b5b22190-ce99-4c99-abb0-efb3217eea7a" />
 </div>
 
 ## Загрузка
