@@ -136,6 +136,11 @@
     <string name="subtitles_count">%1$d subtitles</string>
     <string name="more_details">More details</string>
 
+    <!-- Player playback errors -->
+    <string name="player_error_network">Playback error. Check your connection and try again.</string>
+    <string name="player_error_generic">Playback error. Try again.</string>
+    <string name="player_retry">Retry</string>
+
     <!-- Error screen -->
     <string name="error_title">Error</string>
     <string name="error_message">Service is unavailable or you don\'t have internet connection. Try again later.</string>

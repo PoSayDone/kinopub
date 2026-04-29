@@ -111,6 +111,7 @@ fun VideoPlayerScreenContent(
         hasPrevEpisode = hasPrevEpisode,
         hasNextEpisode = hasNextEpisode,
         isAudioTrackSelectionEnabled = isHls4AudioTrackSelectionEnabled,
+        onRetry = { viewModel.retryPlayback() },
         toggleControls = { viewModel.toggleControls() },
         setResizeMode = { viewModel.setResizeMode(it) },
         seekForward = { viewModel.seekForward() },
@@ -172,6 +173,7 @@ private fun PlayerScreenContent(
     hasPrevEpisode: Boolean,
     hasNextEpisode: Boolean,
     isAudioTrackSelectionEnabled: Boolean,
+    onRetry: () -> Unit = {},
     toggleControls: () -> Unit,
     setResizeMode: (Int) -> Unit,
     seekForward: () -> Unit,
@@ -214,6 +216,7 @@ private fun PlayerScreenContent(
             modifier = Modifier.fillMaxSize(),
             playerState = playerState,
             pulseState = pulseState,
+            onRetry = onRetry,
             subtitles = { /* TODO Implement subtitles */ },
             header = {
                 PlayerMediaTitle(

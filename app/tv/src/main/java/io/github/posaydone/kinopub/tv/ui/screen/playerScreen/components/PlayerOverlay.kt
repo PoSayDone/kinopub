@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -39,15 +40,18 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import androidx.compose.ui.res.stringResource
+import androidx.tv.material3.Button
 import androidx.tv.material3.Icon
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.posaydone.kinopub.core.common.R
+import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerError
 import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 
 
@@ -59,6 +63,7 @@ import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 fun PlayerOverlay(
     modifier: Modifier = Modifier,
     playerState: PlayerState,
+    onRetry: () -> Unit = {},
     centerButton: @Composable () -> Unit = {},
     subtitles: @Composable () -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -139,7 +144,45 @@ fun PlayerOverlay(
                     }
                 }
             }
-            centerButton()
+            if (playerState.playerError == null) {
+                centerButton()
+            }
+
+            if (playerState.playerError != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(horizontal = 48.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Error,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(56.dp),
+                        )
+                        Text(
+                            text = stringResource(
+                                if (playerState.playerError == PlayerError.NETWORK)
+                                    R.string.player_error_network
+                                else
+                                    R.string.player_error_generic
+                            ),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                        Button(onClick = onRetry) {
+                            Text(stringResource(R.string.player_retry))
+                        }
+                    }
+                }
+            }
         }
     }
 }

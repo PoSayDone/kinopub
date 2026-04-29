@@ -128,6 +128,7 @@ fun VideoPlayerScreenContent(
         hasNextEpisode = hasNextEpisode,
         isAudioTrackSelectionEnabled = isHls4AudioTrackSelectionEnabled,
         isEpisodeDialogOpen = isEpisodeDialogOpen,
+        onRetry = { viewModel.retryPlayback() },
         seekBack = { viewModel.seekBack() },
         seekForward = { viewModel.seekForward() },
         pause = { viewModel.pause() },
@@ -190,6 +191,7 @@ private fun PlayerScreenContent(
     hasNextEpisode: Boolean,
     isAudioTrackSelectionEnabled: Boolean,
     isEpisodeDialogOpen: Boolean,
+    onRetry: () -> Unit = {},
     seekBack: () -> Unit,
     seekForward: () -> Unit,
     pause: () -> Unit,
@@ -229,6 +231,7 @@ private fun PlayerScreenContent(
         PlayerOverlay(
             modifier = Modifier.fillMaxSize(),
             playerState = playerState,
+            onRetry = onRetry,
             centerButton = { PlayerPulse(pulseState, playerState.isLoading) },
             subtitles = { /* TODO Implement subtitles */ },
             header = {

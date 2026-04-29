@@ -11,15 +11,14 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +61,12 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        if (uiState is HomeScreenUiState.Done) {
+            viewModel.retry()
+        }
+    }
+
     Scaffold(
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(
             NavigationBarDefaults.windowInsets.union(WindowInsets.statusBars)
@@ -73,32 +78,7 @@ fun HomeScreen(
             }
 
             is HomeScreenUiState.Error -> {
-                Column {
-                    Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry, children = {
-                        Button(onClick = {
-                            s.sessionManager.saveAccessToken(
-                                s.sessionManager.fetchAccessToken(),
-                                System.currentTimeMillis() - 1000
-                            )
-                        }) {
-                            Text(stringResource(R.string.clear_expiration_time))
-                        }
-                        Button(onClick = {
-                            s.sessionManager.saveAccessToken(
-                                null, System.currentTimeMillis() - 1000
-                            )
-                        }) {
-                            Text(stringResource(R.string.remove_token))
-                        }
-                        Button(onClick = {
-                            s.sessionManager.saveAccessToken(
-                                "adsfjskjdfkaksjf", System.currentTimeMillis() + 10 * 60 * 1000
-                            )
-                        }) {
-                            Text(stringResource(R.string.save_wrong_token))
-                        }
-                    })
-                }
+                Error(modifier = Modifier.fillMaxSize(), onRetry = s.onRetry)
             }
 
             is HomeScreenUiState.Done -> {

@@ -26,9 +26,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,12 +45,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.posaydone.kinopub.core.common.R
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
-import com.google.common.util.concurrent.ListenableFutureTask
+import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerError
 import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -55,8 +58,9 @@ import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 @Composable
 fun PlayerOverlay(
     modifier: Modifier = Modifier,
-    playerState: PlayerState, // Updated to use shared PlayerState
+    playerState: PlayerState,
     pulseState: PlayerPulseState,
+    onRetry: () -> Unit = {},
     middle: @Composable () -> Unit = {},
     subtitles: @Composable () -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -148,7 +152,9 @@ fun PlayerOverlay(
         }
 
         AnimatedVisibility(
-            visible = playerState.isLoading, enter = fadeIn(), exit = fadeOut()
+            visible = playerState.isLoading && playerState.playerError == null,
+            enter = fadeIn(),
+            exit = fadeOut(),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(
@@ -156,6 +162,42 @@ fun PlayerOverlay(
                         .size(48.dp)
                         .align(Alignment.Center)
                 )
+            }
+        }
+
+        if (playerState.playerError != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.85f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(horizontal = 32.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Error,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp),
+                    )
+                    Text(
+                        text = stringResource(
+                            if (playerState.playerError == PlayerError.NETWORK)
+                                R.string.player_error_network
+                            else
+                                R.string.player_error_generic
+                        ),
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Button(onClick = onRetry) {
+                        Text(stringResource(R.string.player_retry))
+                    }
+                }
             }
         }
     }

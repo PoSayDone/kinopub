@@ -5,7 +5,7 @@
             @color/ic_launcher_background
         </item>
         <item name="android:windowSplashScreenAnimatedIcon" tools:ignore="NewApi">
-            @drawable/ic_app_icon
+            @mipmap/ic_launcher
         </item>
     </style>
 

@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,10 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import io.github.posaydone.kinopub.core.common.R
 import io.github.posaydone.kinopub.core.model.HistoryShow
 
 private val HistoryCardWidth = 260.dp
@@ -62,6 +66,12 @@ fun HistoryCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_movie),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.size(48.dp),
+            )
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .crossfade(true)
@@ -69,8 +79,7 @@ fun HistoryCard(
                     .build(),
                 contentDescription = show.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
             )
 
             if (show.isSeries && seasonNumber != null && episodeNumber != null) {

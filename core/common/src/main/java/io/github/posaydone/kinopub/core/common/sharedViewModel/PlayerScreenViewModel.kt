@@ -55,6 +55,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+enum class PlayerError { NETWORK, GENERIC }
+
 @androidx.media3.common.util.UnstableApi
 data class PlayerState(
     val isPlaying: Boolean = false,
@@ -65,6 +67,7 @@ data class PlayerState(
     val orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE,
     val controlsVisible: Boolean = true,
     val isSpeedUpActive: Boolean = false,
+    val playerError: PlayerError? = null,
 )
 
 @Immutable
@@ -180,6 +183,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private var minuteProgressSaveJob: Job? = null
     private var isPreparingMediaItem = false
     private var pendingResumePositionMs: Long? = null
+    private var autoRetryCount = 0
 
     fun showControls(seconds: Int = SHOW_CONTROLS_TIME) {
         controlsHideJob?.cancel()
@@ -218,7 +222,16 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
                 controller.addListener(object : Player.Listener {
                     override fun onPlayerError(error: PlaybackException) {
-                        if (shouldRetry(error)) retryPlay()
+                        Log.e(TAG, "onPlayerError: ${error.errorCodeName}", error)
+                        if (shouldRetry(error) && autoRetryCount < MAX_AUTO_RETRIES) {
+                            autoRetryCount++
+                            Log.d(TAG, "onPlayerError: auto-retry $autoRetryCount / $MAX_AUTO_RETRIES")
+                            retryPlay()
+                        } else {
+                            autoRetryCount = 0
+                            val errorType = if (shouldRetry(error)) PlayerError.NETWORK else PlayerError.GENERIC
+                            _playerState.update { it.copy(playerError = errorType, isLoading = false) }
+                        }
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -232,6 +245,10 @@ class PlayerScreenViewModel @AssistedInject constructor(
                         val isLoading =
                             state == Player.STATE_BUFFERING || state == Player.STATE_IDLE
                         _playerState.update { it.copy(isLoading = isLoading) }
+                        if (state == Player.STATE_READY) {
+                            autoRetryCount = 0
+                            _playerState.update { it.copy(playerError = null) }
+                        }
                         maybeClearPendingPlaybackState(controller)
                     }
 
@@ -283,17 +300,25 @@ class PlayerScreenViewModel @AssistedInject constructor(
         }
     }
 
-    fun shouldRetry(error: PlaybackException): Boolean {
-        return error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED || error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
+    private fun shouldRetry(error: PlaybackException): Boolean {
+        return error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+            error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
     }
 
-    fun retryPlay(retryCount: Int = 3) {
-        if (retryCount > 0) {
-            _playerController.value.let {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    playVideo(it!!.currentPosition / 1000) // retry from current time
-                }, 2000)
-            }
+    private fun retryPlay() {
+        val controller = _playerController.value ?: return
+        Handler(Looper.getMainLooper()).postDelayed({
+            playVideo(controller.currentPosition / 1000)
+        }, 2000)
+    }
+
+    fun retryPlayback() {
+        autoRetryCount = 0
+        _playerState.update { it.copy(playerError = null, isLoading = true) }
+        if (_details.value == null) {
+            initialize()
+        } else {
+            playVideo(_playerController.value?.currentPosition?.div(1000) ?: 0)
         }
     }
 
@@ -303,49 +328,54 @@ class PlayerScreenViewModel @AssistedInject constructor(
                 TAG,
                 "initialize: showId=$showId navStartSeason=${navKey.startSeason} navStartEpisode=${navKey.startEpisode}"
             )
-            runCatching { repository.getStreamType() }
-                .onSuccess { streamType ->
-                    _currentStreamType.value = streamType.streamType
-                    Log.d(
-                        TAG,
-                        "initialize: streamType=${streamType.streamType} allowedTypes=${streamType.allowedTypes}"
-                    )
-                }
-                .onFailure { error ->
-                    _currentStreamType.value = null
-                    Log.w(
-                        TAG,
-                        "initialize: failed to fetch stream type, audio track switching disabled",
-                        error
-                    )
-                }
-            savedProgress = repository.getShowProgress(showId)
-            Log.d(TAG, "initialize: savedProgress=${savedProgress.toDebugString()}")
-            when (val response = repository.getShowResource(showId)) {
-                is ShowResourceResponse.MovieResourceResponse -> {
-                    movie = response.movies
-                    _details.value = repository.getShowDetails(showId)
-                    _moviePieces.value = movie
-                    _contentType.value = ShowType.MOVIE
-                    Log.d(
-                        TAG,
-                        "initialize: contentType=MOVIE translations=${movie.size} firstVoices=${movie.take(3).joinToString { it.voiceover }}"
-                    )
-                    restoreMovieProgress()
-                }
+            try {
+                runCatching { repository.getStreamType() }
+                    .onSuccess { streamType ->
+                        _currentStreamType.value = streamType.streamType
+                        Log.d(
+                            TAG,
+                            "initialize: streamType=${streamType.streamType} allowedTypes=${streamType.allowedTypes}"
+                        )
+                    }
+                    .onFailure { error ->
+                        _currentStreamType.value = null
+                        Log.w(
+                            TAG,
+                            "initialize: failed to fetch stream type, audio track switching disabled",
+                            error
+                        )
+                    }
+                savedProgress = repository.getShowProgress(showId)
+                Log.d(TAG, "initialize: savedProgress=${savedProgress.toDebugString()}")
+                when (val response = repository.getShowResource(showId)) {
+                    is ShowResourceResponse.MovieResourceResponse -> {
+                        movie = response.movies
+                        _details.value = repository.getShowDetails(showId)
+                        _moviePieces.value = movie
+                        _contentType.value = ShowType.MOVIE
+                        Log.d(
+                            TAG,
+                            "initialize: contentType=MOVIE translations=${movie.size} firstVoices=${movie.take(3).joinToString { it.voiceover }}"
+                        )
+                        restoreMovieProgress()
+                    }
 
-                is ShowResourceResponse.SeriesResourceResponse -> {
-                    val seriesTransformed = response.series
-                    series = seriesTransformed
-                    _details.value = repository.getShowDetails(showId)
-                    _contentType.value = ShowType.SERIES
-                    _seasons.value = seriesTransformed.seasons
-                    Log.d(
-                        TAG,
-                        "initialize: contentType=SERIES seasons=${seriesTransformed.seasons.size} seasonSummary=${seriesTransformed.seasons.joinToString { "S${it.season}:${it.episodes.size}ep" }}"
-                    )
-                    restoreSeriesProgress()
+                    is ShowResourceResponse.SeriesResourceResponse -> {
+                        val seriesTransformed = response.series
+                        series = seriesTransformed
+                        _details.value = repository.getShowDetails(showId)
+                        _contentType.value = ShowType.SERIES
+                        _seasons.value = seriesTransformed.seasons
+                        Log.d(
+                            TAG,
+                            "initialize: contentType=SERIES seasons=${seriesTransformed.seasons.size} seasonSummary=${seriesTransformed.seasons.joinToString { "S${it.season}:${it.episodes.size}ep" }}"
+                        )
+                        restoreSeriesProgress()
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "initialize: failed to load show data", e)
+                _playerState.update { it.copy(playerError = PlayerError.NETWORK, isLoading = false) }
             }
         }
     }
@@ -1159,6 +1189,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     companion object {
         var SHOW_CONTROLS_TIME = 4
         private const val HLS4_STREAM_TYPE = "hls4"
+        private const val MAX_AUTO_RETRIES = 2
     }
 }
 

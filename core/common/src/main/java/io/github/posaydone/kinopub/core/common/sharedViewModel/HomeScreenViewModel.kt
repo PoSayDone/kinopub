@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -73,7 +74,9 @@ class HomeScreenViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
-        combine(
+        flow {
+            emit(HomeScreenUiState.Loading)
+            emitAll(combine(
             flow { emit(showRepository.getHistoryList(20)) }.mapToResult(),
             showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.VIEWS,    KinoPubPeriod.MONTH, 20).mapToResult(),
             showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.CREATED,  limit = 20).mapToResult(),
@@ -161,6 +164,7 @@ class HomeScreenViewModel @Inject constructor(
                     newTvShows = newTvShows,
                     getShowImages = { showRepository.getShowImages(it) })
             }
+        })
         }
     }.stateIn(
         scope = viewModelScope,

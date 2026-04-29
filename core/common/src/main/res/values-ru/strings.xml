@@ -134,6 +134,11 @@
     <string name="new_documentary_series">Документальные сериалы</string>
     <string name="new_tv_shows">ТВ шоу</string>
 
+    <!-- Player playback errors -->
+    <string name="player_error_network">Ошибка воспроизведения. Проверьте соединение и попробуйте снова.</string>
+    <string name="player_error_generic">Ошибка воспроизведения. Попробуйте снова.</string>
+    <string name="player_retry">Повторить</string>
+
     <!-- Error screen -->
     <string name="error_title">Ошибка</string>
     <string name="error_message">Сервис недоступен или нет подключения к интернету. Попробуйте позже.</string>
