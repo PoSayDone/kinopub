@@ -144,6 +144,15 @@
     <!-- Error screen -->
     <string name="error_title">Error</string>
     <string name="error_message">Service is unavailable or you don\'t have internet connection. Try again later.</string>
+    <string name="change_api_url">Change API URL</string>
+
+    <!-- API URL settings -->
+    <string name="api_url_label">API URL</string>
+    <string name="advanced">Advanced</string>
+    <string name="api_url_dialog_title">Change API URL</string>
+    <string name="api_url_dialog_description">Enter a custom API server address. Leave empty or tap "Reset" to restore the default.</string>
+    <string name="api_url_reset">Reset to default</string>
+    <string name="save">Save</string>
 
     <!-- Shows row -->
     <string name="view_all">View All</string>

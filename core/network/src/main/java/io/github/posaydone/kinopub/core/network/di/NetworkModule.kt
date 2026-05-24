@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.posaydone.kinopub.core.network.BuildConfig
 import io.github.posaydone.kinopub.core.network.Constants
 import io.github.posaydone.kinopub.core.network.KinoPubAuthConfig
+import io.github.posaydone.kinopub.core.network.interceptor.ApiUrlInterceptor
 import io.github.posaydone.kinopub.core.network.interceptor.AuthInterceptor
 import io.github.posaydone.kinopub.core.network.interceptor.RetryInterceptor
 import io.github.posaydone.kinopub.core.network.interceptor.TokenAuthenticator
@@ -42,9 +43,11 @@ internal object NetworkModule {
         retryInterceptor: RetryInterceptor,
         tokenAuthenticator: TokenAuthenticator,
         userAgentInterceptor: UserAgentInterceptor,
+        apiUrlInterceptor: ApiUrlInterceptor,
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            .addInterceptor(apiUrlInterceptor)
             .addInterceptor(userAgentInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(retryInterceptor)
@@ -59,8 +62,10 @@ internal object NetworkModule {
         authInterceptor: AuthInterceptor,
         tokenAuthenticator: TokenAuthenticator,
         userAgentInterceptor: UserAgentInterceptor,
+        apiUrlInterceptor: ApiUrlInterceptor,
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .addInterceptor(apiUrlInterceptor)
             .addInterceptor(userAgentInterceptor)
             .addInterceptor(authInterceptor)
             .authenticator(tokenAuthenticator)
@@ -71,11 +76,13 @@ internal object NetworkModule {
     @Singleton
     fun provideAuthService(
         userAgentInterceptor: UserAgentInterceptor,
+        apiUrlInterceptor: ApiUrlInterceptor,
     ): AuthService {
         return Retrofit.Builder().baseUrl(Constants.KINOPUB_API_URL)
             .addConverterFactory(GsonConverterFactory.create()).client(
                 OkHttpClient.Builder()
                     .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                    .addInterceptor(apiUrlInterceptor)
                     .addInterceptor(userAgentInterceptor)
                     .build()
             ).build().create(AuthService::class.java)

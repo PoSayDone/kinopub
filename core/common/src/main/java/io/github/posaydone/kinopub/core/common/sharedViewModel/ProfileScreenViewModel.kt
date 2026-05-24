@@ -10,6 +10,7 @@ import io.github.posaydone.kinopub.core.data.updates.AppUpdateDownloadState
 import io.github.posaydone.kinopub.core.data.updates.AppUpdateRepository
 import io.github.posaydone.kinopub.core.model.SessionManager
 import io.github.posaydone.kinopub.core.model.UserProfileInfo
+import io.github.posaydone.kinopub.core.network.ApiUrlManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +36,7 @@ class ProfileScreenViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val settingsManager: SettingsManager,
     private val appUpdateRepository: AppUpdateRepository,
+    private val apiUrlManager: ApiUrlManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileScreenUiState>(ProfileScreenUiState.Loading)
@@ -46,6 +48,7 @@ class ProfileScreenViewModel @Inject constructor(
     )
     val appUpdateState: StateFlow<AppUpdateUiState> = _appUpdateState.asStateFlow()
 
+    val apiUrl: StateFlow<String> = apiUrlManager.apiUrl
     val videoQuality: StateFlow<String> = settingsManager.videoQuality
     val homeImmersiveBackgroundEnabled: StateFlow<Boolean> =
         settingsManager.homeImmersiveBackgroundEnabled
@@ -128,6 +131,16 @@ class ProfileScreenViewModel @Inject constructor(
 
     fun updateDefaultVideoQuality(quality: String) {
         settingsManager.setVideoQuality(quality)
+    }
+
+    fun updateApiUrl(url: String) {
+        apiUrlManager.setApiUrl(url)
+        loadSettings()
+    }
+
+    fun resetApiUrl() {
+        apiUrlManager.resetToDefault()
+        loadSettings()
     }
 
     fun updateHomeImmersiveBackgroundEnabled(enabled: Boolean) {

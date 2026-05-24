@@ -35,8 +35,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,28 +48,30 @@ import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Border
+import androidx.tv.material3.Button
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.ClickableSurfaceDefaults
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.rememberAsyncImagePainter
+import io.github.posaydone.kinopub.core.common.R
+import io.github.posaydone.kinopub.core.common.sharedViewModel.AppUpdateUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ProfileScreenUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ProfileScreenViewModel
-import io.github.posaydone.kinopub.core.common.sharedViewModel.AppUpdateUiState
-import io.github.posaydone.kinopub.core.model.UserProfileInfo
-import androidx.compose.ui.res.stringResource
-import androidx.tv.material3.Border
-import androidx.tv.material3.ClickableSurfaceDefaults
-import io.github.posaydone.kinopub.core.common.R
 import io.github.posaydone.kinopub.core.common.utils.createInstallPackageIntent
 import io.github.posaydone.kinopub.core.common.utils.createUnknownSourcesSettingsIntent
+import io.github.posaydone.kinopub.core.model.UserProfileInfo
 import io.github.posaydone.kinopub.tv.ui.common.Error
 import io.github.posaydone.kinopub.tv.ui.common.LargeButton
 import io.github.posaydone.kinopub.tv.ui.common.LargeButtonStyle
@@ -90,8 +92,10 @@ fun ProfileScreen(
     val homeImmersiveGradientEnabled by viewModel.homeImmersiveGradientEnabled.collectAsStateWithLifecycle()
     val homeImmersiveDetailsEnabled by viewModel.homeImmersiveDetailsEnabled.collectAsStateWithLifecycle()
     val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
+    val apiUrl by viewModel.apiUrl.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showAppUpdateDialog by rememberSaveable { mutableStateOf(false) }
+    var showApiUrlDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(appUpdateState.pendingInstallApkUri) {
         val apkUri = appUpdateState.pendingInstallApkUri ?: return@LaunchedEffect
@@ -111,7 +115,27 @@ fun ProfileScreen(
         }
 
         is ProfileScreenUiState.Error -> {
-            Error(modifier = Modifier.fillMaxSize(), onRetry = state.onRetry)
+            Error(
+                modifier = Modifier.fillMaxSize(),
+                onRetry = state.onRetry,
+                additionalActions = {
+                    item {
+                        Button(onClick = { showApiUrlDialog = true }) {
+                            Text(stringResource(R.string.change_api_url))
+                        }
+                    }
+                    item {
+                        Button(
+                            onClick = {
+                                showAppUpdateDialog = true
+                                viewModel.checkForAppUpdates()
+                            }
+                        ) {
+                            Text(stringResource(R.string.check_for_updates))
+                        }
+                    }
+                }
+            )
         }
 
         is ProfileScreenUiState.Success -> {
@@ -126,6 +150,7 @@ fun ProfileScreen(
                 homeImmersiveBackgroundEnabled = homeImmersiveBackgroundEnabled,
                 homeImmersiveGradientEnabled = homeImmersiveGradientEnabled,
                 homeImmersiveDetailsEnabled = homeImmersiveDetailsEnabled,
+                currentApiUrl = apiUrl,
                 modifier = Modifier.fillMaxSize(),
                 onVideoQualityChange = { viewModel.updateDefaultVideoQuality(it) },
                 onStreamTypeChange = { viewModel.updateStreamType(it) },
@@ -155,12 +180,27 @@ fun ProfileScreen(
                         context.startActivity(context.createUnknownSourcesSettingsIntent())
                     }
                 },
+                onApiUrlClick = { showApiUrlDialog = true },
             )
         }
     }
+
+    ApiUrlDialog(
+        showDialog = showApiUrlDialog,
+        currentUrl = apiUrl,
+        onDismiss = { showApiUrlDialog = false },
+        onConfirm = { newUrl ->
+            viewModel.updateApiUrl(newUrl)
+            showApiUrlDialog = false
+        },
+        onReset = {
+            viewModel.resetApiUrl()
+            showApiUrlDialog = false
+        },
+    )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalTvMaterial3Api::class)
 @Composable
 fun ProfileScreenContent(
     modifier: Modifier = Modifier,
@@ -174,6 +214,7 @@ fun ProfileScreenContent(
     homeImmersiveBackgroundEnabled: Boolean,
     homeImmersiveGradientEnabled: Boolean,
     homeImmersiveDetailsEnabled: Boolean,
+    currentApiUrl: String,
     onVideoQualityChange: (quality: String) -> Unit,
     onStreamTypeChange: (newStreamType: String) -> Unit,
     onServerLocationChange: (newServerLocation: String) -> Unit,
@@ -187,6 +228,7 @@ fun ProfileScreenContent(
     onDownloadUpdate: () -> Unit,
     onInstallUpdate: () -> Unit,
     onAllowAppInstalls: () -> Unit,
+    onApiUrlClick: () -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
 
@@ -365,6 +407,15 @@ fun ProfileScreenContent(
                 }
             }
 
+            item {
+                SettingsGroup(title = stringResource(R.string.advanced)) {
+                    SettingItem(
+                        title = stringResource(R.string.api_url_label),
+                        currentValue = currentApiUrl,
+                        onClick = onApiUrlClick,
+                    )
+                }
+            }
 
             item {
                 LargeButton(

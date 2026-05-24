@@ -4,7 +4,10 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,7 +26,11 @@ import androidx.tv.material3.Text
 import io.github.posaydone.kinopub.core.common.R
 
 @Composable
-fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
+fun Error(
+    modifier: Modifier = Modifier,
+    onRetry: () -> Unit,
+    additionalActions: (LazyListScope.() -> Unit)? = null,
+) {
     val (lazyRow, firstItem) = remember { FocusRequester.createRefs() }
 
     Column(
@@ -36,7 +43,8 @@ fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
         ),
     ) {
         Text(
-            text = stringResource(R.string.error_title), style = MaterialTheme.typography.headlineLarge,
+            text = stringResource(R.string.error_title),
+            style = MaterialTheme.typography.headlineLarge,
         )
         Text(
             text = stringResource(R.string.error_message),
@@ -47,17 +55,18 @@ fun Error(modifier: Modifier = Modifier, onRetry: () -> Unit) {
             modifier = Modifier
                 .focusRequester(lazyRow)
                 .focusRestorer(firstItem),
-            contentPadding = PaddingValues(8.dp)
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
                 Button(
-                    modifier = Modifier
-                        .focusRequester(firstItem),
+                    modifier = Modifier.focusRequester(firstItem),
                     onClick = onRetry,
                 ) {
                     Text(stringResource(R.string.retry))
                 }
             }
+            additionalActions?.invoke(this)
         }
     }
 }

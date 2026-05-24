@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -64,8 +65,10 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val videoQuality by viewModel.videoQuality.collectAsStateWithLifecycle()
     val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
+    val apiUrl by viewModel.apiUrl.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showAppUpdateDialog by rememberSaveable { mutableStateOf(false) }
+    var showApiUrlDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(appUpdateState.pendingInstallApkUri) {
         val apkUri = appUpdateState.pendingInstallApkUri ?: return@LaunchedEffect
@@ -90,7 +93,23 @@ fun ProfileScreen(
             }
 
             is ProfileScreenUiState.Error -> {
-                Error(modifier = Modifier.fillMaxSize(), onRetry = state.onRetry)
+                Error(
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = state.onRetry,
+                    children = {
+                        Button(onClick = { showApiUrlDialog = true }) {
+                            Text(stringResource(R.string.change_api_url))
+                        }
+                        Button(
+                            onClick = {
+                                showAppUpdateDialog = true
+                                viewModel.checkForAppUpdates()
+                            }
+                        ) {
+                            Text(stringResource(R.string.check_for_updates))
+                        }
+                    }
+                )
             }
 
             is ProfileScreenUiState.Success -> {
@@ -108,11 +127,13 @@ fun ProfileScreen(
                     streamTypes = state.streamTypes,
                     currentServerLocation = state.currentServerLocation,
                     serverLocations = state.serverLocations,
+                    currentApiUrl = apiUrl,
                     appUpdateState = appUpdateState,
                     onAppUpdateClick = {
                         showAppUpdateDialog = true
                         viewModel.checkForAppUpdates()
                     },
+                    onApiUrlClick = { showApiUrlDialog = true },
                 )
             }
         }
@@ -136,6 +157,21 @@ fun ProfileScreen(
                 },
             )
         }
+
+        if (showApiUrlDialog) {
+            ApiUrlDialog(
+                currentUrl = apiUrl,
+                onDismiss = { showApiUrlDialog = false },
+                onConfirm = { newUrl ->
+                    viewModel.updateApiUrl(newUrl)
+                    showApiUrlDialog = false
+                },
+                onReset = {
+                    viewModel.resetApiUrl()
+                    showApiUrlDialog = false
+                },
+            )
+        }
     }
 }
 
@@ -153,8 +189,10 @@ fun ProfileScreenContent(
     streamTypes: Map<String, String>,
     currentServerLocation: String,
     serverLocations: Map<String, String>,
+    currentApiUrl: String,
     appUpdateState: AppUpdateUiState,
     onAppUpdateClick: () -> Unit,
+    onApiUrlClick: () -> Unit,
 ) {
     val videoQualities = ProfileScreenViewModel.videoQualities
 
@@ -231,6 +269,15 @@ fun ProfileScreenContent(
                 currentValue = appUpdateState.currentVersionName,
                 description = stringResource(R.string.check_for_updates),
                 onClick = onAppUpdateClick,
+            )
+        }
+        SettingsGroup(
+            title = stringResource(R.string.advanced)
+        ) {
+            SettingItemLink(
+                title = stringResource(R.string.api_url_label),
+                currentValue = currentApiUrl,
+                onClick = onApiUrlClick,
             )
         }
         LargeButton(

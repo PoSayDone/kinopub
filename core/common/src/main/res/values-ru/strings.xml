@@ -142,6 +142,15 @@
     <!-- Error screen -->
     <string name="error_title">Ошибка</string>
     <string name="error_message">Сервис недоступен или нет подключения к интернету. Попробуйте позже.</string>
+    <string name="change_api_url">Изменить API URL</string>
+
+    <!-- API URL settings -->
+    <string name="api_url_label">API URL</string>
+    <string name="advanced">Дополнительно</string>
+    <string name="api_url_dialog_title">Изменить API URL</string>
+    <string name="api_url_dialog_description">Введите адрес API-сервера. Оставьте пустым или нажмите «Сбросить» для восстановления значения по умолчанию.</string>
+    <string name="api_url_reset">Сбросить</string>
+    <string name="save">Сохранить</string>
 
     <!-- Shows row -->
     <string name="view_all">Смотреть все</string>
