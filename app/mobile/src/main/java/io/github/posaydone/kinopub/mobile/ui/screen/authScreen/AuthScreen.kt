@@ -1,8 +1,10 @@
 package io.github.posaydone.kinopub.mobile.ui.screen.authScreen
 
+import android.content.ActivityNotFoundException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,13 +16,18 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowRightAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +38,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.kinopub.core.common.R
 import io.github.posaydone.kinopub.core.common.sharedViewModel.AuthScreenUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.AuthScreenViewModel
+import io.github.posaydone.kinopub.core.common.utils.createInstallPackageIntent
+import io.github.posaydone.kinopub.core.common.utils.createUnknownSourcesSettingsIntent
+import io.github.posaydone.kinopub.mobile.ui.screen.profileScreen.ApiUrlDialog
+import io.github.posaydone.kinopub.mobile.ui.screen.profileScreen.AppUpdateDialog
 
 @Composable
 fun AuthScreen(
@@ -38,12 +49,29 @@ fun AuthScreen(
     viewModel: AuthScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val apiUrl by viewModel.apiUrl.collectAsStateWithLifecycle()
+    val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showApiUrlDialog by rememberSaveable { mutableStateOf(false) }
+    var showAppUpdateDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(uiState) {
         if (uiState is AuthScreenUiState.Success) {
             navigateToHome()
             viewModel.onNavigationHandled()
         }
+    }
+
+    LaunchedEffect(appUpdateState.pendingInstallApkUri) {
+        val apkUri = appUpdateState.pendingInstallApkUri ?: return@LaunchedEffect
+        runCatching {
+            context.startActivity(context.createInstallPackageIntent(apkUri))
+        }.onFailure { throwable ->
+            if (throwable is ActivityNotFoundException) {
+                // Keep manual install available in the dialog if no installer is found.
+            }
+        }
+        viewModel.onInstallRequestHandled()
     }
 
     Scaffold { paddingValues ->
@@ -138,6 +166,57 @@ fun AuthScreen(
                     textAlign = TextAlign.Center,
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { showApiUrlDialog = true }) {
+                    Text(stringResource(R.string.change_api_url))
+                }
+                OutlinedButton(
+                    onClick = {
+                        showAppUpdateDialog = true
+                        viewModel.checkForAppUpdates()
+                    }
+                ) {
+                    Text(stringResource(R.string.check_for_updates))
+                }
+            }
+        }
+
+        if (showApiUrlDialog) {
+            ApiUrlDialog(
+                currentUrl = apiUrl,
+                onDismiss = { showApiUrlDialog = false },
+                onConfirm = { newUrl ->
+                    viewModel.updateApiUrl(newUrl)
+                    showApiUrlDialog = false
+                },
+                onReset = {
+                    viewModel.resetApiUrl()
+                    showApiUrlDialog = false
+                },
+            )
+        }
+
+        if (showAppUpdateDialog) {
+            AppUpdateDialog(
+                state = appUpdateState,
+                onDismiss = { showAppUpdateDialog = false },
+                onDownload = { viewModel.downloadUpdate() },
+                onInstall = {
+                    appUpdateState.installApkUri?.let { apkUri ->
+                        runCatching {
+                            context.startActivity(context.createInstallPackageIntent(apkUri))
+                        }
+                    }
+                },
+                onAllowInstalls = {
+                    runCatching {
+                        context.startActivity(context.createUnknownSourcesSettingsIntent())
+                    }
+                },
+            )
         }
     }
 }

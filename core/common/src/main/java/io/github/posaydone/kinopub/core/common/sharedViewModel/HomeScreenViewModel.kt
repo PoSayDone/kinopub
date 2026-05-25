@@ -65,6 +65,7 @@ class HomeScreenViewModel @Inject constructor(
     settingsManager: SettingsManager,
 ) : ViewModel() {
     private val retryChannel = Channel<Unit>()
+    private var hasLoadedOnce = false
     val showImmersiveBackground: StateFlow<Boolean> =
         settingsManager.homeImmersiveBackgroundEnabled
     val showImmersiveGradient: StateFlow<Boolean> =
@@ -75,7 +76,7 @@ class HomeScreenViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = retryChannel.receiveAsFlow().flatMapLatest {
         flow {
-            emit(HomeScreenUiState.Loading)
+            if (!hasLoadedOnce) emit(HomeScreenUiState.Loading)
             emitAll(combine(
             flow { emit(showRepository.getHistoryList(20)) }.mapToResult(),
             showRepository.getCatalogList(KinoPubContentType.MOVIE,      KinoPubSort.VIEWS,    KinoPubPeriod.MONTH, 20).mapToResult(),
@@ -148,6 +149,7 @@ class HomeScreenViewModel @Inject constructor(
                     showRepository.getShowProgress(featuredShowId)
                 }.getOrDefault(emptyList())
 
+                hasLoadedOnce = true
                 HomeScreenUiState.Done(
                     sessionManager = sessionManager,
                     featuredShow = featuredShow.copy(backdropUrl = backdropUrl),
