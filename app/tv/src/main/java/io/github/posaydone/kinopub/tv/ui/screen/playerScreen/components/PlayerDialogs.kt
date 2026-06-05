@@ -34,6 +34,8 @@ fun PlayerDialogs(
     val selectedQuality by viewModel.selectedQuality.collectAsState()
     val showType by viewModel.contentType.collectAsState()
     val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
+    val isHlsStream by viewModel.isHlsStream.collectAsState()
+    val isAutoQuality by viewModel.isAutoQuality.collectAsState()
 
     if (showType == ShowType.SERIES) {
         if (seasons != null && selectedSeason != null) {
@@ -63,11 +65,14 @@ fun PlayerDialogs(
             SettingsDialog(
                 qualities = qualities,
                 selectedQuality = selectedQuality,
+                isAutoQuality = isAutoQuality,
+                isHlsStream = isHlsStream,
                 cropOptions = listOf("Fit", "Fill", "Zoom"),
                 selectedCrop = viewModel.selectedCrop.value,
                 isSettingsSheetOpen = isQualitySheetOpen,
                 onDismiss = closeQualitySheet,
                 onQualitySelected = { quality -> viewModel.setQuality(quality) },
+                onAutoQualitySelected = { viewModel.setAutoQuality() },
                 onCropSelected = { crop -> viewModel.setCrop(crop) })
         }
     } else {
@@ -86,11 +91,14 @@ fun PlayerDialogs(
             SettingsDialog(
                 qualities = qualities,
                 selectedQuality = selectedQuality,
+                isAutoQuality = isAutoQuality,
+                isHlsStream = isHlsStream,
                 cropOptions = listOf("Fit", "Fill", "Zoom"),
                 selectedCrop = viewModel.selectedCrop.value,
                 isSettingsSheetOpen = isQualitySheetOpen,
                 onDismiss = closeQualitySheet,
                 onQualitySelected = { quality -> viewModel.setQuality(quality) },
+                onAutoQualitySelected = { viewModel.setAutoQuality() },
                 onCropSelected = { crop -> viewModel.setCrop(crop) })
         }
     }

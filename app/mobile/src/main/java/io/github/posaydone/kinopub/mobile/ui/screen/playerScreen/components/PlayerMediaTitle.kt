@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.posaydone.kinopub.core.model.ShowDetails
 
@@ -56,6 +57,7 @@ fun PlayerMediaTitle(
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.6f),
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 
@@ -64,6 +66,7 @@ fun PlayerMediaTitle(
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
                     color = Color.White.copy(alpha = 0.8f),
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 if (currentSeason != null && currentEpisode != null) {
@@ -72,6 +75,7 @@ fun PlayerMediaTitle(
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.6f),
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

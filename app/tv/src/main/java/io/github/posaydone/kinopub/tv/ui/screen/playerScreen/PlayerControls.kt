@@ -56,7 +56,9 @@ fun PlayerControls(
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(
-        playerState.controlsVisible
+        playerState.controlsVisible,
+        hasNextEpisode,
+        hasPrevEpisode,
     ) {
         if (playerState.controlsVisible) focusRequester.requestFocus()
     }

@@ -62,10 +62,8 @@ internal object NetworkModule {
         authInterceptor: AuthInterceptor,
         tokenAuthenticator: TokenAuthenticator,
         userAgentInterceptor: UserAgentInterceptor,
-        apiUrlInterceptor: ApiUrlInterceptor,
     ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(apiUrlInterceptor)
             .addInterceptor(userAgentInterceptor)
             .addInterceptor(authInterceptor)
             .authenticator(tokenAuthenticator)

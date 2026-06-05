@@ -138,6 +138,13 @@ class PlayerScreenViewModel @AssistedInject constructor(
         it.equals(HLS4_STREAM_TYPE, ignoreCase = true)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val isHlsStream: StateFlow<Boolean> = currentStreamType.map {
+        it?.contains("hls", ignoreCase = true) == true
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _isAutoQuality = MutableStateFlow(false)
+    val isAutoQuality: StateFlow<Boolean> = _isAutoQuality.asStateFlow()
+
     private val _selectedCrop = MutableStateFlow<String?>("Fit") // Default crop mode
     val selectedCrop: StateFlow<String?> = _selectedCrop.asStateFlow()
 
@@ -624,19 +631,20 @@ class PlayerScreenViewModel @AssistedInject constructor(
         return isHls4AudioTrackSelectionEnabled.value
     }
 
-    private fun isHlsStream(): Boolean {
-        return currentStreamType.value?.contains("hls", ignoreCase = true) == true
-    }
-
     private fun applyVideoQualitySelection(qualityHeight: Int) {
         val controller = playerController.value ?: return
-        val maxHeight = if (qualityHeight > 0) qualityHeight else Int.MAX_VALUE
-        val params = controller.trackSelectionParameters
-            .buildUpon()
-            .setMaxVideoSize(Int.MAX_VALUE, maxHeight)
-            .build()
-        controller.setTrackSelectionParameters(params)
-        Log.d(TAG, "applyVideoQualitySelection: qualityHeight=$qualityHeight maxHeight=$maxHeight")
+        val paramsBuilder = controller.trackSelectionParameters.buildUpon()
+        if (qualityHeight > 0) {
+            paramsBuilder
+                .setMaxVideoSize(Int.MAX_VALUE, qualityHeight)
+                .setMinVideoSize(0, qualityHeight)
+        } else {
+            paramsBuilder
+                .setMaxVideoSize(Int.MAX_VALUE, Int.MAX_VALUE)
+                .setMinVideoSize(0, 0)
+        }
+        controller.setTrackSelectionParameters(paramsBuilder.build())
+        Log.d(TAG, "applyVideoQualitySelection: qualityHeight=$qualityHeight")
     }
 
     private fun applyAudioSelection(tracks: Tracks): Boolean {
@@ -873,14 +881,15 @@ class PlayerScreenViewModel @AssistedInject constructor(
     // Function to set the selected quality
     fun setQuality(qualityFile: File) {
         playerController.value?.let { player ->
+            _isAutoQuality.value = false
             _selectedQuality.value = qualityFile
             _videoUrl.value = qualityFile.url
             Log.d(
                 TAG,
-                "setQuality: newQuality=${qualityFile.quality} url=${qualityFile.url} isHls=${isHlsStream()}"
+                "setQuality: newQuality=${qualityFile.quality} url=${qualityFile.url} isHls=${isHlsStream.value}"
             )
             logSelectionSnapshot("setQuality")
-            if (isHlsStream()) {
+            if (isHlsStream.value) {
                 applyVideoQualitySelection(qualityFile.quality)
             } else {
                 val currentTime = player.currentPosition / 1000
@@ -888,6 +897,13 @@ class PlayerScreenViewModel @AssistedInject constructor(
             }
             saveProgress()
         }
+    }
+
+    fun setAutoQuality() {
+        _isAutoQuality.value = true
+        Log.d(TAG, "setAutoQuality: clearing HLS quality constraints")
+        applyVideoQualitySelection(0)
+        saveProgress()
     }
 
 
@@ -942,8 +958,9 @@ class PlayerScreenViewModel @AssistedInject constructor(
         controller.prepare()
         controller.play()
 
-        if (isHlsStream()) {
-            applyVideoQualitySelection(_selectedQuality.value?.quality ?: 0)
+        if (isHlsStream.value) {
+            val qualityHeight = if (_isAutoQuality.value) 0 else _selectedQuality.value?.quality ?: 0
+            applyVideoQualitySelection(qualityHeight)
         }
 
         if (time > 0) {

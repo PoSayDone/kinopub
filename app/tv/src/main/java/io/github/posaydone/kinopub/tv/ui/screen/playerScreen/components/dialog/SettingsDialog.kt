@@ -40,16 +40,20 @@ fun SettingsDialog(
     modifier: Modifier = Modifier,
     qualities: List<File>,
     selectedQuality: File?,
+    isAutoQuality: Boolean = false,
+    isHlsStream: Boolean = false,
     cropOptions: List<String>,
     selectedCrop: String?,
     isSettingsSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onQualitySelected: (File) -> Unit,
+    onAutoQualitySelected: () -> Unit = {},
     onCropSelected: (String) -> Unit,
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.MAIN) }
     var mainPageFocusTarget by remember { mutableStateOf(SettingsMainPageFocusTarget.QUALITY) }
     var selectedTempQuality by remember { mutableStateOf(selectedQuality) }
+    var selectedTempIsAuto by remember { mutableStateOf(isAutoQuality) }
     var selectedTempCrop by remember { mutableStateOf(selectedCrop) }
 
     SideDialog(
@@ -84,7 +88,8 @@ fun SettingsDialog(
                             currentPage = SettingsPage.CROP
                         },
                         selectedCrop = selectedTempCrop,
-                        selectedQuality = selectedTempQuality
+                        selectedQuality = selectedTempQuality,
+                        isAutoQuality = selectedTempIsAuto,
                     )
 
                 }
@@ -93,9 +98,16 @@ fun SettingsDialog(
                     QualitySettingsPage(
                         qualities = qualities,
                         selectedQuality = selectedTempQuality,
+                        isAutoQuality = selectedTempIsAuto,
+                        isHlsStream = isHlsStream,
                         onQualitySelected = { quality ->
+                            selectedTempIsAuto = false
                             selectedTempQuality = quality
                             onQualitySelected(quality)
+                        },
+                        onAutoQualitySelected = {
+                            selectedTempIsAuto = true
+                            onAutoQualitySelected()
                         })
                 }
 
@@ -119,6 +131,7 @@ private fun MainSettingsPage(
     onQualityClick: () -> Unit,
     onCropClick: () -> Unit,
     selectedQuality: File?,
+    isAutoQuality: Boolean = false,
     selectedCrop: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -148,7 +161,11 @@ private fun MainSettingsPage(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (selectedQuality != null) Text("${selectedQuality.quality}p")
+                        if (isAutoQuality) {
+                            Text(stringResource(R.string.quality_auto))
+                        } else if (selectedQuality != null) {
+                            Text("${selectedQuality.quality}p")
+                        }
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             Icons.Default.ChevronRight, contentDescription = null
@@ -187,36 +204,58 @@ private fun MainSettingsPage(
 private fun QualitySettingsPage(
     qualities: List<File>,
     selectedQuality: File?,
+    isAutoQuality: Boolean = false,
+    isHlsStream: Boolean = false,
     onQualitySelected: (File) -> Unit,
+    onAutoQualitySelected: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val initialFocusRequester = remember { FocusRequester() }
-    val initialFocusIndex = qualities.indexOf(selectedQuality).takeIf { it >= 0 } ?: 0
+    val autoFocusRequester = remember { FocusRequester() }
+    val initialFocusIndex = if (isHlsStream) {
+        qualities.indexOf(selectedQuality).takeIf { !isAutoQuality && it >= 0 } ?: -1
+    } else {
+        qualities.indexOf(selectedQuality).takeIf { it >= 0 } ?: 0
+    }
 
     LaunchedEffect(Unit) {
-        if (qualities.isNotEmpty()) {
+        if (isHlsStream && isAutoQuality) {
+            autoFocusRequester.requestFocus()
+        } else if (qualities.isNotEmpty()) {
             initialFocusRequester.requestFocus()
         }
     }
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
+        if (isHlsStream) {
+            item {
+                ListItem(
+                    modifier = Modifier.focusRequester(autoFocusRequester),
+                    headlineContent = { Text(stringResource(R.string.quality_auto)) },
+                    trailingContent = {
+                        if (isAutoQuality) {
+                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
+                        }
+                    },
+                    onClick = onAutoQualitySelected,
+                    selected = isAutoQuality,
+                    scale = ListItemDefaults.scale(focusedScale = 1.02f)
+                )
+            }
+        }
         itemsIndexed(qualities) { index, quality ->
             ListItem(
                 modifier = Modifier.let {
-                    if (index == initialFocusIndex) {
-                        it.focusRequester(initialFocusRequester)
-                    } else {
-                        it
-                    }
+                    if (index == initialFocusIndex) it.focusRequester(initialFocusRequester) else it
                 },
                 headlineContent = { Text("${quality.quality}p") },
                 trailingContent = {
-                    if (quality == selectedQuality) {
+                    if (!isAutoQuality && quality == selectedQuality) {
                         Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
                     }
                 },
                 onClick = { onQualitySelected(quality) },
-                selected = selectedQuality == quality,
+                selected = !isAutoQuality && selectedQuality == quality,
                 scale = ListItemDefaults.scale(focusedScale = 1.02f)
             )
         }

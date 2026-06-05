@@ -59,6 +59,7 @@
     <string name="logout">Выйти</string>
     <string name="settings">Настройки</string>
     <string name="quality">Качество</string>
+    <string name="quality_auto">Авто</string>
     <string name="crop">Обрезка</string>
     <string name="stream_type_description">Тип видеопотока, выберите автоматически, если не уверены</string>
     <string name="server_location_description">Выберите ближайшее расположение для лучшей скорости</string>

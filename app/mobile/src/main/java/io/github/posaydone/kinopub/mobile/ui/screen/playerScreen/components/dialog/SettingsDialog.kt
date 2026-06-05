@@ -39,13 +39,17 @@ import io.github.posaydone.kinopub.core.model.File
 fun SettingsDialog(
     qualities: List<File>,
     selectedQuality: File?,
+    isAutoQuality: Boolean = false,
+    isHlsStream: Boolean = false,
     isSettingsSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onQualitySelected: (File) -> Unit,
+    onAutoQualitySelected: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.MAIN) }
     var selectedTempQuality by remember { mutableStateOf(selectedQuality) }
+    var selectedTempIsAuto by remember { mutableStateOf(isAutoQuality) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
@@ -69,6 +73,7 @@ fun SettingsDialog(
                     SettingsPage.MAIN -> {
                         MainSettingsPage(
                             selectedQuality = selectedQuality,
+                            isAutoQuality = selectedTempIsAuto,
                             onQualityClick = { currentPage = SettingsPage.QUALITY })
                     }
 
@@ -76,9 +81,16 @@ fun SettingsDialog(
                         QualitySettingsPage(
                             qualities = qualities,
                             selectedQuality = selectedTempQuality,
+                            isAutoQuality = selectedTempIsAuto,
+                            isHlsStream = isHlsStream,
                             onQualitySelected = { quality ->
+                                selectedTempIsAuto = false
                                 selectedTempQuality = quality
                                 onQualitySelected(quality)
+                            },
+                            onAutoQualitySelected = {
+                                selectedTempIsAuto = true
+                                onAutoQualitySelected()
                             })
                     }
 
@@ -92,6 +104,7 @@ fun SettingsDialog(
 private fun MainSettingsPage(
     onQualityClick: () -> Unit,
     selectedQuality: File?,
+    isAutoQuality: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -110,7 +123,11 @@ private fun MainSettingsPage(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (selectedQuality != null) Text("${selectedQuality.quality}p")
+                        if (isAutoQuality) {
+                            Text(stringResource(R.string.quality_auto))
+                        } else if (selectedQuality != null) {
+                            Text("${selectedQuality.quality}p")
+                        }
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             Icons.Default.ChevronRight, contentDescription = null
@@ -126,18 +143,34 @@ private fun MainSettingsPage(
 private fun QualitySettingsPage(
     qualities: List<File>,
     selectedQuality: File?,
+    isAutoQuality: Boolean = false,
+    isHlsStream: Boolean = false,
     onQualitySelected: (File) -> Unit,
+    onAutoQualitySelected: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
     ) {
+        if (isHlsStream) {
+            item {
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = { Text(stringResource(R.string.quality_auto)) },
+                    trailingContent = {
+                        if (isAutoQuality) {
+                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
+                        }
+                    },
+                    modifier = Modifier.clickable { onAutoQualitySelected() })
+            }
+        }
         items(qualities) { quality ->
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text("${quality.quality}p") },
                 trailingContent = {
-                    if (quality == selectedQuality) {
+                    if (!isAutoQuality && quality == selectedQuality) {
                         Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
                     }
                 },

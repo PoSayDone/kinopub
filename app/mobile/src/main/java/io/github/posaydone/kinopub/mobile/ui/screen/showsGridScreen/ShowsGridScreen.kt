@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.posaydone.kinopub.core.common.R
+import io.github.posaydone.kinopub.core.common.sharedViewModel.allContentTypes
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowsGridQueryType
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowsGridScreenViewModel
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowsGridUiState
@@ -58,7 +59,7 @@ fun ShowsGridScreen(
             ShowsGridQueryType.FAVORITES -> stringResource(R.string.favorites)
             ShowsGridQueryType.HISTORY -> stringResource(R.string.history)
             ShowsGridQueryType.WATCHING -> stringResource(R.string.watching_list)
-            ShowsGridQueryType.CATALOG -> ""
+            ShowsGridQueryType.CATALOG -> allContentTypes.find { it.apiValue == catalogContentType }?.label ?: ""
         }
     }
 
