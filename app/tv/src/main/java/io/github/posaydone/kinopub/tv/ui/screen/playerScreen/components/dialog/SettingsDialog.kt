@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,11 +45,14 @@ fun SettingsDialog(
     isHlsStream: Boolean = false,
     cropOptions: List<String>,
     selectedCrop: String?,
+    speedOptions: List<Float> = PlaybackSpeeds,
+    selectedSpeed: Float,
     isSettingsSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onQualitySelected: (File) -> Unit,
     onAutoQualitySelected: () -> Unit = {},
     onCropSelected: (String) -> Unit,
+    onSpeedSelected: (Float) -> Unit,
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.MAIN) }
     var mainPageFocusTarget by remember { mutableStateOf(SettingsMainPageFocusTarget.QUALITY) }
@@ -71,6 +75,7 @@ fun SettingsDialog(
             SettingsPage.MAIN -> stringResource(R.string.settings)
             SettingsPage.QUALITY -> stringResource(R.string.quality)
             SettingsPage.CROP -> stringResource(R.string.crop)
+            SettingsPage.SPEED -> stringResource(R.string.playback_speed)
         },
         description = null
     ) {
@@ -87,9 +92,14 @@ fun SettingsDialog(
                             mainPageFocusTarget = SettingsMainPageFocusTarget.CROP
                             currentPage = SettingsPage.CROP
                         },
+                        onSpeedClick = {
+                            mainPageFocusTarget = SettingsMainPageFocusTarget.SPEED
+                            currentPage = SettingsPage.SPEED
+                        },
                         selectedCrop = selectedTempCrop,
                         selectedQuality = selectedTempQuality,
                         isAutoQuality = selectedTempIsAuto,
+                        selectedSpeed = selectedSpeed,
                     )
 
                 }
@@ -120,28 +130,45 @@ fun SettingsDialog(
                             onCropSelected(crop)
                         })
                 }
+
+                SettingsPage.SPEED -> {
+                    SpeedSettingsPage(
+                        speedOptions = speedOptions,
+                        selectedSpeed = selectedSpeed,
+                        onSpeedSelected = onSpeedSelected,
+                    )
+                }
             }
         }
     }
 }
+
+val PlaybackSpeeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+
+fun formatSpeedLabel(speed: Float): String =
+    if (speed == speed.toLong().toFloat()) "${speed.toLong()}x" else "${speed}x"
 
 @Composable
 private fun MainSettingsPage(
     initialFocusTarget: SettingsMainPageFocusTarget,
     onQualityClick: () -> Unit,
     onCropClick: () -> Unit,
+    onSpeedClick: () -> Unit,
     selectedQuality: File?,
     isAutoQuality: Boolean = false,
     selectedCrop: String?,
+    selectedSpeed: Float,
     modifier: Modifier = Modifier,
 ) {
     val qualityItemFocusRequester = remember { FocusRequester() }
     val cropItemFocusRequester = remember { FocusRequester() }
+    val speedItemFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         when (initialFocusTarget) {
             SettingsMainPageFocusTarget.QUALITY -> qualityItemFocusRequester.requestFocus()
             SettingsMainPageFocusTarget.CROP -> cropItemFocusRequester.requestFocus()
+            SettingsMainPageFocusTarget.SPEED -> speedItemFocusRequester.requestFocus()
         }
     }
 
@@ -190,6 +217,30 @@ private fun MainSettingsPage(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (selectedCrop != null) Text(selectedCrop)
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            Icons.Default.ChevronRight, contentDescription = null
+                        )
+                    }
+                })
+        }
+
+        item {
+            ListItem(
+                modifier = Modifier.focusRequester(speedItemFocusRequester),
+                onClick = onSpeedClick,
+                selected = false,
+                headlineContent = { Text(stringResource(R.string.playback_speed)) },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Speed, contentDescription = stringResource(R.string.playback_speed)
+                    )
+                },
+                trailingContent = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(formatSpeedLabel(selectedSpeed))
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             Icons.Default.ChevronRight, contentDescription = null
@@ -302,10 +353,50 @@ private fun CropSettingsPage(
     }
 }
 
+@Composable
+private fun SpeedSettingsPage(
+    speedOptions: List<Float>,
+    selectedSpeed: Float,
+    onSpeedSelected: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val initialFocusRequester = remember { FocusRequester() }
+    val initialFocusIndex = speedOptions.indexOf(selectedSpeed).takeIf { it >= 0 } ?: 0
+
+    LaunchedEffect(Unit) {
+        if (speedOptions.isNotEmpty()) {
+            initialFocusRequester.requestFocus()
+        }
+    }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        itemsIndexed(speedOptions) { index, speed ->
+            ListItem(
+                modifier = Modifier.let {
+                    if (index == initialFocusIndex) {
+                        it.focusRequester(initialFocusRequester)
+                    } else {
+                        it
+                    }
+                },
+                headlineContent = { Text(formatSpeedLabel(speed)) },
+                trailingContent = {
+                    if (speed == selectedSpeed) {
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
+                    }
+                },
+                onClick = { onSpeedSelected(speed) },
+                scale = ListItemDefaults.scale(focusedScale = 1.02f),
+                selected = selectedSpeed == speed
+            )
+        }
+    }
+}
+
 enum class SettingsPage {
-    MAIN, QUALITY, CROP
+    MAIN, QUALITY, CROP, SPEED
 }
 
 private enum class SettingsMainPageFocusTarget {
-    QUALITY, CROP
+    QUALITY, CROP, SPEED
 }

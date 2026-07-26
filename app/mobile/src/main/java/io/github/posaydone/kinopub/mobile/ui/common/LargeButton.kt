@@ -25,7 +25,10 @@ private fun getDefaultColors(buttonStyle: LargeButtonStyle): ButtonColors {
     when (buttonStyle) {
         LargeButtonStyle.OUTLINED -> return ButtonDefaults.outlinedButtonColors()
         LargeButtonStyle.TEXT -> return ButtonDefaults.textButtonColors()
-        LargeButtonStyle.FILLED -> return ButtonDefaults.buttonColors()
+        LargeButtonStyle.FILLED -> return ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        )
     }
 }
 

@@ -61,6 +61,8 @@
     <string name="quality">Качество</string>
     <string name="quality_auto">Авто</string>
     <string name="crop">Обрезка</string>
+    <string name="playback_speed">Скорость воспроизведения</string>
+    <string name="similar_shows">Смотрите также</string>
     <string name="stream_type_description">Тип видеопотока, выберите автоматически, если не уверены</string>
     <string name="server_location_description">Выберите ближайшее расположение для лучшей скорости</string>
     <string name="video_quality_description">Выберите качество видео по умолчанию, которое будет использоваться в плеере</string>

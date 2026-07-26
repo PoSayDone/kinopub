@@ -66,6 +66,7 @@ import io.github.posaydone.kinopub.mobile.ui.common.Error
 import io.github.posaydone.kinopub.mobile.ui.common.Loading
 import io.github.posaydone.kinopub.mobile.ui.common.ShowBannerContent
 import io.github.posaydone.kinopub.mobile.ui.common.ShowPoster
+import io.github.posaydone.kinopub.mobile.ui.common.ShowsRow
 
 const val TAG = "ShowDetailsScreen"
 
@@ -75,6 +76,7 @@ fun ShowDetailsScreen(
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateBack: () -> Unit,
     navigateToEpisodes: (showId: Int) -> Unit = {},
+    navigateToShowDetails: (showId: Int) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
@@ -126,6 +128,8 @@ fun ShowDetailsScreen(
                         { navigateToEpisodes(showId) }
                     } else null,
                     navigateBack = navigateBack,
+                    similarShows = s.similarShows,
+                    navigateToShowDetails = navigateToShowDetails,
                     modifier = modifier
                         .fillMaxSize()
                         .animateContentSize()
@@ -144,6 +148,8 @@ private fun Details(
     playButtonText: String,
     navigateBack: () -> Unit,
     navigateToEpisodes: (() -> Unit)? = null,
+    similarShows: List<Show> = emptyList(),
+    navigateToShowDetails: (showId: Int) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
@@ -213,6 +219,14 @@ private fun Details(
                             DescriptionSection(description = showDetails.description!!)
                         }
                         ExtraInfoSection(show = showDetails)
+                    }
+
+                    if (similarShows.isNotEmpty()) {
+                        ShowsRow(
+                            showList = similarShows,
+                            title = stringResource(R.string.similar_shows),
+                            onShowClick = { show -> navigateToShowDetails(show.id) },
+                        )
                     }
                 }
             }

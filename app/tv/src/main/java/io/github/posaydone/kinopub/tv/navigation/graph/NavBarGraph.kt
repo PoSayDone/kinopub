@@ -17,6 +17,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ModalNavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
+import androidx.tv.material3.NavigationDrawerItemDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import io.github.posaydone.kinopub.shared.graphData.navBarScreenItems
@@ -57,6 +58,12 @@ fun NavBarGraph(
                             topLevelBackStack.addTopLevel(item)
                             drawerState.setValue(DrawerValue.Closed)
                         },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedContentColor = MaterialTheme.colorScheme.onPrimary,
+                            focusedSelectedContainerColor = MaterialTheme.colorScheme.primary,
+                            focusedSelectedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
                         leadingContent = {
                             Icon(
                                 imageVector = icon,

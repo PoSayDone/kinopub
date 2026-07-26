@@ -148,6 +148,9 @@ class PlayerScreenViewModel @AssistedInject constructor(
     private val _selectedCrop = MutableStateFlow<String?>("Fit") // Default crop mode
     val selectedCrop: StateFlow<String?> = _selectedCrop.asStateFlow()
 
+    private val _selectedSpeed = MutableStateFlow(1f)
+    val selectedSpeed: StateFlow<Float> = _selectedSpeed.asStateFlow()
+
     private lateinit var savedProgress: ShowProgress
 
     // StateFlow for the final video URL
@@ -957,6 +960,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
         controller.setMediaItem(mediaItem)
         controller.prepare()
         controller.play()
+        controller.setPlaybackSpeed(_selectedSpeed.value)
 
         if (isHlsStream.value) {
             val qualityHeight = if (_isAutoQuality.value) 0 else _selectedQuality.value?.quality ?: 0
@@ -1122,9 +1126,14 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     fun disableSpeedUp() {
         playerController.value?.let { player ->
-            player.setPlaybackSpeed(1f)
+            player.setPlaybackSpeed(_selectedSpeed.value)
             _playerState.update { it.copy(isSpeedUpActive = false) }
         }
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        _selectedSpeed.value = speed
+        playerController.value?.setPlaybackSpeed(speed)
     }
 
     fun setCrop(crop: String) {

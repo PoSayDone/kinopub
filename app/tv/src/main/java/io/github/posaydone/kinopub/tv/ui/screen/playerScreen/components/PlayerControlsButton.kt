@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -46,7 +47,7 @@ fun PlayerControlsButton(
 
     Surface(
         modifier = modifier
-            .then(if (text != null) Modifier else Modifier.size(40.dp)),
+            .then(if (text != null) Modifier.height(56.dp) else Modifier.size(56.dp)),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = CircleShape),
         colors = ClickableSurfaceDefaults.colors(
@@ -60,19 +61,19 @@ fun PlayerControlsButton(
             // Icon with text
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 24.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
                     icon,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(28.dp),
                     contentDescription = contentDescription,
                     tint = LocalContentColor.current
                 )
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     color = LocalContentColor.current
                 )
             }
@@ -82,7 +83,7 @@ fun PlayerControlsButton(
                 icon,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
+                    .padding(14.dp),
                 contentDescription = contentDescription,
                 tint = LocalContentColor.current
             )

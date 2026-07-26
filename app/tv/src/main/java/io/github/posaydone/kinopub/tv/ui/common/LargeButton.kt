@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonColors
 import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.OutlinedButtonDefaults
 
@@ -20,7 +21,14 @@ enum class LargeButtonStyle {
 private fun getDefaultColors(buttonStyle: LargeButtonStyle): ButtonColors {
     when (buttonStyle) {
         LargeButtonStyle.OUTLINED -> return OutlinedButtonDefaults.colors()
-        LargeButtonStyle.FILLED -> return ButtonDefaults.colors()
+        LargeButtonStyle.FILLED -> return ButtonDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            focusedContainerColor = MaterialTheme.colorScheme.primary,
+            focusedContentColor = MaterialTheme.colorScheme.onPrimary,
+            pressedContainerColor = MaterialTheme.colorScheme.primary,
+            pressedContentColor = MaterialTheme.colorScheme.onPrimary,
+        )
     }
 }
 

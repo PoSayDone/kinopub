@@ -37,6 +37,7 @@ fun PlayerDialogs(
     val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
     val isHlsStream by viewModel.isHlsStream.collectAsState()
     val isAutoQuality by viewModel.isAutoQuality.collectAsState()
+    val selectedSpeed by viewModel.selectedSpeed.collectAsState()
 
     if (showType == ShowType.SERIES) {
         if (seasons != null && selectedSeason != null) {
@@ -68,10 +69,12 @@ fun PlayerDialogs(
                 selectedQuality = selectedQuality,
                 isAutoQuality = isAutoQuality,
                 isHlsStream = isHlsStream,
+                selectedSpeed = selectedSpeed,
                 isSettingsSheetOpen = isSettingsDialogOpen,
                 onDismiss = closeSettingsDialog,
                 onQualitySelected = { quality -> viewModel.setQuality(quality) },
-                onAutoQualitySelected = { viewModel.setAutoQuality() })
+                onAutoQualitySelected = { viewModel.setAutoQuality() },
+                onSpeedSelected = { speed -> viewModel.setPlaybackSpeed(speed) })
         }
     } else {
         if (isHls4AudioTrackSelectionEnabled) moviePieces?.let { translations ->
@@ -91,10 +94,12 @@ fun PlayerDialogs(
                 selectedQuality = selectedQuality,
                 isAutoQuality = isAutoQuality,
                 isHlsStream = isHlsStream,
+                selectedSpeed = selectedSpeed,
                 isSettingsSheetOpen = isSettingsDialogOpen,
                 onDismiss = closeSettingsDialog,
                 onQualitySelected = { quality -> viewModel.setQuality(quality) },
-                onAutoQualitySelected = { viewModel.setAutoQuality() })
+                onAutoQualitySelected = { viewModel.setAutoQuality() },
+                onSpeedSelected = { speed -> viewModel.setPlaybackSpeed(speed) })
         }
     }
 }

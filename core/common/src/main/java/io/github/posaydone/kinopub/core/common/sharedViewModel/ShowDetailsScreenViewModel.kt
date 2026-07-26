@@ -9,6 +9,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.kinopub.core.data.ShowRepository
 import io.github.posaydone.kinopub.core.model.SessionManager
+import io.github.posaydone.kinopub.core.model.Show
 import io.github.posaydone.kinopub.core.model.ShowDetails
 import io.github.posaydone.kinopub.core.model.ShowProgress
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,8 @@ sealed class ShowDetailsScreenUiState {
         val showDetails: ShowDetails,
         val showProgress: ShowProgress,
         val toggleFavorites: () -> Unit,
+        val similarShows: List<Show> = emptyList(),
+        val trailerUrl: String? = null,
     ) : ShowDetailsScreenUiState()
 }
 
@@ -82,12 +85,21 @@ class ShowDetailsScreenViewModel @AssistedInject constructor(
                         showRepository.getShowProgress(showId)
                     }
 
+                    val similarShows = runCatching { showRepository.getSimilarShows(showId) }
+                        .getOrDefault(emptyList())
+
+                    val trailerUrl = runCatching {
+                        showRepository.getShowTrailers(showId).firstOrNull()?.files?.firstOrNull()?.url
+                    }.getOrNull()
+
                     emit(
                         ShowDetailsScreenUiState.Done(
                             showDetails = showDetails,
                             showProgress = progress,
                             sessionManager = sessionManager,
-                            toggleFavorites = { toggleFavorites() }
+                            toggleFavorites = { toggleFavorites() },
+                            similarShows = similarShows,
+                            trailerUrl = trailerUrl,
                         )
                     )
                 } catch (error: Exception) {

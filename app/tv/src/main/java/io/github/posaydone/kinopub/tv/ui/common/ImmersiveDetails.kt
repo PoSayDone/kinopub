@@ -73,7 +73,10 @@ fun ImmersiveDetails(
             } else {
                 Text(
                     text = primaryTitle,
-                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Medium),
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = (-0.5).sp,
+                    ),
                 )
             }
             if (secondaryTitle != null) {

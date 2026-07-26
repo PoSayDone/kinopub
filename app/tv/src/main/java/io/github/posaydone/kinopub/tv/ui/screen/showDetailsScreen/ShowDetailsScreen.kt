@@ -4,6 +4,7 @@ package io.github.posaydone.kinopub.tv.ui.screen.showDetailsScreen
 
 import android.util.Log
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,18 +59,31 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import io.github.posaydone.kinopub.core.common.R
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowDetailsScreenUiState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowDetailsScreenViewModel
@@ -80,14 +95,15 @@ import io.github.posaydone.kinopub.core.model.Votes
 import io.github.posaydone.kinopub.core.model.latestProgressItem
 import io.github.posaydone.kinopub.core.model.latestSeriesProgress
 import io.github.posaydone.kinopub.tv.ui.common.Error
-import io.github.posaydone.kinopub.tv.ui.common.ImmersiveBackground
 import io.github.posaydone.kinopub.tv.ui.common.ImmersiveDetails
 import io.github.posaydone.kinopub.tv.ui.common.LargeButton
 import io.github.posaydone.kinopub.tv.ui.common.LargeButtonStyle
 import io.github.posaydone.kinopub.tv.ui.common.Loading
+import io.github.posaydone.kinopub.tv.ui.common.ShowsRow
 import io.github.posaydone.kinopub.tv.ui.screen.homeScreen.rememberChildPadding
 import io.github.posaydone.kinopub.tv.ui.theme.DefaultBorderSize
 import io.github.posaydone.kinopub.tv.ui.utils.CustomBringIntoViewSpec
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val TAG = "ShowDetailsScreen"
@@ -99,6 +115,7 @@ fun ShowDetailsScreen(
     showId: Int,
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToEpisodes: (showId: Int) -> Unit = {},
+    navigateToShowDetails: (showId: Int) -> Unit = {},
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -149,6 +166,9 @@ fun ShowDetailsScreen(
                 goToEpisodes = if (s.showDetails.isSeries) {
                     { navigateToEpisodes(showId) }
                 } else null,
+                similarShows = s.similarShows,
+                trailerUrl = s.trailerUrl,
+                navigateToShowDetails = navigateToShowDetails,
                 modifier = Modifier
                     .fillMaxSize()
                     .animateContentSize()
@@ -165,6 +185,9 @@ private fun Details(
     goToMoviePlayer: () -> Unit,
     playButtonText: String,
     goToEpisodes: (() -> Unit)? = null,
+    similarShows: List<Show> = emptyList(),
+    trailerUrl: String? = null,
+    navigateToShowDetails: (showId: Int) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
@@ -172,6 +195,11 @@ private fun Details(
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val verticalBivs = remember { CustomBringIntoViewSpec(0.9f, 1.0f) }
+
+    // The background (poster/trailer) must reach the true screen edge, so this
+    // sidebar-width inset is applied only to the text/details content below,
+    // not to the outer Box that also bounds the background.
+    val contentStartPadding = childPadding.start + 80.dp
 
     val hasExtraInfo = !showDetails.cast.isNullOrBlank()
             || !showDetails.director.isNullOrBlank()
@@ -183,7 +211,6 @@ private fun Details(
 
     Box(
         modifier = modifier
-            .padding(start = 80.dp)
             .fillMaxWidth()
             .fillMaxHeight()
     ) {
@@ -199,17 +226,21 @@ private fun Details(
                         .fillMaxWidth(),
                 ) {
                     if (showDetails.backdropUrl != null) {
-                        ImmersiveBackground(imageUrl = showDetails.backdropUrl)
+                        ShowDetailsImmersiveBackground(
+                            imageUrl = showDetails.backdropUrl,
+                            trailerUrl = trailerUrl,
+                            isPaused = scrollState.value > 0,
+                        )
                     }
 
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(
-                                start = childPadding.start,
+                                start = contentStartPadding,
                                 top = childPadding.top + 24.dp,
                                 end = childPadding.end + 48.dp,
-                                bottom = childPadding.bottom + 24.dp,
+                                bottom = childPadding.bottom,
                             ),
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -240,7 +271,7 @@ private fun Details(
                             ageRating = showDetails.ageRating.takeIf { it > 0 }?.toString() ?: "",
                         )
 
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             ShowDetailsButtons(
                                 modifier = Modifier
                                     .onFocusChanged {
@@ -268,16 +299,118 @@ private fun Details(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(
-                                start = childPadding.start,
+                                start = contentStartPadding,
                                 end = childPadding.end + 48.dp,
                                 top = 32.dp,
                                 bottom = 48.dp,
                             ),
                     )
                 }
+
+                if (similarShows.isNotEmpty()) {
+                    ShowsRow(
+                        title = stringResource(R.string.similar_shows),
+                        showList = similarShows,
+                        startPadding = contentStartPadding,
+                        modifier = Modifier
+                            .padding(bottom = 32.dp)
+                            .fillMaxWidth(),
+                        onShowSelected = { show -> navigateToShowDetails(show.id) },
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ShowDetailsImmersiveBackground(
+    imageUrl: String?,
+    trailerUrl: String?,
+    isPaused: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    var showTrailer by remember(trailerUrl) { mutableStateOf(false) }
+    val posterAlpha = remember(trailerUrl) { Animatable(1f) }
+
+    LaunchedEffect(trailerUrl) {
+        showTrailer = false
+        posterAlpha.snapTo(1f)
+        if (trailerUrl != null) {
+            delay(3000)
+            posterAlpha.animateTo(0f, animationSpec = tween(durationMillis = 1000))
+            showTrailer = true
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .crossfade(400)
+                .data(imageUrl)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .size(1280, 720)
+                .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(posterAlpha.value),
+            placeholder = ColorPainter(Color.Black),
+            error = ColorPainter(Color.Black),
+            fallback = ColorPainter(Color.Black),
+        )
+
+        if (trailerUrl != null && showTrailer) {
+            TrailerPlayer(url = trailerUrl, isPaused = isPaused, modifier = Modifier.fillMaxSize())
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+        )
+    }
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
+@Composable
+private fun TrailerPlayer(url: String, isPaused: Boolean = false, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val exoPlayer = remember(url) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(url))
+            repeatMode = Player.REPEAT_MODE_ONE
+            volume = 0f
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    DisposableEffect(exoPlayer) {
+        onDispose { exoPlayer.release() }
+    }
+
+    LaunchedEffect(exoPlayer, isPaused) {
+        if (isPaused) exoPlayer.pause() else exoPlayer.play()
+    }
+
+    AndroidView(
+        factory = {
+            PlayerView(context).apply {
+                useController = false
+                player = exoPlayer
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable

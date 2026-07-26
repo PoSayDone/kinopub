@@ -153,6 +153,9 @@ class ShowRepository @Inject constructor(
             )
         }
 
+    suspend fun getSimilarShows(movieId: Int): List<Show> =
+        kinoPubApiService.getSimilarItems(movieId).items.map { it.toShow() }
+
     suspend fun getShowProgress(movieId: Int): ShowProgress {
         val item = kinoPubApiService.getWatchingInfo(movieId).item ?: return emptyList()
         val movieProgress = item.videos.orEmpty().mapNotNull { it.toMovieProgress() }.sortedForResume()

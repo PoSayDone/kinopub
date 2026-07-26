@@ -82,6 +82,11 @@ interface KinoPubApiService {
         @Query("id") id: Int,
     ): KinoPubTrailerResponse
 
+    @GET("v1/items/similar")
+    suspend fun getSimilarItems(
+        @Query("id") id: Int,
+    ): KinoPubItemsResponse
+
     @GET("v1/items/media-video-link")
     suspend fun getMediaVideoLink(
         @Query("file") file: String,

@@ -2,7 +2,6 @@ package io.github.posaydone.kinopub.tv.ui.common
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,7 +15,7 @@ fun Loading(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.focusable().padding(start = 80.dp),
+        modifier = modifier.focusable(),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(

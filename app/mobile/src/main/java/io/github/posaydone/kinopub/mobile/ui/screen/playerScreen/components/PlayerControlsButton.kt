@@ -27,11 +27,11 @@ fun PlayerControlsButton(
     onClick: () -> Unit = {},
 ) {
     val commonModifier = Modifier
-        .height(48.dp)
+        .height(56.dp)
         .then(modifier)
 
     val commonPadding = PaddingValues(
-        horizontal = 20.dp, vertical = 0.dp
+        horizontal = 24.dp, vertical = 0.dp
     )
 
     if (text != null) {
@@ -48,11 +48,11 @@ fun PlayerControlsButton(
             contentPadding = commonPadding
         ) {
             Icon(
-                modifier = modifier.size(16.dp),
+                modifier = Modifier.size(28.dp),
                 imageVector = icon,
                 contentDescription = contentDescription
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(12.dp))
             Text(
                 text = text,
             )
@@ -61,7 +61,7 @@ fun PlayerControlsButton(
         IconButton(
             onClick = onClick,
             modifier = Modifier
-                .size(48.dp)
+                .size(56.dp)
                 .then(modifier),
             enabled = !disabled,
             colors = IconButtonDefaults.iconButtonColors(
@@ -72,7 +72,7 @@ fun PlayerControlsButton(
             ),
         ) {
             Icon(
-                modifier = modifier.size(16.dp),
+                modifier = Modifier.size(28.dp),
                 imageVector = icon,
                 contentDescription = contentDescription,
                 tint = Color.White

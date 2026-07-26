@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -157,6 +158,9 @@ fun MainGraph() {
                         navigateToEpisodes = { showId ->
                             topLevelBackStack.add(MainGraphData.Episodes(showId))
                         },
+                        navigateToShowDetails = { showId ->
+                            topLevelBackStack.add(MainGraphData.ShowDetails(showId))
+                        },
                         viewModel = viewModel
                     )
                 }
@@ -244,14 +248,21 @@ fun MainGraph() {
             ) {
                 navBarScreenItems.forEach { destination ->
                     val isSelected = destination == topLevelBackStack.topLevelKey
-                    NavigationBarItem(selected = isSelected, icon = {
-                        Icon(
-                            imageVector = getIcon(destination.icon),
-                            contentDescription = "$destination icon"
-                        )
-                    }, onClick = {
-                        topLevelBackStack.addTopLevel(destination)
-                    })
+                    NavigationBarItem(
+                        selected = isSelected,
+                        icon = {
+                            Icon(
+                                imageVector = getIcon(destination.icon),
+                                contentDescription = "$destination icon"
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
+                        ),
+                        onClick = {
+                            topLevelBackStack.addTopLevel(destination)
+                        })
                 }
             }
         }

@@ -72,6 +72,8 @@
     <string name="quality">Quality</string>
     <string name="quality_auto">Auto</string>
     <string name="crop">Crop</string>
+    <string name="playback_speed">Playback speed</string>
+    <string name="similar_shows">You may also like</string>
     <string name="stream_type_description">Type of video stream, pick auto if unsure</string>
     <string name="server_location_description">Pick the nearest location for a better speed</string>
     <string name="video_quality_description">Choose the default video quality, which will be used in the player</string>

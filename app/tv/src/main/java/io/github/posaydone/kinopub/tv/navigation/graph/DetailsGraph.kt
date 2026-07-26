@@ -1,12 +1,9 @@
 package io.github.posaydone.kinopub.tv.navigation.graph
 
 import androidx.annotation.OptIn
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -34,34 +31,13 @@ fun DetailsGraph(showId: Int) {
 
     NavDisplay(
         transitionSpec = {
-            slideInHorizontally(
-                animationSpec = tween(300, easing = FastOutSlowInEasing),
-                initialOffsetX = { it / 5 }
-            ) + fadeIn(tween(300)) togetherWith
-            slideOutHorizontally(
-                animationSpec = tween(250, easing = FastOutSlowInEasing),
-                targetOffsetX = { -it / 5 }
-            ) + fadeOut(tween(200))
+            fadeIn(tween(300)) togetherWith fadeOut(tween(250))
         },
         popTransitionSpec = {
-            slideInHorizontally(
-                animationSpec = tween(300, easing = FastOutSlowInEasing),
-                initialOffsetX = { -it / 5 }
-            ) + fadeIn(tween(300)) togetherWith
-            slideOutHorizontally(
-                animationSpec = tween(250, easing = FastOutSlowInEasing),
-                targetOffsetX = { it / 5 }
-            ) + fadeOut(tween(200))
+            fadeIn(tween(300)) togetherWith fadeOut(tween(250))
         },
         predictivePopTransitionSpec = {
-            slideInHorizontally(
-                animationSpec = tween(300, easing = FastOutSlowInEasing),
-                initialOffsetX = { -it / 5 }
-            ) + fadeIn(tween(300)) togetherWith
-            slideOutHorizontally(
-                animationSpec = tween(250, easing = FastOutSlowInEasing),
-                targetOffsetX = { it / 5 }
-            ) + fadeOut(tween(200))
+            fadeIn(tween(300)) togetherWith fadeOut(tween(250))
         },
         backStack = backStack,
         onBack = { backStack.removeAt(backStack.lastIndex) },
@@ -89,6 +65,9 @@ fun DetailsGraph(showId: Int) {
                     },
                     navigateToEpisodes = { id ->
                         backStack.add(MainGraphData.Episodes(id))
+                    },
+                    navigateToShowDetails = { id ->
+                        backStack.add(MainGraphData.ShowDetails(id))
                     },
                     viewModel = viewModel,
                 )

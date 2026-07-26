@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
@@ -86,6 +87,7 @@ fun TextField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
                 .focusRequester(tfFocusRequester)
                 .onKeyEvent {
                     if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) {

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -41,10 +42,13 @@ fun SettingsDialog(
     selectedQuality: File?,
     isAutoQuality: Boolean = false,
     isHlsStream: Boolean = false,
+    speedOptions: List<Float> = PlaybackSpeeds,
+    selectedSpeed: Float,
     isSettingsSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onQualitySelected: (File) -> Unit,
     onAutoQualitySelected: () -> Unit = {},
+    onSpeedSelected: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.MAIN) }
@@ -74,7 +78,9 @@ fun SettingsDialog(
                         MainSettingsPage(
                             selectedQuality = selectedQuality,
                             isAutoQuality = selectedTempIsAuto,
-                            onQualityClick = { currentPage = SettingsPage.QUALITY })
+                            selectedSpeed = selectedSpeed,
+                            onQualityClick = { currentPage = SettingsPage.QUALITY },
+                            onSpeedClick = { currentPage = SettingsPage.SPEED })
                     }
 
                     SettingsPage.QUALITY -> {
@@ -94,17 +100,31 @@ fun SettingsDialog(
                             })
                     }
 
+                    SettingsPage.SPEED -> {
+                        SpeedSettingsPage(
+                            speedOptions = speedOptions,
+                            selectedSpeed = selectedSpeed,
+                            onSpeedSelected = onSpeedSelected,
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+val PlaybackSpeeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+
+fun formatSpeedLabel(speed: Float): String =
+    if (speed == speed.toLong().toFloat()) "${speed.toLong()}x" else "${speed}x"
+
 @Composable
 private fun MainSettingsPage(
     onQualityClick: () -> Unit,
+    onSpeedClick: () -> Unit,
     selectedQuality: File?,
     isAutoQuality: Boolean = false,
+    selectedSpeed: Float,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -135,6 +155,30 @@ private fun MainSettingsPage(
                     }
                 },
                 modifier = Modifier.clickable { onQualityClick() })
+        }
+
+        item {
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Speed,
+                        contentDescription = stringResource(R.string.playback_speed)
+                    )
+                },
+                headlineContent = { Text(stringResource(R.string.playback_speed)) },
+                trailingContent = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(formatSpeedLabel(selectedSpeed))
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            Icons.Default.ChevronRight, contentDescription = null
+                        )
+                    }
+                },
+                modifier = Modifier.clickable { onSpeedClick() })
         }
     }
 }
@@ -179,6 +223,30 @@ private fun QualitySettingsPage(
     }
 }
 
+@Composable
+private fun SpeedSettingsPage(
+    speedOptions: List<Float>,
+    selectedSpeed: Float,
+    onSpeedSelected: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        items(speedOptions) { speed ->
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                headlineContent = { Text(formatSpeedLabel(speed)) },
+                trailingContent = {
+                    if (speed == selectedSpeed) {
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
+                    }
+                },
+                modifier = Modifier.clickable { onSpeedSelected(speed) })
+        }
+    }
+}
+
 enum class SettingsPage {
-    MAIN, QUALITY
+    MAIN, QUALITY, SPEED
 }
