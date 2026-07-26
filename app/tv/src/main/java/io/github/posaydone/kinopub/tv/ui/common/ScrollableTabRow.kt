@@ -9,15 +9,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,9 +35,8 @@ fun ScrollableTabRow(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp)
 ) {
-    var currentIndex by remember { mutableIntStateOf(selectedTabIndex) }
     val lazyListState = rememberLazyListState()
-    val (lazyRow, firstItem) = remember { FocusRequester.Companion.createRefs() }
+    val (lazyRow, restoredItem) = remember { FocusRequester.Companion.createRefs() }
 
     LaunchedEffect(selectedTabIndex) {
         if (selectedTabIndex < items.size) {
@@ -51,7 +49,7 @@ fun ScrollableTabRow(
         modifier = modifier
             .fillMaxWidth()
             .focusRequester(lazyRow)
-            .focusRestorer(firstItem)
+            .focusProperties { onEnter = { runCatching { restoredItem.requestFocus() } } }
             .focusGroup(),
         contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -59,22 +57,16 @@ fun ScrollableTabRow(
         items(items.size) { index ->
             Tab(
                 modifier = Modifier.let {
-                    if (index == 0) {
-                        it.focusRequester(firstItem)
+                    if (index == selectedTabIndex) {
+                        it.focusRequester(restoredItem)
                     } else {
                         it
                     }
                 },
                 text = items[index],
-                selected = index == currentIndex,
-                onFocus = {
-                    currentIndex = index
-                    onTabSelected(index)
-                },
-                onClick = {
-                    currentIndex = index
-                    onTabSelected(index)
-                }
+                selected = index == selectedTabIndex,
+                onFocus = { onTabSelected(index) },
+                onClick = { onTabSelected(index) }
             )
         }
     }

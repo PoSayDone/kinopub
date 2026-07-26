@@ -29,6 +29,50 @@ jobs:
             - name: Set repository name as env variable
               run: echo "repository_name=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
 
+            - name: Bump app version
+              if: "!contains(github.event.head_commit.message, '[skip ci]')"
+              run: |
+                  mobile_gradle="app/mobile/build.gradle.kts"
+                  tv_gradle="app/tv/build.gradle.kts"
+
+                  current_version_code=$(sed -n 's/.*versionCode = \([0-9]\+\).*/\1/p' "$mobile_gradle" | head -n 1)
+                  current_version_name=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' "$mobile_gradle" | head -n 1)
+
+                  if [ -z "$current_version_code" ] || [ -z "$current_version_name" ]; then
+                      echo "::error::Unable to resolve current versionCode/versionName from $mobile_gradle."
+                      exit 1
+                  fi
+
+                  # Bump the last dot-separated numeric segment of versionName (e.g. 0.5 -> 0.6),
+                  # and versionCode by 1 — keeping the two in lockstep, matching this repo's
+                  # existing convention (versionName's minor segment == versionCode).
+                  version_prefix="${current_version_name%.*}"
+                  version_minor="${current_version_name##*.}"
+                  if ! [[ "$version_minor" =~ ^[0-9]+$ ]]; then
+                      echo "::error::versionName '$current_version_name' does not end in a numeric segment; cannot auto-bump."
+                      exit 1
+                  fi
+
+                  new_version_code=$((current_version_code + 1))
+                  new_version_name="${version_prefix}.$((version_minor + 1))"
+
+                  for gradle_file in "$mobile_gradle" "$tv_gradle"; do
+                      sed -i -E "s/versionCode = [0-9]+/versionCode = ${new_version_code}/" "$gradle_file"
+                      sed -i -E "s/versionName = \"[^\"]*\"/versionName = \"${new_version_name}\"/" "$gradle_file"
+                  done
+
+                  echo "Bumped version: ${current_version_name} (${current_version_code}) -> ${new_version_name} (${new_version_code})"
+                  echo "new_version_name=${new_version_name}" >> $GITHUB_ENV
+                  echo "new_version_code=${new_version_code}" >> $GITHUB_ENV
+
+            - name: Commit version bump
+              id: commit_version_bump
+              if: "!contains(github.event.head_commit.message, '[skip ci]')"
+              uses: stefanzweifel/git-auto-commit-action@v5
+              with:
+                  commit_message: "chore: bump version to ${{ env.new_version_name }} (${{ env.new_version_code }}) [skip ci]"
+                  file_pattern: "app/mobile/build.gradle.kts app/tv/build.gradle.kts"
+
             - name: Resolve release version
               run: |
                   mobile_version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/mobile/build.gradle.kts | head -n 1)
@@ -123,9 +167,17 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
+                  # Target the version-bump commit when one was made, since that's the
+                  # commit whose source actually matches release_version — falls back to
+                  # the triggering commit if the bump step was skipped.
+                  target_sha="${{ steps.commit_version_bump.outputs.commit_hash }}"
+                  if [ -z "$target_sha" ]; then
+                      target_sha="${GITHUB_SHA}"
+                  fi
+
                   notes_file=$(mktemp)
                   {
-                      echo "Automated release for commit ${GITHUB_SHA}."
+                      echo "Automated release for commit ${target_sha}."
                       echo
                       echo "Version: ${release_version}"
                       echo
@@ -138,11 +190,11 @@ jobs:
                       gh release upload "${release_tag}" release-assets/*.apk --clobber
                       gh release edit "${release_tag}" \
                           --title "${release_tag}" \
-                          --target "${GITHUB_SHA}" \
+                          --target "${target_sha}" \
                           --notes-file "$notes_file"
                   else
                       gh release create "${release_tag}" release-assets/*.apk \
                           --title "${release_tag}" \
-                          --target "${GITHUB_SHA}" \
+                          --target "${target_sha}" \
                           --notes-file "$notes_file"
                   fi
