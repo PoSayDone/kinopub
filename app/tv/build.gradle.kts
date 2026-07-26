@@ -69,8 +69,8 @@ android {
         applicationId = "io.github.posaydone.kinopub.tv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.8"
+        versionCode = 7
+        versionName = "0.7"
         vectorDrawables {
             useSupportLibrary = true
         }
