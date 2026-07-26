@@ -54,12 +54,20 @@ fun ShowsGridScreen(
 
     val hasFilters =
         queryType == ShowsGridQueryType.CATALOG || queryType == ShowsGridQueryType.WATCHING
-    val title = viewModel.screenTitle.ifBlank {
-        when (queryType) {
-            ShowsGridQueryType.FAVORITES -> stringResource(R.string.favorites)
-            ShowsGridQueryType.HISTORY -> stringResource(R.string.history)
-            ShowsGridQueryType.WATCHING -> stringResource(R.string.watching_list)
-            ShowsGridQueryType.CATALOG -> allContentTypes.find { it.apiValue == catalogContentType }?.label ?: ""
+    val title = when (queryType) {
+        // Content type is a filter the user can change from within the screen, so its
+        // label must stay reactive — falling back to the static nav-key title here (as
+        // the other query types do below) would freeze it at whatever was passed in
+        // when navigating here, never reflecting subsequent filter changes.
+        ShowsGridQueryType.CATALOG -> allContentTypes.find { it.apiValue == catalogContentType }?.label
+            ?: viewModel.screenTitle
+        else -> viewModel.screenTitle.ifBlank {
+            when (queryType) {
+                ShowsGridQueryType.FAVORITES -> stringResource(R.string.favorites)
+                ShowsGridQueryType.HISTORY -> stringResource(R.string.history)
+                ShowsGridQueryType.WATCHING -> stringResource(R.string.watching_list)
+                ShowsGridQueryType.CATALOG -> "" // unreachable, handled above
+            }
         }
     }
 
