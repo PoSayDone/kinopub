@@ -13,6 +13,7 @@ data class Show(
     val isSeries: Boolean = false,
     val genres: List<Genre> = emptyList(),
     val countries: List<Country> = emptyList(),
+    val imdbId: String? = null,
     val ratingKp: Double? = null,
     val ratingImdb: Double? = null,
     val votesKp: Int? = null,

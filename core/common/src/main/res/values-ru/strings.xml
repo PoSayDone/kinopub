@@ -103,6 +103,8 @@
     <string name="aspect_ratio">Соотношение сторон</string>
     <string name="previous_episode">Предыдущий эпизод</string>
     <string name="next_episode">Следующий эпизод</string>
+    <string name="skip_segment">Пропустить</string>
+    <string name="watch_segment">Смотреть заставку</string>
     <string name="picture_in_picture">Картинка в картинке</string>
     <string name="back">Назад</string>
     <string name="search_icon">Значок поиска</string>

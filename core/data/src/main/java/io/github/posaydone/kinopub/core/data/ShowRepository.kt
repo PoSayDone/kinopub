@@ -458,6 +458,7 @@ class ShowRepository @Inject constructor(
             isSeries = isSeries,
             genres = genres.map { Genre(it.id, it.title.slug(), it.title) },
             countries = countries.map { Country(it.id, it.title) },
+            imdbId = imdb?.let { "tt" + it.toString().padStart(7, '0') },
             ratingKp = kinopoisk_rating?.takeIf { it > 0.0 },
             ratingImdb = imdb_rating?.takeIf { it > 0.0 },
             votesKp = kinopoisk_votes,

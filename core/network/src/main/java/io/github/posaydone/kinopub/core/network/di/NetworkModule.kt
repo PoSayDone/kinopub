@@ -13,6 +13,7 @@ import io.github.posaydone.kinopub.core.network.interceptor.RetryInterceptor
 import io.github.posaydone.kinopub.core.network.interceptor.TokenAuthenticator
 import io.github.posaydone.kinopub.core.network.interceptor.UserAgentInterceptor
 import io.github.posaydone.kinopub.core.network.service.AuthService
+import io.github.posaydone.kinopub.core.network.service.IntroDbApiService
 import io.github.posaydone.kinopub.core.network.service.KinoPubApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -94,5 +95,19 @@ internal object NetworkModule {
         return Retrofit.Builder().baseUrl(Constants.KINOPUB_API_URL)
             .addConverterFactory(GsonConverterFactory.create()).client(okHttpClient).build()
             .create(KinoPubApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIntroDbApiService(
+        userAgentInterceptor: UserAgentInterceptor,
+    ): IntroDbApiService {
+        return Retrofit.Builder().baseUrl(Constants.INTRODB_API_URL)
+            .addConverterFactory(GsonConverterFactory.create()).client(
+                OkHttpClient.Builder()
+                    .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                    .addInterceptor(userAgentInterceptor)
+                    .build()
+            ).build().create(IntroDbApiService::class.java)
     }
 }

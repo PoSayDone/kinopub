@@ -27,14 +27,18 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.posaydone.kinopub.core.common.services.PlaybackService
+import io.github.posaydone.kinopub.core.data.IntroDbRepository
 import io.github.posaydone.kinopub.core.data.ShowRepository
 import io.github.posaydone.kinopub.core.data.SettingsManager
 import io.github.posaydone.kinopub.core.model.Episode
 import io.github.posaydone.kinopub.core.model.File
+import io.github.posaydone.kinopub.core.model.IntroDbSegments
+import io.github.posaydone.kinopub.core.model.SegmentType
 import io.github.posaydone.kinopub.core.model.ShowDetails
 import io.github.posaydone.kinopub.core.model.Season
 import io.github.posaydone.kinopub.core.model.Series
 import io.github.posaydone.kinopub.core.model.SessionManager
+import io.github.posaydone.kinopub.core.model.activeSegmentAt
 import io.github.posaydone.kinopub.core.model.findEpisodeProgress
 import io.github.posaydone.kinopub.core.model.latestProgressItem
 import io.github.posaydone.kinopub.core.model.latestSeriesProgress
@@ -49,6 +53,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -89,6 +95,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
     @Assisted val navKey: PlayerScreenNavKey,
     val sessionManager: SessionManager,
     private val repository: ShowRepository,
+    private val introDbRepository: IntroDbRepository,
     private val settingsManager: SettingsManager,
     context: Application,
 ) : ViewModel() {
@@ -150,6 +157,17 @@ class PlayerScreenViewModel @AssistedInject constructor(
 
     private val _selectedSpeed = MutableStateFlow(1f)
     val selectedSpeed: StateFlow<Float> = _selectedSpeed.asStateFlow()
+
+    private val _segments = MutableStateFlow<IntroDbSegments?>(null)
+    val segments: StateFlow<IntroDbSegments?> = _segments.asStateFlow()
+
+    val activeSegment: StateFlow<SegmentType?> = combine(_segments, playerState) { segments, state ->
+        segments?.activeSegmentAt(state.currentPosition)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private var autoNextEpisodeJob: Job? = null
+    private val _autoNextEpisodeProgress = MutableStateFlow(0f)
+    val autoNextEpisodeProgress: StateFlow<Float> = _autoNextEpisodeProgress.asStateFlow()
 
     private lateinit var savedProgress: ShowProgress
 
@@ -278,6 +296,49 @@ class PlayerScreenViewModel @AssistedInject constructor(
             }, ContextCompat.getMainExecutor(context))
         }
 
+        observeSegments()
+        observeAutoNextEpisode()
+    }
+
+    private fun observeSegments() {
+        viewModelScope.launch {
+            combine(selectedSeason, selectedEpisode) { season, episode -> season to episode }
+                .collectLatest { (season, episode) ->
+                    _segments.value = null
+                    val imdbId = _details.value?.imdbId
+                    if (season != null && episode != null && imdbId != null) {
+                        _segments.value = introDbRepository.getSegments(imdbId, season.season, episode.episode)
+                    }
+                }
+        }
+    }
+
+    private fun observeAutoNextEpisode() {
+        viewModelScope.launch {
+            activeSegment.collectLatest { segment ->
+                autoNextEpisodeJob?.cancel()
+                _autoNextEpisodeProgress.value = 0f
+                if (segment == SegmentType.OUTRO) {
+                    autoNextEpisodeJob = launch {
+                        val stepMs = 50L
+                        var elapsedMs = 0L
+                        while (elapsedMs < AUTO_NEXT_EPISODE_DELAY_MS) {
+                            delay(stepMs)
+                            elapsedMs += stepMs
+                            _autoNextEpisodeProgress.value =
+                                (elapsedMs.toFloat() / AUTO_NEXT_EPISODE_DELAY_MS).coerceIn(0f, 1f)
+                        }
+                        goToNextEpisode()
+                    }
+                }
+            }
+        }
+    }
+
+    fun cancelAutoNextEpisode() {
+        autoNextEpisodeJob?.cancel()
+        autoNextEpisodeJob = null
+        _autoNextEpisodeProgress.value = 0f
     }
 
     private fun startTrackingPlayback() {
@@ -1136,6 +1197,19 @@ class PlayerScreenViewModel @AssistedInject constructor(
         playerController.value?.setPlaybackSpeed(speed)
     }
 
+    fun skipActiveSegment() {
+        val segment = activeSegment.value ?: return
+        val segments = _segments.value ?: return
+        when (segment) {
+            SegmentType.OUTRO -> {
+                cancelAutoNextEpisode()
+                goToNextEpisode()
+            }
+            SegmentType.INTRO -> segments.intro?.let { seekTo(it.endMs) }
+            SegmentType.RECAP -> segments.recap?.let { seekTo(it.endMs) }
+        }
+    }
+
     fun setCrop(crop: String) {
         _selectedCrop.value = crop
         val resizeMode = when (crop) {
@@ -1216,6 +1290,7 @@ class PlayerScreenViewModel @AssistedInject constructor(
         var SHOW_CONTROLS_TIME = 4
         private const val HLS4_STREAM_TYPE = "hls4"
         private const val MAX_AUTO_RETRIES = 2
+        private const val AUTO_NEXT_EPISODE_DELAY_MS = 5_000L
     }
 }
 

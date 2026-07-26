@@ -114,6 +114,8 @@
     <string name="aspect_ratio">Aspect ratio</string>
     <string name="previous_episode">Previous episode</string>
     <string name="next_episode">Next episode</string>
+    <string name="skip_segment">Skip</string>
+    <string name="watch_segment">Watch</string>
     <string name="picture_in_picture">Picture in picture</string>
     <string name="back">Back</string>
     <string name="search_icon">Search icon</string>

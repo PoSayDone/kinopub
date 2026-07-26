@@ -106,21 +106,24 @@ fun Modifier.handleDPadKeyEvents(
             }
         } else {
             if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_UP) {
+                // A null callback means "don't handle this direction here" — leave the
+                // event unconsumed so Compose's default focus-search can move focus
+                // between sibling focusables instead (e.g. the intro/outro skip buttons).
                 when (keyEvent.nativeKeyEvent.keyCode) {
                     KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT -> {
-                        onLeft?.invoke(); true
+                        onLeft?.let { it.invoke(); true } ?: false
                     }
 
                     KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT -> {
-                        onRight?.invoke(); true
+                        onRight?.let { it.invoke(); true } ?: false
                     }
 
                     KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP -> {
-                        onUp?.invoke(); true
+                        onUp?.let { it.invoke(); true } ?: false
                     }
 
                     KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN -> {
-                        onDown?.invoke(); true
+                        onDown?.let { it.invoke(); true } ?: false
                     }
 
                     else -> false

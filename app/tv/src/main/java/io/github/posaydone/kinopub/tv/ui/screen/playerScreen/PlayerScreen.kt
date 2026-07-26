@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -38,6 +39,7 @@ import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowType
 import io.github.posaydone.kinopub.core.model.Episode
 import io.github.posaydone.kinopub.core.model.File
+import io.github.posaydone.kinopub.core.model.SegmentType
 import io.github.posaydone.kinopub.core.model.Show
 import io.github.posaydone.kinopub.core.model.ShowDetails
 import io.github.posaydone.kinopub.core.model.Season
@@ -49,6 +51,7 @@ import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerMe
 import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerOverlay
 import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerPulse
 import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerPulseState
+import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerSegmentSkipButtons
 import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.rememberPlayerPulseState
 import io.github.posaydone.kinopub.tv.ui.theme.KinopubTheme
 import io.github.posaydone.kinopub.tv.ui.utils.handleDPadKeyEvents
@@ -67,6 +70,7 @@ fun PlayerScreen(
     val player = viewModel.playerController.collectAsState().value
     val selectedSeason by viewModel.selectedSeason.collectAsState()
     val selectedEpisode by viewModel.selectedEpisode.collectAsState()
+    val activeSegment by viewModel.activeSegment.collectAsState()
 
     when (showDetails == null || player == null) {
         true -> {
@@ -75,7 +79,8 @@ fun PlayerScreen(
 
         false -> {
             VideoPlayerScreenContent(
-                player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode
+                player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode,
+                activeSegment
             )
         }
     }
@@ -90,6 +95,7 @@ fun VideoPlayerScreenContent(
     showDetails: ShowDetails,
     selectedSeason: Season?,
     selectedEpisode: Episode?,
+    activeSegment: SegmentType?,
 ) {
     val context = LocalContext.current
     val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
@@ -107,6 +113,8 @@ fun VideoPlayerScreenContent(
         mutableStateOf(false)
     }
     val pulseState = rememberPlayerPulseState()
+    var segmentDismissed by remember(activeSegment) { mutableStateOf(false) }
+    val autoNextEpisodeProgress by viewModel.autoNextEpisodeProgress.collectAsState()
 
 
     PlayerEffects(
@@ -128,6 +136,14 @@ fun VideoPlayerScreenContent(
         hasNextEpisode = hasNextEpisode,
         isAudioTrackSelectionEnabled = isHls4AudioTrackSelectionEnabled,
         isEpisodeDialogOpen = isEpisodeDialogOpen,
+        activeSegment = activeSegment,
+        segmentDismissed = segmentDismissed,
+        autoNextEpisodeProgress = autoNextEpisodeProgress,
+        onWatchSegment = {
+            segmentDismissed = true
+            viewModel.cancelAutoNextEpisode()
+        },
+        onSkipSegment = { viewModel.skipActiveSegment() },
         onRetry = { viewModel.retryPlayback() },
         seekBack = { viewModel.seekBack() },
         seekForward = { viewModel.seekForward() },
@@ -191,6 +207,11 @@ private fun PlayerScreenContent(
     hasNextEpisode: Boolean,
     isAudioTrackSelectionEnabled: Boolean,
     isEpisodeDialogOpen: Boolean,
+    activeSegment: SegmentType? = null,
+    segmentDismissed: Boolean = false,
+    autoNextEpisodeProgress: Float = 0f,
+    onWatchSegment: () -> Unit = {},
+    onSkipSegment: () -> Unit = {},
     onRetry: () -> Unit = {},
     seekBack: () -> Unit,
     seekForward: () -> Unit,
@@ -209,6 +230,11 @@ private fun PlayerScreenContent(
     playerSurface: @Composable BoxScope.() -> Unit,
     dialogs: @Composable () -> Unit = {},
 ) {
+    val segmentButtonsVisible = activeSegment != null &&
+        !playerState.controlsVisible &&
+        !segmentDismissed &&
+        !(activeSegment == SegmentType.OUTRO && !hasNextEpisode)
+
     Box(
         Modifier
             .dPadEvents(
@@ -218,6 +244,7 @@ private fun PlayerScreenContent(
                 seekForward = seekForward,
                 pause = pause,
                 isEpisodeSheetOpen = isEpisodeDialogOpen,
+                isSegmentButtonsVisible = segmentButtonsVisible,
                 onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                 onEnterHold = onEnterHold,
                 onEnterHoldUp = onEnterHoldUp
@@ -262,10 +289,22 @@ private fun PlayerScreenContent(
                     onPrevEpisodeClick = onPrevEpisodeClick,
                     onNextEpisodeClick = onNextEpisodeClick,
                     seekTo = seekTo,
-                    onPlayPauseToggle = onPlayPauseToggle
+                    onPlayPauseToggle = onPlayPauseToggle,
+                    activeSegment = activeSegment,
+                    onSkipSegment = onSkipSegment,
                 )
             }
         )
+
+        if (segmentButtonsVisible) {
+            PlayerSegmentSkipButtons(
+                activeSegment = activeSegment,
+                autoNextEpisodeProgress = autoNextEpisodeProgress,
+                onWatch = onWatchSegment,
+                onSkip = onSkipSegment,
+                onNextEpisode = onNextEpisodeClick,
+            )
+        }
 
         dialogs()
     }
@@ -372,20 +411,25 @@ private fun Modifier.dPadEvents(
     seekForward: () -> Unit,
     pause: () -> Unit,
     isEpisodeSheetOpen: Boolean,
+    isSegmentButtonsVisible: Boolean = false,
     playerState: PlayerState,
     onShowControls: () -> Unit,
     pulseState: PlayerPulseState,
     onEnterHold: () -> Unit,
     onEnterHoldUp: () -> Unit,
-): Modifier = this.handleDPadKeyEvents(onLeft = {
-    if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
-        seekBack()
-        pulseState.setType(PlayerPulse.Type.BACK)
+): Modifier = this.handleDPadKeyEvents(onLeft = if (isSegmentButtonsVisible) null else {
+    {
+        if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
+            seekBack()
+            pulseState.setType(PlayerPulse.Type.BACK)
+        }
     }
-}, onRight = {
-    if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
-        seekForward()
-        pulseState.setType(PlayerPulse.Type.FORWARD)
+}, onRight = if (isSegmentButtonsVisible) null else {
+    {
+        if (!playerState.controlsVisible && !isEpisodeSheetOpen) {
+            seekForward()
+            pulseState.setType(PlayerPulse.Type.FORWARD)
+        }
     }
 }, onUp = {
     if (!isEpisodeSheetOpen) onShowControls()

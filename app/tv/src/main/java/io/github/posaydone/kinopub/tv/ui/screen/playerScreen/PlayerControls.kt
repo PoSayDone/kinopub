@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -29,6 +30,7 @@ import io.github.posaydone.kinopub.core.common.R
 import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerScreenViewModel.Companion.SHOW_CONTROLS_TIME
 import io.github.posaydone.kinopub.core.common.sharedViewModel.PlayerState
 import io.github.posaydone.kinopub.core.common.sharedViewModel.ShowType
+import io.github.posaydone.kinopub.core.model.SegmentType
 import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerControlsButton
 import io.github.posaydone.kinopub.tv.ui.screen.playerScreen.components.PlayerSeeker
 import kotlin.time.Duration.Companion.milliseconds
@@ -52,6 +54,8 @@ fun PlayerControls(
     onNextEpisodeClick: () -> Unit,
     hasNextEpisode: Boolean,
     hasPrevEpisode: Boolean,
+    activeSegment: SegmentType? = null,
+    onSkipSegment: () -> Unit = {},
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -136,7 +140,6 @@ fun PlayerControls(
                         onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                         isPlaying = playerState.isPlaying,
                         contentDescription = stringResource(R.string.audio_tracks),
-                        text = stringResource(R.string.audioString),
                         onClick = openAudioSheet,
                     )
                 }
@@ -146,9 +149,19 @@ fun PlayerControls(
                     onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
                     isPlaying = playerState.isPlaying,
                     contentDescription = stringResource(R.string.settings),
-                    text = "Settings",
                     onClick = openQualitySheet,
                 )
+
+                if (activeSegment != null) {
+                    PlayerControlsButton(
+                        icon = Icons.Default.FastForward,
+                        onShowControls = { onShowControls(SHOW_CONTROLS_TIME) },
+                        isPlaying = playerState.isPlaying,
+                        contentDescription = stringResource(R.string.skip_segment),
+                        text = stringResource(R.string.skip_segment),
+                        onClick = onSkipSegment,
+                    )
+                }
             }
         }
     }
