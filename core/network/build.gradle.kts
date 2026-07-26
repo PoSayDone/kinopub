@@ -23,7 +23,7 @@ fun resolveSecret(name: String): String {
 
 android {
     namespace = "io.github.posaydone.kinopub.core.network"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 21

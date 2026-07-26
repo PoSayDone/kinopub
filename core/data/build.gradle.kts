@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "io.github.posaydone.kinopub.core.data"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 21

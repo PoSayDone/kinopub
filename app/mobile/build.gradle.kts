@@ -69,8 +69,8 @@ android {
         applicationId = "io.github.posaydone.kinopub.mobile"
         minSdk = 24
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.8"
+        versionCode = 7
+        versionName = "0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
