@@ -230,10 +230,12 @@ private fun PlayerScreenContent(
     playerSurface: @Composable BoxScope.() -> Unit,
     dialogs: @Composable () -> Unit = {},
 ) {
-    val segmentButtonsVisible = activeSegment != null &&
-        !playerState.controlsVisible &&
-        !segmentDismissed &&
+    // Don't offer a skip while the video hasn't actually started playing yet (initial
+    // buffering, or mid-buffer after a seek) — isPlaying is false in both cases.
+    val segmentAvailable = activeSegment != null &&
+        playerState.isPlaying &&
         !(activeSegment == SegmentType.OUTRO && !hasNextEpisode)
+    val segmentButtonsVisible = segmentAvailable && !playerState.controlsVisible && !segmentDismissed
 
     Box(
         Modifier
@@ -290,7 +292,7 @@ private fun PlayerScreenContent(
                     onNextEpisodeClick = onNextEpisodeClick,
                     seekTo = seekTo,
                     onPlayPauseToggle = onPlayPauseToggle,
-                    activeSegment = activeSegment,
+                    activeSegment = if (segmentAvailable) activeSegment else null,
                     onSkipSegment = onSkipSegment,
                 )
             }

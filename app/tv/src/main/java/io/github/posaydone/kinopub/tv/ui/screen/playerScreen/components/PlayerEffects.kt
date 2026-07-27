@@ -21,8 +21,12 @@ fun PlayerEffects(
     saveProgress: () -> Unit,
     pause: () -> Unit,
 ) {
-    LaunchedEffect(playerState.isPlaying) {
-        if (!playerState.isPlaying && pulseState.type == PlayerPulse.Type.NONE) {
+    // isPlaying goes false while merely buffering (initial load, post-seek/skip
+    // rebuffer) — not just on a real pause. Gate on !isLoading too, otherwise every
+    // buffering spell (including "skip intro") pops the full controls overlay open on
+    // top of the (separately rendered, always-independent) loading spinner.
+    LaunchedEffect(playerState.isPlaying, playerState.isLoading) {
+        if (!playerState.isPlaying && !playerState.isLoading && pulseState.type == PlayerPulse.Type.NONE) {
             onShowControls(Int.MAX_VALUE)
         }
     }

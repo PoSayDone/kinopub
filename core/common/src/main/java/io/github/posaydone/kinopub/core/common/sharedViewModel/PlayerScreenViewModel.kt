@@ -71,7 +71,7 @@ data class PlayerState(
     val duration: Long = 0L,
     val resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     val orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE,
-    val controlsVisible: Boolean = true,
+    val controlsVisible: Boolean = false,
     val isSpeedUpActive: Boolean = false,
     val playerError: PlayerError? = null,
 )
