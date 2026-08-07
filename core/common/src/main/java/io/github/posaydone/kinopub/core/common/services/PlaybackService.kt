@@ -1,5 +1,7 @@
 package io.github.posaydone.kinopub.core.common.services
 
+import android.app.PendingIntent
+import android.content.Intent
 import android.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
@@ -26,7 +28,18 @@ class PlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         val player = buildPlaybackPlayer(this, okHttpClient)
-        mediaSession = MediaSession.Builder(this, player).build()
+        val sessionBuilder = MediaSession.Builder(this, player)
+        createSessionActivityPendingIntent()?.let { sessionBuilder.setSessionActivity(it) }
+        mediaSession = sessionBuilder.build()
+    }
+
+    private fun createSessionActivityPendingIntent(): PendingIntent? {
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        } ?: return null
+        return PendingIntent.getActivity(
+            this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
     }
 
     override fun onDestroy() {

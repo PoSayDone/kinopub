@@ -53,7 +53,10 @@ fun PlayerEffects(playerState: PlayerState, saveProgress: () -> Unit, pause: () 
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_PAUSE) {
+            // Entering Picture-in-Picture always pauses the Activity but
+            // only stops it when PiP isn't available, so this naturally skips pausing playback
+            // while the video keeps running in the PiP window.
+            if (event == Lifecycle.Event.ON_STOP && !activity.isInPictureInPictureMode) {
                 saveProgress()
                 pause()
             }

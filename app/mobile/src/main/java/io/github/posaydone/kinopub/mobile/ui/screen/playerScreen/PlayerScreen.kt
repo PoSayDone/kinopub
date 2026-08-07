@@ -2,6 +2,7 @@
 
 package io.github.posaydone.kinopub.mobile.ui.screen.playerScreen
 
+import android.util.Rational
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -10,9 +11,11 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,6 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
@@ -46,6 +51,7 @@ import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.Play
 import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.PlayerOverlay
 import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.rememberPlayerPulseState
 import io.github.posaydone.kinopub.mobile.ui.theme.KinopubTheme
+import io.github.posaydone.kinopub.mobile.ui.utils.LocalPipController
 
 private var TAG = "PlayerScreen"
 
@@ -88,6 +94,7 @@ fun VideoPlayerScreenContent(
     val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
     val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
     val context = LocalContext.current
+    val pipController = LocalPipController.current
     var isAudioDialogOpen by rememberSaveable {
         mutableStateOf(false)
     }
@@ -97,12 +104,47 @@ fun VideoPlayerScreenContent(
     var isEpisodeDialogOpen by rememberSaveable {
         mutableStateOf(false)
     }
+    var playerView by remember { mutableStateOf<PlayerView?>(null) }
+    var videoAspectRatio by remember { mutableStateOf<Rational?>(null) }
 
     PlayerEffects(playerState = playerState, pause = { viewModel.pause() }, saveProgress = {
         viewModel.saveProgress()
     })
 
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                if (videoSize.width > 0 && videoSize.height > 0) {
+                    videoAspectRatio = Rational(videoSize.width, videoSize.height)
+                }
+            }
+        }
+        player.videoSize.let {
+            if (it.width > 0 && it.height > 0) {
+                videoAspectRatio = Rational(it.width, it.height)
+            }
+        }
+        player.addListener(listener)
+        onDispose { player.removeListener(listener) }
+    }
+
+    DisposableEffect(playerView, videoAspectRatio) {
+        pipController.updatePictureInPicture(
+            enabled = playerView != null,
+            playerView = playerView,
+            aspectRatio = videoAspectRatio,
+        )
+        onDispose { }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            pipController.updatePictureInPicture(enabled = false, playerView = null)
+        }
+    }
+
     PlayerScreenContent(
+        isInPictureInPictureMode = pipController.isInPip,
         playerState = playerState,
         showDetails = showDetails,
         showType = showType,
@@ -136,7 +178,9 @@ fun VideoPlayerScreenContent(
         },
         playerSurface = {
             AndroidView(
-                factory = { PlayerView(context).apply { useController = false } },
+                factory = {
+                    PlayerView(context).apply { useController = false }.also { playerView = it }
+                },
                 update = {
                     it.player = player
                     it.apply {
@@ -165,6 +209,7 @@ fun VideoPlayerScreenContent(
 @OptIn(UnstableApi::class)
 @Composable
 private fun PlayerScreenContent(
+    isInPictureInPictureMode: Boolean = false,
     playerState: PlayerState,
     showDetails: ShowDetails,
     showType: ShowType?,
@@ -201,64 +246,69 @@ private fun PlayerScreenContent(
     ) {
         playerSurface()
 
-        PlayerGestureContainer(
-            toggleControls = toggleControls,
-            setResizeMode = setResizeMode,
-            setPulseType = { pulseState.setType(it) },
-            seekForward = seekForward,
-            seekBack = seekBack,
-            enableSpeedUp = enableSpeedUp,
-            disableSpeedUp = disableSpeedUp
-        )
+        // Picture-in-Picture shows a bare video surface: touch input isn't delivered to the
+        // app while in PiP, and there's no room for the overlay controls anyway.
+        if (!isInPictureInPictureMode) {
+            PlayerGestureContainer(
+                toggleControls = toggleControls,
+                setResizeMode = setResizeMode,
+                setPulseType = { pulseState.setType(it) },
+                seekForward = seekForward,
+                seekBack = seekBack,
+                enableSpeedUp = enableSpeedUp,
+                disableSpeedUp = disableSpeedUp
+            )
 
-
-        PlayerOverlay(
-            modifier = Modifier.fillMaxSize(),
-            playerState = playerState,
-            pulseState = pulseState,
-            onRetry = onRetry,
-            subtitles = { /* TODO Implement subtitles */ },
-            header = {
-                PlayerMediaTitle(
-                    showDetails = showDetails,
-                    currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) stringResource(
-                        R.string.seasonString
-                    ) + " " + selectedSeason.season else null,
-                    currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) stringResource(
-                        R.string.episode,
-                        selectedEpisode.episode
-                    ) else null,
-                    openSettingsDialog = openSettingsDialog
-                )
-            },
-            middle = {
-                PlayerMiddleControls(
-                    showType = showType,
-                    isPlaying = playerState.isPlaying,
-                    isLoading = playerState.isLoading,
-                    onPlayPauseClick = onPlayPauseClick,
-                    hasNextEpisode = hasNextEpisode,
-                    onNextEpisodeClick = onNextEpisodeClick,
-                    hasPrevEpisode = hasPrevEpisode,
-                    onPrevEpisodeClick = onPrevEpisodeClick,
-                )
-            },
-            footer = {
-                PlayerBottomControls(
-                    showType = showType,
-                    resizeMode = playerState.resizeMode,
-                    setResizeMode = setResizeMode,
-                    currentPosition = playerState.currentPosition,
-                    duration = playerState.duration,
-                    seekTo = seekTo,
-                    onShowControls = onShowControls,
-                    openEpisodeDialog = openEpisodeDialog,
-                    isAudioTrackSelectionEnabled = isAudioTrackSelectionEnabled,
-                    openAudioDialog = openAudioDialog,
-                )
-            })
+            PlayerOverlay(
+                modifier = Modifier.fillMaxSize(),
+                playerState = playerState,
+                pulseState = pulseState,
+                onRetry = onRetry,
+                subtitles = { /* TODO Implement subtitles */ },
+                header = {
+                    PlayerMediaTitle(
+                        showDetails = showDetails,
+                        currentSeason = if (showType == ShowType.SERIES && selectedSeason != null) stringResource(
+                            R.string.seasonString
+                        ) + " " + selectedSeason.season else null,
+                        currentEpisode = if (showType == ShowType.SERIES && selectedEpisode != null) stringResource(
+                            R.string.episode,
+                            selectedEpisode.episode
+                        ) else null,
+                        openSettingsDialog = openSettingsDialog
+                    )
+                },
+                middle = {
+                    PlayerMiddleControls(
+                        showType = showType,
+                        isPlaying = playerState.isPlaying,
+                        isLoading = playerState.isLoading,
+                        onPlayPauseClick = onPlayPauseClick,
+                        hasNextEpisode = hasNextEpisode,
+                        onNextEpisodeClick = onNextEpisodeClick,
+                        hasPrevEpisode = hasPrevEpisode,
+                        onPrevEpisodeClick = onPrevEpisodeClick,
+                    )
+                },
+                footer = {
+                    PlayerBottomControls(
+                        showType = showType,
+                        resizeMode = playerState.resizeMode,
+                        setResizeMode = setResizeMode,
+                        currentPosition = playerState.currentPosition,
+                        duration = playerState.duration,
+                        seekTo = seekTo,
+                        onShowControls = onShowControls,
+                        openEpisodeDialog = openEpisodeDialog,
+                        isAudioTrackSelectionEnabled = isAudioTrackSelectionEnabled,
+                        openAudioDialog = openAudioDialog,
+                    )
+                })
+        }
     }
-    dialogs()
+    if (!isInPictureInPictureMode) {
+        dialogs()
+    }
 }
 
 @UnstableApi

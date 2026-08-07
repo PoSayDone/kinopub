@@ -1008,12 +1008,22 @@ class PlayerScreenViewModel @AssistedInject constructor(
         )
         logSelectionSnapshot("playVideo")
 
+        // Prefer the episode's own preview frame; fall back to the show's artwork so movies and
+        // episodes without a thumbnail still get something in the system media controls.
+        val artworkUrl = when (_contentType.value) {
+            ShowType.SERIES -> _selectedEpisode.value?.thumbnail
+            else -> null
+        } ?: _details.value?.backdropUrl ?: _details.value?.poster
+
         val mediaItem = MediaItem.Builder()
             .setUri(Uri.parse(url))
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setDisplayTitle(displayTitle)
                     .setTitle(displayTitle)
+                    .apply {
+                        artworkUrl?.let { setArtworkUri(Uri.parse(it)) }
+                    }
                     .build()
             )
             .build()
