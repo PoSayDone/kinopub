@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.rounded.AutoAwesomeMotion
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,6 +36,8 @@ fun PlayerBottomControls(
     openEpisodeDialog: () -> Unit,
     isAudioTrackSelectionEnabled: Boolean,
     openAudioDialog: () -> Unit,
+    hasNextEpisode: Boolean,
+    onNextEpisodeClick: () -> Unit,
 ) {
     Column {
         PlayerSeeker(
@@ -97,6 +100,13 @@ fun PlayerBottomControls(
                         }
                     },
                 )
+                if (showType == ShowType.SERIES && hasNextEpisode) {
+                    PlayerControlsButton(
+                        icon = Icons.Default.SkipNext,
+                        contentDescription = stringResource(R.string.next_episode),
+                        onClick = onNextEpisodeClick,
+                    )
+                }
             }
         }
     }

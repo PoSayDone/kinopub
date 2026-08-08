@@ -69,6 +69,14 @@ fun DetailsGraph(showId: Int) {
                     navigateToShowDetails = { id ->
                         backStack.add(MainGraphData.ShowDetails(id))
                     },
+                    // ShowDetails is this graph's own seed entry, so it can be the sole item
+                    // left on backStack (e.g. after popping back from a similar-show detour).
+                    // NavDisplay itself already knows not to pop the last entry — mirror that
+                    // here too, otherwise this screen's own BackHandler would empty the
+                    // backstack and crash NavDisplay instead of letting the press bubble up
+                    // to the parent graph.
+                    canNavigateBack = backStack.size > 1,
+                    navigateBack = { backStack.removeAt(backStack.lastIndex) },
                     viewModel = viewModel,
                 )
             }
@@ -104,7 +112,10 @@ fun DetailsGraph(showId: Int) {
                                 )
                             )
                         })
-                PlayerScreen(viewModel = viewModel)
+                PlayerScreen(
+                    viewModel = viewModel,
+                    navigateBack = { backStack.removeAt(backStack.lastIndex) },
+                )
             }
         })
 }

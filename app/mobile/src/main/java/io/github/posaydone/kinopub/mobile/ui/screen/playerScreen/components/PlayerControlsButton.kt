@@ -24,6 +24,7 @@ fun PlayerControlsButton(
     contentDescription: String? = null,
     disabled: Boolean = false,
     text: String? = null,
+    containerColor: Color = Color.White.copy(0.1f),
     onClick: () -> Unit = {},
 ) {
     val commonModifier = Modifier
@@ -40,9 +41,9 @@ fun PlayerControlsButton(
             onClick = onClick,
             enabled = !disabled,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(0.1f),
+                containerColor = containerColor,
                 contentColor = Color.White,
-                disabledContainerColor = Color.White.copy(0.1f),
+                disabledContainerColor = containerColor,
                 disabledContentColor = Color.White.copy(0.8f),
             ),
             contentPadding = commonPadding
@@ -65,9 +66,9 @@ fun PlayerControlsButton(
                 .then(modifier),
             enabled = !disabled,
             colors = IconButtonDefaults.iconButtonColors(
-                containerColor = Color.White.copy(0.1f),
+                containerColor = containerColor,
                 contentColor = Color.White,
-                disabledContainerColor = Color.White.copy(0.05f),
+                disabledContainerColor = containerColor,
                 disabledContentColor = Color.White.copy(0.8f),
             ),
         ) {

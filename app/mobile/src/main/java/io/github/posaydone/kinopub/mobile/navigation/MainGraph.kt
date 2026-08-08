@@ -155,9 +155,6 @@ fun MainGraph() {
                                 )
                             )
                         },
-                        navigateToEpisodes = { showId ->
-                            topLevelBackStack.add(MainGraphData.Episodes(showId))
-                        },
                         navigateToShowDetails = { showId ->
                             topLevelBackStack.add(MainGraphData.ShowDetails(showId))
                         },
@@ -239,7 +236,10 @@ fun MainGraph() {
                                     )
                                 )
                             })
-                    PlayerScreen(viewModel = viewModel)
+                    PlayerScreen(
+                        viewModel = viewModel,
+                        navigateBack = { topLevelBackStack.removeLast() },
+                    )
                 }
             })
         AnimatedVisibility(visible = !isPlayerScreen) {

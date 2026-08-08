@@ -61,3 +61,11 @@ fun formatDuration(context: Context, totalSeconds: Int): String {
 
     return parts.joinToString(" ")
 }
+
+/**
+ * Formats a season count into a localized, correctly pluralized string like "1 season".
+ */
+fun formatSeasonCount(context: Context, seasonCount: Int): String {
+    if (seasonCount <= 0) return ""
+    return context.resources.getQuantityString(R.plurals.season_count_plural, seasonCount, seasonCount)
+}

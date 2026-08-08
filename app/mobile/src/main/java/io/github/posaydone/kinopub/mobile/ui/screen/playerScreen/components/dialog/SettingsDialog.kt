@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
@@ -70,7 +68,7 @@ fun SettingsDialog(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(16.dp)
             ) {
                 when (currentPage) {
@@ -127,59 +125,55 @@ private fun MainSettingsPage(
     selectedSpeed: Float,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
+    Column(
+        modifier = modifier.fillMaxWidth(),
     ) {
-        item {
-            ListItem(
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.quality)
-                    )
-                },
-                headlineContent = { Text(stringResource(R.string.quality)) },
-                trailingContent = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (isAutoQuality) {
-                            Text(stringResource(R.string.quality_auto))
-                        } else if (selectedQuality != null) {
-                            Text("${selectedQuality.quality}p")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Icon(
-                            Icons.Default.ChevronRight, contentDescription = null
-                        )
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            leadingContent = {
+                Icon(
+                    imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.quality)
+                )
+            },
+            headlineContent = { Text(stringResource(R.string.quality)) },
+            trailingContent = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (isAutoQuality) {
+                        Text(stringResource(R.string.quality_auto))
+                    } else if (selectedQuality != null) {
+                        Text("${selectedQuality.quality}p")
                     }
-                },
-                modifier = Modifier.clickable { onQualityClick() })
-        }
+                    Spacer(Modifier.width(8.dp))
+                    Icon(
+                        Icons.Default.ChevronRight, contentDescription = null
+                    )
+                }
+            },
+            modifier = Modifier.clickable { onQualityClick() })
 
-        item {
-            ListItem(
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            leadingContent = {
+                Icon(
+                    imageVector = Icons.Default.Speed,
+                    contentDescription = stringResource(R.string.playback_speed)
+                )
+            },
+            headlineContent = { Text(stringResource(R.string.playback_speed)) },
+            trailingContent = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(formatSpeedLabel(selectedSpeed))
+                    Spacer(Modifier.width(8.dp))
                     Icon(
-                        imageVector = Icons.Default.Speed,
-                        contentDescription = stringResource(R.string.playback_speed)
+                        Icons.Default.ChevronRight, contentDescription = null
                     )
-                },
-                headlineContent = { Text(stringResource(R.string.playback_speed)) },
-                trailingContent = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(formatSpeedLabel(selectedSpeed))
-                        Spacer(Modifier.width(8.dp))
-                        Icon(
-                            Icons.Default.ChevronRight, contentDescription = null
-                        )
-                    }
-                },
-                modifier = Modifier.clickable { onSpeedClick() })
-        }
+                }
+            },
+            modifier = Modifier.clickable { onSpeedClick() })
     }
 }
 
@@ -193,23 +187,21 @@ private fun QualitySettingsPage(
     onAutoQualitySelected: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
+    Column(
+        modifier = modifier.fillMaxWidth(),
     ) {
         if (isHlsStream) {
-            item {
-                ListItem(
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    headlineContent = { Text(stringResource(R.string.quality_auto)) },
-                    trailingContent = {
-                        if (isAutoQuality) {
-                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
-                        }
-                    },
-                    modifier = Modifier.clickable { onAutoQualitySelected() })
-            }
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                headlineContent = { Text(stringResource(R.string.quality_auto)) },
+                trailingContent = {
+                    if (isAutoQuality) {
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected))
+                    }
+                },
+                modifier = Modifier.clickable { onAutoQualitySelected() })
         }
-        items(qualities) { quality ->
+        qualities.forEach { quality ->
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text("${quality.quality}p") },
@@ -230,10 +222,10 @@ private fun SpeedSettingsPage(
     onSpeedSelected: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
+    Column(
+        modifier = modifier.fillMaxWidth(),
     ) {
-        items(speedOptions) { speed ->
+        speedOptions.forEach { speed ->
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text(formatSpeedLabel(speed)) },

@@ -1,6 +1,8 @@
 package io.github.posaydone.kinopub.mobile.ui.screen.authScreen
 
 import android.content.ActivityNotFoundException
+import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,8 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowRightAlt
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -27,9 +31,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -52,6 +58,7 @@ fun AuthScreen(
     val apiUrl by viewModel.apiUrl.collectAsStateWithLifecycle()
     val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var showApiUrlDialog by rememberSaveable { mutableStateOf(false) }
     var showAppUpdateDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -111,11 +118,27 @@ fun AuthScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = activation.userCode,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = activation.userCode,
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    IconButton(onClick = {
+                        clipboardManager.setText(AnnotatedString(activation.userCode))
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                            Toast.makeText(
+                                context, context.getString(R.string.code_copied), Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(R.string.copy_code),
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 

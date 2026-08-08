@@ -3,6 +3,7 @@
 package io.github.posaydone.kinopub.mobile.ui.screen.playerScreen
 
 import android.util.Rational
+import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +41,7 @@ import io.github.posaydone.kinopub.core.model.Episode
 import io.github.posaydone.kinopub.core.model.File
 import io.github.posaydone.kinopub.core.model.ShowDetails
 import io.github.posaydone.kinopub.core.model.Season
+import io.github.posaydone.kinopub.core.model.SegmentType
 import io.github.posaydone.kinopub.core.model.Show
 import io.github.posaydone.kinopub.core.model.Translation
 import io.github.posaydone.kinopub.mobile.ui.common.Loading
@@ -49,6 +52,7 @@ import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.Play
 import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.PlayerMediaTitle
 import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.PlayerMiddleControls
 import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.PlayerOverlay
+import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.PlayerSegmentSkipButtons
 import io.github.posaydone.kinopub.mobile.ui.screen.playerScreen.components.rememberPlayerPulseState
 import io.github.posaydone.kinopub.mobile.ui.theme.KinopubTheme
 import io.github.posaydone.kinopub.mobile.ui.utils.LocalPipController
@@ -59,12 +63,14 @@ private var TAG = "PlayerScreen"
 @Composable
 fun PlayerScreen(
     viewModel: PlayerScreenViewModel = hiltViewModel(),
+    navigateBack: () -> Unit = {},
 ) {
     val showDetails by viewModel.details.collectAsState()
     val playerState by viewModel.playerState.collectAsState()
     val player = viewModel.playerController.collectAsState().value
     val selectedSeason by viewModel.selectedSeason.collectAsState()
     val selectedEpisode by viewModel.selectedEpisode.collectAsState()
+    val activeSegment by viewModel.activeSegment.collectAsState()
 
     when (showDetails == null || player == null) {
         true -> {
@@ -73,7 +79,8 @@ fun PlayerScreen(
 
         false -> {
             VideoPlayerScreenContent(
-                player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode
+                player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode,
+                activeSegment, navigateBack
             )
         }
     }
@@ -88,11 +95,14 @@ fun VideoPlayerScreenContent(
     showDetails: ShowDetails,
     selectedSeason: Season?,
     selectedEpisode: Episode?,
+    activeSegment: SegmentType?,
+    navigateBack: () -> Unit = {},
 ) {
     val showType by viewModel.contentType.collectAsState()
-    val hasPrevEpisode by viewModel.hasPrevEpisode.collectAsState()
     val hasNextEpisode by viewModel.hasNextEpisode.collectAsState()
     val isHls4AudioTrackSelectionEnabled by viewModel.isHls4AudioTrackSelectionEnabled.collectAsState()
+    val autoNextEpisodeProgress by viewModel.autoNextEpisodeProgress.collectAsState()
+    var segmentDismissed by remember(activeSegment) { mutableStateOf(false) }
     val context = LocalContext.current
     val pipController = LocalPipController.current
     var isAudioDialogOpen by rememberSaveable {
@@ -106,10 +116,27 @@ fun VideoPlayerScreenContent(
     }
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
     var videoAspectRatio by remember { mutableStateOf<Rational?>(null) }
+    // SurfaceView (the video surface PlayerView uses by default) is composited on its own
+    // hardware layer outside the normal View hierarchy, so it doesn't reliably hide in sync
+    // with Compose navigation transitions — the last frame can keep showing on top of the
+    // next screen for a couple of seconds otherwise. Detaching the surface eagerly, the
+    // instant back navigation is requested rather than waiting for this composable to
+    // actually be disposed, makes it disappear immediately instead.
+    var isLeaving by remember { mutableStateOf(false) }
 
     PlayerEffects(playerState = playerState, pause = { viewModel.pause() }, saveProgress = {
         viewModel.saveProgress()
     })
+
+    val handleNavigateBack = {
+        isLeaving = true
+        viewModel.saveProgress()
+        viewModel.pause()
+        playerView?.player = null
+        navigateBack()
+    }
+
+    BackHandler(enabled = !isLeaving, onBack = handleNavigateBack)
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -150,10 +177,18 @@ fun VideoPlayerScreenContent(
         showType = showType,
         selectedSeason = selectedSeason,
         selectedEpisode = selectedEpisode,
-        hasPrevEpisode = hasPrevEpisode,
         hasNextEpisode = hasNextEpisode,
         isAudioTrackSelectionEnabled = isHls4AudioTrackSelectionEnabled,
+        activeSegment = activeSegment,
+        segmentDismissed = segmentDismissed,
+        autoNextEpisodeProgress = autoNextEpisodeProgress,
+        onWatchSegment = {
+            segmentDismissed = true
+            viewModel.cancelAutoNextEpisode()
+        },
+        onSkipSegment = { viewModel.skipActiveSegment() },
         onRetry = { viewModel.retryPlayback() },
+        onClose = handleNavigateBack,
         toggleControls = { viewModel.toggleControls() },
         setResizeMode = { viewModel.setResizeMode(it) },
         seekForward = { viewModel.seekForward() },
@@ -163,7 +198,6 @@ fun VideoPlayerScreenContent(
         seekTo = { viewModel.seekTo(it) },
         onPlayPauseClick = { viewModel.onPlayPauseClick() },
         onNextEpisodeClick = { viewModel.goToNextEpisode() },
-        onPrevEpisodeClick = { viewModel.goToPrevEpisode() },
         onShowControls = { viewModel.showControls(seconds = 4) },
         openSettingsDialog = { isSettingsDialogOpen = true },
         openEpisodeDialog = {
@@ -177,19 +211,21 @@ fun VideoPlayerScreenContent(
             }
         },
         playerSurface = {
-            AndroidView(
-                factory = {
-                    PlayerView(context).apply { useController = false }.also { playerView = it }
-                },
-                update = {
-                    it.player = player
-                    it.apply {
-                        resizeMode = playerState.resizeMode
-                        keepScreenOn = playerState.isPlaying
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+            if (!isLeaving) {
+                AndroidView(
+                    factory = {
+                        PlayerView(context).apply { useController = false }.also { playerView = it }
+                    },
+                    update = {
+                        it.player = player
+                        it.apply {
+                            resizeMode = playerState.resizeMode
+                            keepScreenOn = playerState.isPlaying
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         },
         dialogs = {
             PlayerDialogs(
@@ -215,10 +251,15 @@ private fun PlayerScreenContent(
     showType: ShowType?,
     selectedSeason: Season?,
     selectedEpisode: Episode?,
-    hasPrevEpisode: Boolean,
     hasNextEpisode: Boolean,
     isAudioTrackSelectionEnabled: Boolean,
+    activeSegment: SegmentType? = null,
+    segmentDismissed: Boolean = false,
+    autoNextEpisodeProgress: Float = 0f,
+    onWatchSegment: () -> Unit = {},
+    onSkipSegment: () -> Unit = {},
     onRetry: () -> Unit = {},
+    onClose: () -> Unit = {},
     toggleControls: () -> Unit,
     setResizeMode: (Int) -> Unit,
     seekForward: () -> Unit,
@@ -228,7 +269,6 @@ private fun PlayerScreenContent(
     seekTo: (Long) -> Unit,
     onPlayPauseClick: () -> Unit,
     onNextEpisodeClick: () -> Unit,
-    onPrevEpisodeClick: () -> Unit,
     onShowControls: () -> Unit,
     openSettingsDialog: () -> Unit,
     openEpisodeDialog: () -> Unit,
@@ -237,6 +277,13 @@ private fun PlayerScreenContent(
     dialogs: @Composable () -> Unit = {},
 ) {
     val pulseState = rememberPlayerPulseState()
+
+    // Don't offer a skip while the video hasn't actually started playing yet (initial
+    // buffering, or mid-buffer after a seek) — isPlaying is false in both cases.
+    val segmentAvailable = activeSegment != null &&
+        playerState.isPlaying &&
+        !(activeSegment == SegmentType.OUTRO && !hasNextEpisode)
+    val segmentButtonsVisible = segmentAvailable && !segmentDismissed
 
     Box(
         Modifier
@@ -275,19 +322,17 @@ private fun PlayerScreenContent(
                             R.string.episode,
                             selectedEpisode.episode
                         ) else null,
+                        onClose = onClose,
                         openSettingsDialog = openSettingsDialog
                     )
                 },
                 middle = {
                     PlayerMiddleControls(
-                        showType = showType,
                         isPlaying = playerState.isPlaying,
                         isLoading = playerState.isLoading,
                         onPlayPauseClick = onPlayPauseClick,
-                        hasNextEpisode = hasNextEpisode,
-                        onNextEpisodeClick = onNextEpisodeClick,
-                        hasPrevEpisode = hasPrevEpisode,
-                        onPrevEpisodeClick = onPrevEpisodeClick,
+                        seekForward = seekForward,
+                        seekBack = seekBack,
                     )
                 },
                 footer = {
@@ -302,8 +347,21 @@ private fun PlayerScreenContent(
                         openEpisodeDialog = openEpisodeDialog,
                         isAudioTrackSelectionEnabled = isAudioTrackSelectionEnabled,
                         openAudioDialog = openAudioDialog,
+                        hasNextEpisode = hasNextEpisode,
+                        onNextEpisodeClick = onNextEpisodeClick,
                     )
                 })
+
+            if (segmentButtonsVisible) {
+                PlayerSegmentSkipButtons(
+                    activeSegment = activeSegment,
+                    autoNextEpisodeProgress = autoNextEpisodeProgress,
+                    controlsVisible = playerState.controlsVisible,
+                    onWatch = onWatchSegment,
+                    onSkip = onSkipSegment,
+                    onNextEpisode = onNextEpisodeClick,
+                )
+            }
         }
     }
     if (!isInPictureInPictureMode) {
@@ -360,7 +418,6 @@ private fun PlayerScreenPreview() {
             showType = ShowType.SERIES,
             selectedSeason = previewSeason,
             selectedEpisode = previewEpisode,
-            hasPrevEpisode = true,
             hasNextEpisode = true,
             isAudioTrackSelectionEnabled = true,
             toggleControls = {},
@@ -372,7 +429,6 @@ private fun PlayerScreenPreview() {
             seekTo = {},
             onPlayPauseClick = {},
             onNextEpisodeClick = {},
-            onPrevEpisodeClick = {},
             onShowControls = {},
             openSettingsDialog = {},
             openEpisodeDialog = {},

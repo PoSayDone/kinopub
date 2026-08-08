@@ -4,6 +4,7 @@
 
 package io.github.posaydone.kinopub.tv.ui.screen.playerScreen
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -64,6 +65,7 @@ import io.github.posaydone.kinopub.tv.ui.utils.handleDPadKeyEvents
 @Composable
 fun PlayerScreen(
     viewModel: PlayerScreenViewModel = hiltViewModel(),
+    navigateBack: () -> Unit = {},
 ) {
     val showDetails by viewModel.details.collectAsState()
     val playerState by viewModel.playerState.collectAsState()
@@ -80,7 +82,7 @@ fun PlayerScreen(
         false -> {
             VideoPlayerScreenContent(
                 player, viewModel, playerState, showDetails!!, selectedSeason, selectedEpisode,
-                activeSegment
+                activeSegment, navigateBack
             )
         }
     }
@@ -96,6 +98,7 @@ fun VideoPlayerScreenContent(
     selectedSeason: Season?,
     selectedEpisode: Episode?,
     activeSegment: SegmentType?,
+    navigateBack: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
@@ -115,7 +118,23 @@ fun VideoPlayerScreenContent(
     val pulseState = rememberPlayerPulseState()
     var segmentDismissed by remember(activeSegment) { mutableStateOf(false) }
     val autoNextEpisodeProgress by viewModel.autoNextEpisodeProgress.collectAsState()
+    var playerView by remember { mutableStateOf<PlayerView?>(null) }
+    // SurfaceView (the video surface PlayerView uses by default) is composited on its own
+    // hardware layer outside the normal View hierarchy, so it doesn't reliably hide in sync
+    // with Compose navigation transitions — the last frame can keep showing on top of the
+    // next screen for a couple of seconds otherwise. Detaching the surface eagerly, the
+    // instant back navigation is requested rather than waiting for this composable to
+    // actually be disposed, makes it disappear immediately instead.
+    var isLeaving by remember { mutableStateOf(false) }
+    val handleNavigateBack = {
+        isLeaving = true
+        viewModel.saveProgress()
+        viewModel.pause()
+        playerView?.player = null
+        navigateBack()
+    }
 
+    BackHandler(enabled = !isLeaving, onBack = handleNavigateBack)
 
     PlayerEffects(
         lifecycleOwner = lifecycleOwner,
@@ -168,17 +187,21 @@ fun VideoPlayerScreenContent(
         seekTo = { viewModel.seekTo(it) },
         onPlayPauseToggle = { viewModel.onPlayPauseClick() },
         playerSurface = {
-            AndroidView(
-                factory = { PlayerView(context).apply { useController = false } },
-                update = {
-                    it.player = player
-                    it.apply {
-                        resizeMode = playerState.resizeMode
-                        keepScreenOn = playerState.isPlaying
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+            if (!isLeaving) {
+                AndroidView(
+                    factory = {
+                        PlayerView(context).apply { useController = false }.also { playerView = it }
+                    },
+                    update = {
+                        it.player = player
+                        it.apply {
+                            resizeMode = playerState.resizeMode
+                            keepScreenOn = playerState.isPlaying
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         },
         dialogs = {
             PlayerDialogs(

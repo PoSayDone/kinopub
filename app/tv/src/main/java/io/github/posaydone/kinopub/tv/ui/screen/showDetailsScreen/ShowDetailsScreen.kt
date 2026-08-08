@@ -3,6 +3,7 @@
 package io.github.posaydone.kinopub.tv.ui.screen.showDetailsScreen
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -116,9 +117,27 @@ fun ShowDetailsScreen(
     navigateToMoviePlayer: (showId: Int, startSeason: Int, startEpisode: Int) -> Unit,
     navigateToEpisodes: (showId: Int) -> Unit = {},
     navigateToShowDetails: (showId: Int) -> Unit = {},
+    canNavigateBack: Boolean = true,
+    navigateBack: () -> Unit = {},
     viewModel: ShowDetailsScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // SurfaceView (the trailer's video surface) is composited on its own hardware layer
+    // outside the normal View hierarchy, so it doesn't reliably hide in sync with Compose
+    // navigation transitions — the last frame can keep showing on top of the next screen for
+    // a couple of seconds otherwise. Detaching it eagerly the instant back navigation is
+    // requested, rather than waiting for this composable to actually be disposed, makes it
+    // disappear immediately instead.
+    var isLeaving by remember { mutableStateOf(false) }
+    var trailerPlayerView by remember { mutableStateOf<PlayerView?>(null) }
+    val handleNavigateBack = {
+        isLeaving = true
+        trailerPlayerView?.player = null
+        navigateBack()
+    }
+
+    BackHandler(enabled = canNavigateBack && !isLeaving, onBack = handleNavigateBack)
 
     LaunchedEffect(Unit) {
         if (uiState is ShowDetailsScreenUiState.Done) {
@@ -169,6 +188,8 @@ fun ShowDetailsScreen(
                 similarShows = s.similarShows,
                 trailerUrl = s.trailerUrl,
                 navigateToShowDetails = navigateToShowDetails,
+                isLeaving = isLeaving,
+                onTrailerPlayerViewCreated = { trailerPlayerView = it },
                 modifier = Modifier
                     .fillMaxSize()
                     .animateContentSize()
@@ -188,6 +209,8 @@ private fun Details(
     similarShows: List<Show> = emptyList(),
     trailerUrl: String? = null,
     navigateToShowDetails: (showId: Int) -> Unit = {},
+    isLeaving: Boolean = false,
+    onTrailerPlayerViewCreated: (PlayerView) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
@@ -230,6 +253,8 @@ private fun Details(
                             imageUrl = showDetails.backdropUrl,
                             trailerUrl = trailerUrl,
                             isPaused = scrollState.value > 0,
+                            isLeaving = isLeaving,
+                            onPlayerViewCreated = onTrailerPlayerViewCreated,
                         )
                     }
 
@@ -328,6 +353,8 @@ private fun ShowDetailsImmersiveBackground(
     imageUrl: String?,
     trailerUrl: String?,
     isPaused: Boolean = false,
+    isLeaving: Boolean = false,
+    onPlayerViewCreated: (PlayerView) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var showTrailer by remember(trailerUrl) { mutableStateOf(false) }
@@ -366,8 +393,13 @@ private fun ShowDetailsImmersiveBackground(
             fallback = ColorPainter(Color.Black),
         )
 
-        if (trailerUrl != null && showTrailer) {
-            TrailerPlayer(url = trailerUrl, isPaused = isPaused, modifier = Modifier.fillMaxSize())
+        if (trailerUrl != null && showTrailer && !isLeaving) {
+            TrailerPlayer(
+                url = trailerUrl,
+                isPaused = isPaused,
+                onPlayerViewCreated = onPlayerViewCreated,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         Box(
@@ -381,7 +413,12 @@ private fun ShowDetailsImmersiveBackground(
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(UnstableApi::class)
 @Composable
-private fun TrailerPlayer(url: String, isPaused: Boolean = false, modifier: Modifier = Modifier) {
+private fun TrailerPlayer(
+    url: String,
+    isPaused: Boolean = false,
+    onPlayerViewCreated: (PlayerView) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val exoPlayer = remember(url) {
         ExoPlayer.Builder(context).build().apply {
@@ -407,7 +444,7 @@ private fun TrailerPlayer(url: String, isPaused: Boolean = false, modifier: Modi
                 useController = false
                 player = exoPlayer
                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            }
+            }.also(onPlayerViewCreated)
         },
         modifier = modifier,
     )

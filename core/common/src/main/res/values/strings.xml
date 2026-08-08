@@ -17,6 +17,10 @@
     <plurals name="minutes_plural">
         <item quantity="other">%d min</item>
     </plurals>
+    <plurals name="season_count_plural">
+        <item quantity="one">%d season</item>
+        <item quantity="other">%d seasons</item>
+    </plurals>
 
     <!-- Error messages -->
     <string name="sign_in">Sign in</string>
@@ -25,6 +29,8 @@
     <string name="device_sign_in_waiting">Waiting for confirmation. This screen will continue automatically after activation.</string>
     <string name="device_sign_in_start">Get activation code</string>
     <string name="device_sign_in_refresh">Request new code</string>
+    <string name="copy_code">Copy code</string>
+    <string name="code_copied">Code copied</string>
     <string name="search">Search</string>
     <string name="retry_error">Oops, failed to load the movies, try again</string>
     <string name="retry">Retry</string>
@@ -114,6 +120,8 @@
     <string name="aspect_ratio">Aspect ratio</string>
     <string name="previous_episode">Previous episode</string>
     <string name="next_episode">Next episode</string>
+    <string name="seek_back">Seek back</string>
+    <string name="seek_forward">Seek forward</string>
     <string name="skip_segment">Skip</string>
     <string name="watch_segment">Watch</string>
     <string name="picture_in_picture">Picture in picture</string>
@@ -126,6 +134,8 @@
     <string name="navback_icon">Navigation back icon</string>
     <string name="play">Play</string>
     <string name="pause">Pause</string>
+    <string name="mute">Mute</string>
+    <string name="unmute">Unmute</string>
     <string name="favorite">Favorite</string>
     <string name="favorites">Favorites</string>
     <string name="mine">Mine</string>
@@ -137,6 +147,10 @@
     <string name="cast_label">Cast</string>
     <string name="director_label">Director</string>
     <string name="voice_label">Voiceover</string>
+    <string name="about_tab">About</string>
+    <string name="description_label">Description</string>
+    <string name="details_label">Details</string>
+    <string name="subtitles_label">Subtitles</string>
     <string name="audio_count">%1$d audio tracks</string>
     <string name="subtitles_count">%1$d subtitles</string>
     <string name="more_details">More details</string>

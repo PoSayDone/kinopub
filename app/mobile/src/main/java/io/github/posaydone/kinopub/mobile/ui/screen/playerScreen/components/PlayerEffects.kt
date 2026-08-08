@@ -33,17 +33,23 @@ fun PlayerEffects(playerState: PlayerState, saveProgress: () -> Unit, pause: () 
     val previousOrientation = remember { activity.requestedOrientation }
 
     LaunchedEffect(playerState.controlsVisible) {
+        // The status bar should never reappear while the player is on screen; only the
+        // navigation pill is allowed to follow the controls' visibility.
+        insetsController.hide(WindowInsetsCompat.Type.statusBars())
+        insetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         if (!playerState.controlsVisible) {
-            insetsController.hide(WindowInsetsCompat.Type.systemBars())
-            insetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            insetsController.hide(WindowInsetsCompat.Type.navigationBars())
         } else {
-            insetsController.show(WindowInsetsCompat.Type.systemBars())
+            insetsController.show(WindowInsetsCompat.Type.navigationBars())
         }
     }
 
     DisposableEffect(Unit) {
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        insetsController.hide(WindowInsetsCompat.Type.statusBars())
+        insetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         onDispose {
             activity.requestedOrientation = previousOrientation

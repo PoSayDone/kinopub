@@ -38,6 +38,13 @@
     <plurals name="minutes_plural" tools:ignore="MissingQuantity">
         <item quantity="other">%d мин</item>
     </plurals>
+
+    <plurals name="season_count_plural">
+        <item quantity="one">%d сезон</item>
+        <item quantity="few">%d сезона</item>
+        <item quantity="many">%d сезонов</item>
+        <item quantity="other">%d сезонов</item>
+    </plurals>
     
     <!-- Settings related strings -->
     <string name="video_quality">Качество видео</string>
@@ -115,6 +122,8 @@
     <string name="navback_icon">Значок навигации назад</string>
     <string name="play">Воспроизвести</string>
     <string name="pause">Пауза</string>
+    <string name="mute">Выключить звук</string>
+    <string name="unmute">Включить звук</string>
     <string name="favorite">Избранное</string>
     <string name="favorites">Избранное</string>
     <string name="mine">Мои</string>
@@ -129,6 +138,10 @@
     <string name="audio_count">%1$d дорожек</string>
     <string name="subtitles_count">%1$d субтитров</string>
     <string name="more_details">Подробнее</string>
+    <string name="about_tab">Обзор</string>
+    <string name="description_label">Описание</string>
+    <string name="details_label">Детали</string>
+    <string name="subtitles_label">Субтитры</string>
 
     <!-- Missing category row titles -->
     <string name="new_movies">Новые фильмы</string>

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -17,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.posaydone.kinopub.core.common.R
 import io.github.posaydone.kinopub.core.model.ShowDetails
 
 @Composable
@@ -28,6 +31,7 @@ fun PlayerMediaTitle(
     currentSeason: String?,
     currentEpisode: String?,
     modifier: Modifier = Modifier,
+    onClose: () -> Unit,
     openSettingsDialog: () -> Unit,
 ) {
     val primaryTitle = showDetails.title.trim()
@@ -44,7 +48,14 @@ fun PlayerMediaTitle(
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.Start
-            ) {}
+            ) {
+                PlayerControlsButton(
+                    icon = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close),
+                    containerColor = Color.Transparent,
+                    onClick = onClose,
+                )
+            }
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -84,7 +95,9 @@ fun PlayerMediaTitle(
                 modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End
             ) {
                 PlayerControlsButton(
-                    icon = Icons.Default.Settings, onClick = { openSettingsDialog() })
+                    icon = Icons.Default.Settings,
+                    containerColor = Color.Transparent,
+                    onClick = { openSettingsDialog() })
             }
         }
     }

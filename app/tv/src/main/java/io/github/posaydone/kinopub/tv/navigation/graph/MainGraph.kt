@@ -176,7 +176,10 @@ fun MainGraph() {
                                 )
                             )
                         })
-                PlayerScreen(viewModel = viewModel)
+                PlayerScreen(
+                    viewModel = viewModel,
+                    navigateBack = { topLevelBackStack.removeLast() },
+                )
             }
         }
     )
